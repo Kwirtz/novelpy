@@ -10,7 +10,7 @@ classifiers = [
  
 setup(
   name='novelpy',
-  version='0.0.2',
+  version='0.0.6',
   description='Calculate novelty indicators',
   long_description=open('README.txt').read() + '\n\n' + open('CHANGELOG.txt').read(),
   url='',  
@@ -20,5 +20,5 @@ setup(
   classifiers=classifiers,
   keywords='Novelty, scientometrics', 
   packages=find_packages(),
-  install_requires=['wosfile','pymongo','joblib','sklearn','glob','tqdm','networkx','python-louvain','nltk','gensim'] 
+  install_requires=['wosfile','pymongo','joblib','sklearn','glob2','tqdm','networkx','python-louvain','nltk','gensim'] 
 )
