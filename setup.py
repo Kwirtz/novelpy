@@ -20,5 +20,5 @@ setup(
   classifiers=classifiers,
   keywords='Novelty, scientometrics', 
   packages=find_packages(),
-  install_requires=['wosfile','pymongo','joblib','sklearn','glob','tqdm','networkx','python-louvain','nltk'] 
+  install_requires=['wosfile','pymongo','joblib','sklearn','glob','tqdm','networkx','python-louvain','nltk','gensim'] 
 )
