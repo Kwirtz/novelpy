@@ -1,81 +1,55 @@
 import numpy as np
 from sklearn import preprocessing
-from scipy.sparse import csr_matrix, triu 
+from scipy.sparse import csr_matrix, triu, lil_matrix
 from scipy.linalg import norm
-from itertools import combinations
+from itertools import combinations, chain
 import pandas as pd
 from random import sample
 import tqdm
 import networkx as nx
 import pymongo
 import time
+import pickle
+from joblib import Parallel, delayed
+import json
+import time
+import os
+
+def get_comb(item):
+    combi = [tuple(sorted(comb)) for comb in combinations(item,2)]
+    return combi
+    
 
 def get_adjacency_matrix(unique_items,
                          items_list,
                          unique_pairwise,
                          keep_diag):
     
-    lb = preprocessing.MultiLabelBinarizer(classes=sorted(unique_items))
-    if unique_pairwise:
+    if unique_pairwise:     
+        lb = preprocessing.MultiLabelBinarizer(classes=sorted(list(unique_items.keys())))
         dtm_mat = csr_matrix(lb.fit_transform(items_list))
         adj_mat = dtm_mat.T.dot(dtm_mat)
     else:
-        combi = []
-        #adj_mat = csr_matrix((len(lb.classes),len(lb.classes)))
-        for item in items_list:
-            for comb in combinations(item,2):
-                combi.append(tuple(sorted(comb)))
-                #i = np.where(np.array(lb.classes) == comb[0])
-                #j = np.where(np.array(lb.classes) == comb[1])
-                #adj_mat[i,j] = int(adj_mat.A[i,j])+1
-                
-                
-        G = nx.MultiGraph(combi)
-        G.add_nodes_from(lb.classes)
-        adj_mat = nx.adjacency_matrix(G,nodelist=sorted(G.nodes()))
+        
+        adj_mat = lil_matrix((len(unique_items.keys()),len(unique_items.keys())), dtype = np.uint32)
+        for item in tqdm.tqdm(items_list):
+            for combi in list(combinations(item, r=2)):
+                combi = sorted(combi)
+                ind_1 = unique_items[combi[0]]
+                ind_2 = unique_items[combi[1]]
+                adj_mat[ind_1,ind_2] += 1
+                adj_mat[ind_2,ind_1] += 1
+            
     if keep_diag == False:
         adj_mat.setdiag(0)
+    adj_mat = adj_mat.tocsr()
     adj_mat.eliminate_zeros()
     return adj_mat
 
-def get_difficulty_cos_sim(difficulty_adj):
-     
-     difficulty_norms = np.apply_along_axis(norm, 0, difficulty_adj.A)[np.newaxis]
-     difficulty_norms = difficulty_norms.T.dot(difficulty_norms)
-     cos_sim = difficulty_adj.dot(difficulty_adj)/difficulty_norms
-     cos_sim = csr_matrix(triu(np.nan_to_num(cos_sim)))
-     cos_sim.setdiag(0)
-     cos_sim.eliminate_zeros()
-     return cos_sim
- 
-# def get_comb_freq(adj_mat):
-#     nb_comb = np.sum(triu(adj_mat))
-#     return adj_mat/nb_comb
-    
-def suffle_network(current_items):
-    df = []
-    for idx in current_items:
-        for item in current_items[idx]:
-          df.append({'idx':idx,
-                      'journal':item['journal'],
-                      'year': item['year']})  
-    df = pd.DataFrame(df)    
-    
-    years = set(df.year)
-    for year in years:
-        journals_y = list(df.journal[df.year == year])
-        df.journal[df.year == year] = sample(journals_y,k = len(journals_y))
-    
-    random_network = []
-    for idx in current_items:
-        random_network.append(list(df.journal[df.idx == idx]))
-    
-    return random_network
-        
-   
-    
 
-def get_paper_score(doc_adj,comb_scores,unique_items,indicator,item_name = 'journal',**kwargs):
+        
+        
+def get_paper_score(doc_adj,comb_scores,unique_items,indicator,item_name,**kwargs):
     
     doc_comb_adj = csr_matrix(doc_adj.multiply(comb_scores))
     
@@ -118,6 +92,8 @@ def get_paper_score(doc_adj,comb_scores,unique_items,indicator,item_name = 'jour
         'nb_comb':len(comb_infos) if comb_infos else 0,
         'comb_infos': comb_infos
         }
+    
+    
     if indicator == 'novelty':
         score = {'novelty':sum(comb_list) if comb_idx[0] else 0}
     elif indicator == 'atypicality':
@@ -135,21 +111,18 @@ def get_paper_score(doc_adj,comb_scores,unique_items,indicator,item_name = 'jour
     return {key:doc_infos}
 
 
-#### Get infos from dataset depending on the indicator used
-
 
 class Dataset:
     
     def __init__(self,
-                 client_name,
-                 db_name,
-                 collection_name,
-                 var = None,
-                 sub_var = None):
+        client_name = None,
+        db_name = None,
+        collection_name = None,
+        var = None,
+        sub_var = None,
+        focal_year = None):
         
-        self.client = pymongo.MongoClient(client_name)
-        self.db = self.client[db_name]
-        self.collection = self.db[collection_name]
+        self.focal_year = focal_year
         if 'wos' in collection_name:
             self.VAR_YEAR = 'PY'
             self.VAR_PMID = 'PM'
@@ -158,6 +131,30 @@ class Dataset:
             self.VAR_PMID = 'PMID'
         self.VAR = var
         self.SUB_VAR = sub_var
+        self.item_name = self.VAR.split('_')[0]
+        if client_name:
+            self.client = pymongo.MongoClient(client_name)
+            self.db = self.client[db_name]
+            self.collection = self.db[collection_name]
+        else:
+            self.docs = pickle.load(open("/Data/{}/{}/{}.p".format(self.VAR_YEAR,
+                                                                   self.VAR,
+                                                                   self.focal_year),
+                                         "rb" ) )
+            
+        if not os.path.exists('Data/Journal_JournalIssue_PubDate_Year/{}/results/'.format(self.VAR)):
+            os.makedirs('Data/Journal_JournalIssue_PubDate_Year/{}/results/'.format(self.VAR))
+
+        
+
+        
+    def choose_path(self,indicator):
+        unw = ['novelty']
+        type1 = 'unweighted_network' if indicator in unw else 'weighted_network'
+        type2 = 'no_self_loop' if indicator in unw else 'self_loop'
+        self.path = "Data/{}/{}/{}_{}".format(self.VAR_YEAR,self.VAR,type1,type2)
+        self.unique_items = pickle.load(open(self.path + "/name2index.p", "rb" ))
+
     
     def get_item_infos(self,
                        item,
@@ -168,11 +165,9 @@ class Dataset:
             if 'category' in item.keys():
                 if indicator == 'atypicality':
                     if 'year' in item.keys():
-                        all_item = [item[self.SUB_VAR]]
                         doc_item = {'journal':item[self.SUB_VAR],
                                           'year':item['year']}
                 else:
-                    all_item = [item[self.SUB_VAR]]
                     doc_item = item[self.SUB_VAR]    
                     
                 return all_item, doc_item
@@ -180,55 +175,109 @@ class Dataset:
         else:
             if indicator == 'atypicality':
                 if 'year' in item.keys():
-                    all_item = [item[self.SUB_VAR]]
-                    doc_item = {'journal':item[self.SUB_VAR],
+                    doc_item = {'item':item[self.SUB_VAR],
                                       'year':item['year']}
             else:
-                all_item = [item[self.SUB_VAR]]
                 doc_item = item[self.SUB_VAR]
             
-            return all_item, doc_item
-        return [], []
+            return  doc_item
+        return  []
     
     def get_items(self,
-                  docs,
-                  focal_year,
                   indicator,
                   restrict_wos_journal = False):
 
-        only_focal_y = ['commonness','atypicality']
+        if self.client:
+            self.docs = self.collection.find({
+                self.VAR:{'$exists':'true'},
+                self.VAR_YEAR:self.focal_year
+                })
+        self.choose_path(indicator)
+        self.true_adj =  pickle.load(
+            open( self.path+'/{}.p'.format(self.focal_year),
+                 "rb" )) 
+
         ######### Set Objects #########
-        all_items = set()
         current_items = dict()
         
         ######### Iterate over documents #########
-        for items in tqdm.tqdm(docs):
+        for items in tqdm.tqdm(self.docs):
             doc_items = list()
+          
             for item in items[self.VAR]:
                 ######### Get doc item and update journal list #########
-                all_item, doc_item = self.get_item_infos(item,
-                                                    indicator,
-                                                    restrict_wos_journal)
+                doc_item = self.get_item_infos(item,
+                                                indicator,
+                                                restrict_wos_journal)
                 if doc_item:
-                    all_items.update(all_item)
                     doc_items.append(doc_item)
                 
             ######### Store items #########
             ### focal year items
             doc_items = list(doc_items)
             
-            if items[self.VAR_YEAR] == focal_year:
+            if items[self.VAR_YEAR] == self.focal_year:
                 current_items.update({
                     str(items[self.VAR_PMID]):doc_items
-                })       
+                })  
+        
+        self.current_items = current_items
+
+
+
+    def populate_list(self,idx,current_item,unique_items,item_name,indicator,scores_adj,tomongo):
+        if len(current_item)>2:
+                try:
                     
-        ######### Return dict with items for all periods #########       
-        list_items = {
-            'unique_items':sorted(tuple(all_items)),
-            'current_items':current_items
-            }
+                    if indicator == 'atypicality':
+                        current_item = pd.DataFrame(current_item)['item'].tolist()
+                    
+                    current_adj = get_adjacency_matrix(unique_items,
+                                                       [current_item],
+                                                       unique_pairwise = False,
+                                                       keep_diag=True)
+        
+                    infos = get_paper_score(current_adj,
+                                            scores_adj,
+                                            list(unique_items.keys()),
+                                            indicator,
+                                            item_name)
+                    if tomongo:
+                        update_mongo(idx,infos)
+                    else:
+                        return {idx:infos}
+                    
+                except Exception as e:
+                    print(e)
+ 
+
+  
+    def update_paper_values(self,indicator, tomongo = False):
+        comb_scores = pickle.load(
+            open('Data/Journal_JournalIssue_PubDate_Year/{}/indicators_adj/{}/{}_{}.p'.format(self.VAR,
+                                                                                              indicator,
+                                                                                              indicator,
+                                                                                              self.focal_year),
+                 "rb" ) )
+       
             
-        return list_items
+        
+        docs_infos = Parallel(n_jobs=4)(
+            delayed(self.populate_list)(idx,
+                                    self.current_items[idx],
+                                    self.unique_items,
+                                    self.item_name,
+                                    indicator,
+                                    comb_scores,
+                                    tomongo) for idx in tqdm.tqdm(self.current_items.keys()))
+        if not tomongo:
+            pickle.dump(
+                docs_infos,
+                open('Data/Journal_JournalIssue_PubDate_Year/{}/results/{}_{}.p'.format(self.VAR,indicator,self.focal_year),
+                      "wb" ) )
+            
+        print('saved')
+
 
     def update_mongo(self,
                      pmid,
@@ -237,3 +286,4 @@ class Dataset:
         query = { self.VAR_PMID: int(pmid) }
         newvalues = { '$set': doc_infos}
         self.collection.update_one(query,newvalues)
+
