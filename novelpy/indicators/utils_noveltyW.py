@@ -1,6 +1,6 @@
 import numpy as np
 import pickle 
-from scipy.sparse import lil_matrix, triu 
+from scipy.sparse import lil_matrix, triu, csr_matrix
 from scipy.linalg import norm
 import tqdm 
 
