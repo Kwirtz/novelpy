@@ -35,7 +35,7 @@ class Commonness:
         """
         self.focal_year = focal_year
         self.current_adj = current_adj
-        self.path2 = "Data/{}/{}/indicators_adj/commonness/".format(var_year,var)
+        self.path2 = "Data/{}/{}/indicators_adj/commonness/".format(var)
         if not os.path.exists(self.path2):
             os.makedirs(self.path2)
             

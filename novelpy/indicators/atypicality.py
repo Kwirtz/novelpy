@@ -44,8 +44,8 @@ class Atypicality:
         self.true_current_adj_freq = true_current_adj_freq
         self.focal_year = focal_year
         self.var = var
-        self.path1 = "Data/{}/{}/sample_network/".format(var_year,self.var)
-        self.path2 = "Data/{}/{}/indicators_adj/atypicality/".format(var_year,self.var)
+        self.path1 = "Data/{}/sample_network/".format(self.var)
+        self.path2 = "Data/{}/indicators_adj/atypicality/".format(self.var)
         if not os.path.exists(self.path1):
             os.makedirs(self.path1)
         if not os.path.exists(self.path2 + 'iteration/'):

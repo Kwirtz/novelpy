@@ -2,6 +2,7 @@ from .utils_noveltyW import *
 from scipy.sparse import csr_matrix, lil_matrix
 import tqdm
 import pickle 
+import os 
 
 class Novelty:
 
@@ -41,8 +42,8 @@ class Novelty:
         self.focal_year = focal_year
         self.time_window = time_window
         self.n_reutilisation = n_reutilisation
-        self.path = 'Data/{}/{}/unweighted_network_no_self_loop/'.format(var_year,self.var)
-        self.path2 = "Data/{}/{}/indicators_adj/novelty/".format(var_year,self.var)
+        self.path = 'Data/{}/unweighted_network_no_self_loop/'.format(self.var)
+        self.path2 = "Data/{}/indicators_adj/novelty/".format(self.var)
         if not os.path.exists(self.path):
             os.makedirs(self.path)        
         if not os.path.exists(self.path2):

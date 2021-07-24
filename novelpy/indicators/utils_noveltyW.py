@@ -1,8 +1,8 @@
 import numpy as np
 import pickle 
 from scipy.sparse import lil_matrix, triu 
-from utils import *
 from scipy.linalg import norm
+import tqdm 
 
 # Moslty used for Novelty
    

@@ -1,6 +1,6 @@
 # pip install python-louvain
 import community as community_louvain
-from package.indicators.our_indicator import *
+from novelpy.indicators.our_indicator import *
 from collections import defaultdict
 import itertools
 

@@ -2,7 +2,7 @@ import pandas as pd
 import pickle
 from scipy.sparse import lil_matrix
 from random import sample
-from indicators.utils import *
+pd.options.mode.chained_assignment = None
 
 def suffle_network(current_items):
     """
