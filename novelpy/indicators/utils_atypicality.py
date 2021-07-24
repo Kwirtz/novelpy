@@ -2,10 +2,26 @@ import pandas as pd
 import pickle
 from scipy.sparse import lil_matrix
 from random import sample
-from novelpy.indicators.utils import *
+from indicators.utils import *
 
 def suffle_network(current_items):
+    """
     
+    Description
+    -----------
+    list of list of items resampled conserving the distribution in time of the citations
+
+    Parameters
+    ----------
+    current_items : list
+        list of list of items
+
+    Returns
+    -------
+    random_network : list
+        list of list of items
+
+    """
     lst = []
     for idx in current_items:
         for item in current_items[idx]:
@@ -24,6 +40,23 @@ def suffle_network(current_items):
     return random_network
         
 def get_unique_value_used(all_sampled_adj_freq):
+    """
+    
+    Description
+    -----------
+    Get the set of coordinates for which calculation is need to compute the mean and the standard deviation
+
+    Parameters
+    ----------
+    all_sampled_adj_freq : list
+        list of sampled adjacency matrices
+
+    Returns
+    -------
+    list 
+        list of coordinates
+
+    """
     tuples_set = set()
     for sampled_adj in tqdm.tqdm(all_sampled_adj_freq):
         i_list = sampled_adj.nonzero()[0].tolist()
@@ -33,13 +66,54 @@ def get_unique_value_used(all_sampled_adj_freq):
     return list(tuples_set)
 
 def get_cell_mean_sd(value,all_sampled_adj_freq):
+    """
+    
+    Description
+    -----------
+    Compute mean and standard deviation
+
+    Parameters
+    ----------
+    value : tuple
+        coordinates to look for.
+    all_sampled_adj_freq : list
+        list of sampled adjacency matrices.
+
+    Returns
+    -------
+    tuple
+        coordinates, mean and sd across each sample.
+
+    """
     count = []
     for sampled_adj in all_sampled_adj_freq:
         count.append(sampled_adj[value[0],value[1]])
     return value, np.mean(count), np.std(count)
 
 def get_comb_mean_sd(path2,all_sampled_adj_freq,unique_values,var,focal_year):
+    """
     
+
+    Parameters
+    ----------
+    path2 : str
+        path to load and save mean and sd adjacency matrix.
+    all_sampled_adj_freq : list
+        list of sampled adjacency matrices.
+    unique_values : list
+        list of unique coordinate to compute mean and sd.
+    focal_year : int
+        year of interest.
+
+    Returns
+    -------
+    mean_comb : TYPE
+        DESCRIPTION.
+    sd_comb : TYPE
+        DESCRIPTION.
+
+    """
+       
     mean_comb = lil_matrix(all_sampled_adj_freq[0].shape)
     sd_comb = lil_matrix(all_sampled_adj_freq[0].shape)
     
@@ -83,8 +157,6 @@ def get_comb_mean_sd(path2,all_sampled_adj_freq,unique_values,var,focal_year):
     except:
         i = 0
     
-    # For HPC 
-    t = time.time()
     for value in tqdm.tqdm(unique_values[i:]):
         i+=1
         value, mean, sd = get_cell_mean_sd(value,all_sampled_adj_freq)
@@ -98,12 +170,4 @@ def get_comb_mean_sd(path2,all_sampled_adj_freq,unique_values,var,focal_year):
                                         "wb" ) )
             pickle.dump(sd_comb, open(path2 + "/iteration/sd_info_{}_{}.p".format('atypicality',focal_year),
                                         "wb" ) )
-            # For HPC
-            # if time.time() - t > (3600*23):
-            #     break
-    # print('populate matrix')
-    # for value, mean, sd in tqdm.tqdm(mean_sd_list):
-    #     mean_comb[value[0],value[1]] = mean
-    #     sd_comb[value[0],value[1]] = sd
-    
     return mean_comb, sd_comb

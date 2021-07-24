@@ -7,21 +7,64 @@ import re
 
 class Atypicality:
 
-    def __init__(self,var,focal_year,current_items,unique_items,true_current_adj_freq):
+    def __init__(self,
+                 var,
+                 var_year,
+                 focal_year,
+                 current_items,
+                 unique_items,
+                 true_current_adj_freq):
+        """
+        Description
+        -----------
+        Compute Atypicality as proposed by Uzzi, Mukherjee, Stringer and Jones (2013)
+ 
+        Parameters
+        ----------
+        var : str
+            variable used.
+        var_year : str
+            year variable name
+        focal_year : int
+            year of interest.
+        current_item : dict
+            dict with id as key and item and item info as value.
+        unique_items : dict
+            dict structured thi way name:index, file from the name2index.p generated with the cooccurrence matrices.
+        true_current_adj_freq : scipy.sparse.csr.csr_matrix
+            current adjacency matrix.
+
+        Returns
+        -------
+        None.
+
+        """
         self.current_items = current_items
         self.unique_items = unique_items
         self.true_current_adj_freq = true_current_adj_freq
         self.focal_year = focal_year
         self.var = var
-        self.path1 = "Data/Journal_JournalIssue_PubDate_Year/{}/sample_network/".format(self.var)
-        self.path2 = "Data/Journal_JournalIssue_PubDate_Year/{}/indicators_adj/atypicality/".format(self.var)
+        self.path1 = "Data/{}/{}/sample_network/".format(var_year,self.var)
+        self.path2 = "Data/{}/{}/indicators_adj/atypicality/".format(var_year,self.var)
         if not os.path.exists(self.path1):
             os.makedirs(self.path1)
         if not os.path.exists(self.path2 + 'iteration/'):
             os.makedirs(self.path2 + 'iteration/')
 
     def sample_network(self,nb_sample):
+        """
         
+
+        Parameters
+        ----------
+        nb_sample : int
+            number of sample to create.
+
+        Returns
+        -------
+        None.
+
+        """
         self.nb_sample = nb_sample
         allready_computed = [
             f for f in os.listdir(self.path1) 
@@ -44,6 +87,17 @@ class Atypicality:
                          "wb" ) )
                 
     def compute_comb_score(self):
+        """
+               
+        Description
+        -----------
+        Compute Atypicality Scores and store them on the disk
+
+        Returns
+        -------
+        None.
+
+        """
         # Get nb_sample networks
         all_sampled_adj_freq = []
         for i in tqdm.tqdm(range(self.nb_sample)):
