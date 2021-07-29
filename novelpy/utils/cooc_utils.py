@@ -49,6 +49,9 @@ class create_cooc:
             keep the diagonal on the coocurrence matrix
             
         '''
+        self.client_name = client_name
+        self.db_name = db_name
+        self.collection_name = collection_name
         self.client = pymongo.MongoClient(client_name)
         self.db = self.client[db_name]
         self.collection = self.db[collection_name]
@@ -82,6 +85,9 @@ class create_cooc:
         final_list = []
         for year in tqdm.tqdm(self.time_window, desc="Get item list, loop on year"):
             item_list = []
+            self.client = pymongo.MongoClient(self.client_name)
+            self.db = self.client[self.db_name]
+            self.collection = self.db[self.collection_name]
             docs = self.collection.find({self.year_var:year},no_cursor_timeout=True)
             for doc in tqdm.tqdm(docs, desc="Get item list, loop on doc"):
                 try:
