@@ -1,4 +1,5 @@
 from .utils_atypicality import *
+from .utils import *
 import os
 import pickle
 from scipy.sparse import triu, csr_matrix

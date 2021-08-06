@@ -59,10 +59,10 @@ class Disruptiveness:
         """
         citation_network = pd.read_json(path2citnet,
                                         dtype={self.var_id:'uint32',
-                                               self.var_refs_list:'uint32'})
+                                               self.var_refs_list:'uint32',
+                                               self.var_year:'uint16'})
         # citation_network = dd.from_pandas(citation_network,npartitions = 8)                                                        
         citation_network = citation_network.dropna(subset=[self.var_refs_list])
-        citation_network = citation_network.drop('_id',axis = 1)
         citation_network = citation_network[citation_network[self.var_year] != '']\
             .astype({self.var_year:'uint32'})
         # Restrict to pmids that are published from one year before the focal_year to present

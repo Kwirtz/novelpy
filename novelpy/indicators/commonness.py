@@ -1,4 +1,5 @@
 from scipy.sparse import csr_matrix, lil_matrix, triu
+from .utils import *
 import tqdm
 import numpy as np
 import pickle 
