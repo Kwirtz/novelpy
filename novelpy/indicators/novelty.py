@@ -1,5 +1,5 @@
 from .utils_noveltyW import *
-from .utils
+from .utils import *
 from scipy.sparse import csr_matrix, lil_matrix
 import tqdm
 import pickle 

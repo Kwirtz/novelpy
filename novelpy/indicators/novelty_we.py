@@ -16,6 +16,7 @@ def novel(txt):
     n = len(txt)
     w = np.zeros((n, d))
 
+    q_list = [100, 99, 95, 90, 80, 50]
     # Assign word embedding
     for i in range(n):
         tokens = nlp(txt[i])
@@ -33,7 +34,7 @@ def novel(txt):
     for q in q_list:
         nov_list.append([q, np.percentile(dist_list, q)])
 
-    return nov_list
+    return nov_list, dist_list
 
 
 
