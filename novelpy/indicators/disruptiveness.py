@@ -183,8 +183,11 @@ class Disruptiveness:
             }
         
         if tomongo:
-            query = { self.var_id: focal_paper_id}
-            newvalue =  { '$set': disruptiveness_indicators}
-            db[kwargs['collection2update']].update_one(query,newvalue)
+            try:
+                query = { self.var_id: focal_paper_id}
+                newvalue =  { '$set': disruptiveness_indicators}
+                db[kwargs['collection2update']].update_one(query,newvalue)
+            except Exception as e:
+                print(e)
         else:
             return {focal_paper_id:disruptiveness_indicators}

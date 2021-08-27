@@ -69,7 +69,7 @@ class Atypicality:
         self.nb_sample = nb_sample
         allready_computed = [
             f for f in os.listdir(self.path1) 
-                             if re.match(r'sample_[0-{}]_{}'.format(self.nb_sample,self.focal_year), f)
+                             if re.match(r'sample_[0-9]+_{}'.format(self.focal_year), f)
                              ]
 
         for i in tqdm.tqdm(range(nb_sample)):
