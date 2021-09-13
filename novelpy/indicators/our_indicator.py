@@ -35,7 +35,7 @@ class our_indicator:
         self.chunk = chunk
         self.weighted = weighted
         self.resample = resample
-        self.path = "Paper/Results/our_novelty_non_normalized/"
+        self.path = "./Results/our_novelty_non_normalized/"
         self.year = year
         self.variable = variable
         
@@ -46,11 +46,6 @@ class our_indicator:
         if not os.path.exists(self.path+ "{}/{}/subgraph_nodes".format(self.variable,self.year)):
             os.makedirs(self.path+ "{}/{}/subgraph_nodes".format(self.variable,self.year))
 
-
-    def compressed_pickle(self, title, data):
-        with bz2.BZ2File(title + ".pbz2", "w") as f: 
-            pickle.dump(data, f)
-                        
     def compute_novelty(self):
         '''
         Description
@@ -70,6 +65,9 @@ class our_indicator:
             for i,j in zip(cx.row, cx.col):
                 self.df[i,j] = 1-(self.df[i,j]/(self.B*self.resample))
     
+    def compressed_pickle(self, title, data):
+        with bz2.BZ2File(title + ".pbz2", "w") as f: 
+            pickle.dump(data, f)
         
     def generate_commu_adj_matrix(self):
         '''

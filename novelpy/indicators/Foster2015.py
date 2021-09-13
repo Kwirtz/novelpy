@@ -1,31 +1,11 @@
-# pip install python-louvain
 import community as community_louvain
-from novelpy.indicators.our_indicator import *
+from novelpy.indicators.utils_foster2015 import *
 from collections import defaultdict
 import itertools
 
-class Louvain_based_indicator(our_indicator):
+class Foster2015(community_appartenance):
     
-    def get_community(self,graph):
-        '''
-        Description
-        -----------
-        
-        perform a community algorithm on the graph g
-        
-        Parameters
-        ----------
-
-        Returns
-        -------
-        Partition of the graph
-
-        '''
-        
-        partition = community_louvain.best_partition(graph, partition=None, weight='weight', resolution=1.0, randomize=None, random_state=None)
-        return partition
-
-    def community_appartenance(self):
+    def Louvain_based(self):
             '''
             Description
             -----------
@@ -41,7 +21,9 @@ class Louvain_based_indicator(our_indicator):
             The Adjacency matrix
     
             '''
-            partition = self.get_community(self.subgraph)
+            print("Get Partition of community ...")
+            partition = community_louvain.best_partition(self.g, partition=None, weight='weight', resolution=1.0, randomize=None, random_state=None)
+            print("Partition Done !")
             communities = defaultdict(list)
             for key, value in sorted(partition.items()):
                 communities[value].append(key)
