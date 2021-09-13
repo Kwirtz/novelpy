@@ -141,24 +141,34 @@ class Disruptiveness:
                 .apply(list)\
                 .reset_index()
         
+        
         citing_focal_paper = {
-            row[self.var_id]:row[self.var_refs_list] for index, row in citing_focal_paper.iterrows()
+            row[ 'PMID']:row['refs_pmid_wos'] for index, row in citing_focal_paper.iterrows()
             }
 
         citing_ref_from_focal_paper = {
-            row[self.var_id]:row[self.var_refs_list] for index, row in citing_ref_from_focal_paper.iterrows()
+            row[ 'PMID']:row['refs_pmid_wos'] for index, row in citing_ref_from_focal_paper.iterrows()
             }
-   
+        # papers that cite the focal paper that also cite reference from the focal paper
         J = set(citing_focal_paper.keys()).intersection(citing_ref_from_focal_paper.keys())
-        I = np.setdiff1d(set(citing_focal_paper.keys()),J)
-        K = np.setdiff1d(set(citing_ref_from_focal_paper.keys()),J)
+        
+        # papers that cite the focal paper but do not cite reference from the focal paper
+        I = set(citing_focal_paper.keys()) - J
+        
+        # papers that do not cite the focal paper but cite reference from the focal paper
+        K = set(citing_ref_from_focal_paper.keys()) - J
 
+        # number of reference cited by a paper that cite the focal paper that are cited by the focal paper
         Jxc = [len(set(focal_paper_refs).intersection(cited_ref)) for cited_ref in citing_focal_paper.values()]
         
+        # keep papers that cite the focal paper that share at least 5 references with the focal paper
         J5 = [len_match_ref for len_match_ref in Jxc if len_match_ref > 4]
         
+        # papers that cite the focal paper that do not cite papers that cite the focal paper
         Breadth = [pmid for pmid in citing_focal_paper
                    if not any([ref in citing_focal_paper.keys() for ref in citing_focal_paper[pmid]])]
+        
+        # papers that cite the focal paper that cite at least one other paper that cite the focal paper
         Depth = [pmid for pmid in citing_focal_paper
                    if any([ref in citing_focal_paper.keys() for ref in citing_focal_paper[pmid]])]
         
