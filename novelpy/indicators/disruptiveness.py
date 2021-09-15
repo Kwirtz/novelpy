@@ -143,11 +143,11 @@ class Disruptiveness:
         
         
         citing_focal_paper = {
-            row[ 'PMID']:row['refs_pmid_wos'] for index, row in citing_focal_paper.iterrows()
+            row[self.var_id]:row[self.var_refs_list] for index, row in citing_focal_paper.iterrows()
             }
 
         citing_ref_from_focal_paper = {
-            row[ 'PMID']:row['refs_pmid_wos'] for index, row in citing_ref_from_focal_paper.iterrows()
+            row[self.var_id]:row[self.var_refs_list] for index, row in citing_ref_from_focal_paper.iterrows()
             }
         # papers that cite the focal paper that also cite reference from the focal paper
         J = set(citing_focal_paper.keys()).intersection(citing_ref_from_focal_paper.keys())
