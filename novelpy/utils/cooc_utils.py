@@ -136,7 +136,7 @@ class create_cooc:
             n_processed += 1
             if n_processed % 10000 == 0:
                 final_list = list(set(final_list))
-        self.item_list = sorted(final_list)
+        self.item_list = sorted(list(set(final_list)))
 
     def create_save_index(self):
         '''
