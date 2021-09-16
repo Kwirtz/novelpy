@@ -12,7 +12,7 @@ from itertools import chain
 
 
 
-class Author_embedding:
+class Embedding:
     
     def __init__(self,
                  client_name,
@@ -21,6 +21,7 @@ class Author_embedding:
                  collection_authors,
                  var_year,
                  var_id,
+                 var_pmid_list,
                  var_id_list,
                  var_auth_id,
                  pretrain_path,
@@ -74,6 +75,7 @@ class Author_embedding:
         self.collection_authors = collection_authors
         self.var_year = var_year
         self.var_id = var_id
+        self.var_pmid_list = var_pmid_list
         self.var_id_list = var_id_list
         self.var_auth_id = var_auth_id
         self.nlp = spacy.load(pretrain_path)
@@ -112,7 +114,7 @@ class Author_embedding:
             db = client[self.db_name]
             collection = db[self.collection_articles]
             pmids = np.arange(pmid,(pmid+chunk_size)).tolist()
-            docs = collection.find({var_id:{'$in':pmids}})
+            docs = collection.find({self.var_id:{'$in':pmids}})
             for doc in tqdm.tqdm(docs):
                 # try:
                 try:
@@ -131,7 +133,7 @@ class Author_embedding:
                 else:
                     article_abs_centroid = None
                     
-                collection.update_one({var_id:doc[self.var_id]},
+                collection.update_one({self.var_id:doc[self.var_id]},
                                       {'$set':{'title_embedding':article_title_centroid,
                                                'abstract_embedding':article_abs_centroid}})
                 # except:
@@ -313,7 +315,11 @@ class Author_embedding:
                                            {'$set':{'authors_profiles':authors_profiles}})
         
         
-        docs = collection_articles.find()
+        client = pymongo.MongoClient(self.client_name)
+        db = client[self.db_name]
+        collection = db[self.collection_articles]
+        docs = collection.find()
+        
         Parallel(n_jobs=n_jobs)(
             delayed(get_author_profile)(
                 doc,
@@ -325,5 +331,57 @@ class Author_embedding:
                 self.collection_articles,
                 self.collection_authors)
             for doc in tqdm.tqdm(docs))
+        
+    def get_references_embbeding(self,n_jobs=1):
+        """
+        
+
+        Parameters
+        ----------
+        n_jobs : int, optional
+            Number of cores used for calculation. The default is 1.
+
+        Returns
+        -------
+        None.
+
+        """
     
-     
+        def get_embedding_list(doc,
+                               client_name,
+                               db_name,
+                               collection_articles,
+                               var_id,
+                               var_pmid_list):
+            
+            if var_pmid_list in doc.keys():
+                client = pymongo.MongoClient(client_name)
+                db = client[db_name]
+                collection = db[collection_articles]
+                
+                refs = collection.find({var_id:{'$in':doc[var_pmid_list]}})
+                
+                refs_emb = []
+                for ref in refs:
+                    refs_emb.append({'id':ref[var_id],
+                                     'abstract_embedding': ref['abstract_embedding'],
+                                     'title_embedding': ref['title_embedding']})
+                collection.update_one({var_id:doc[var_id]},
+                                      {'$set':{'refs_embedding':refs_emb}})
+            
+            
+        client = pymongo.MongoClient(self.client_name)
+        db = client[self.db_name]
+        collection = db[self.collection_articles]
+         
+        docs = collection.find()
+        Parallel(n_jobs=n_jobs)(
+            delayed(get_embedding_list)(
+                doc,
+                self.client_name,
+                self.db_name,
+                self.collection_articles,
+                self.var_id,
+                self.var_pmid_list)
+            for doc in tqdm.tqdm(docs))
+            
