@@ -8,6 +8,7 @@ import pymongo
 import pickle
 import json
 import os
+import re
 from multiprocessing import Process, Manager
 import traceback
 import sys
@@ -149,6 +150,35 @@ class Dataset:
                     
             self.papers_items.update({int(doc[self.VAR_ID]):doc_items})  
 
+    def sum_cooc_matrix(self):
+        """
+        
+    
+        Parameters
+        ----------
+        time_window : int
+            time window to compute the difficulty in the past and the reutilisation in the futur.
+        path : str
+            path to adjacency matrices.
+    
+        Returns
+        -------
+        matrix : scipy.sparse.csr.csr_matrix
+            sum of considered matrices.
+    
+        """
+        
+        file_list = os.listdir(self.path)
+        file_list = [file for file in file_list if re.search(r'\d{4}', file)  and int(file.split(".")[0]) <= 2020]
+        i = 0
+        for file in file_list:
+            if i == 0:
+                cooc = pickle.load(open( self.path + "/{}".format(file), "rb" ))
+                i += 1
+            else:
+                cooc += pickle.load(open( self.path + "/{}".format(file), "rb" ))
+        self.current_adj = cooc
+
     def get_cooc(self):
         
         unw = ['novelty']
@@ -157,8 +187,7 @@ class Dataset:
         self.path = "Data/{}/{}_{}".format(self.VAR,type1,type2)
         self.name2index = pickle.load(open(self.path + "/name2index.p", "rb" ))
         if self.indicator == "foster":
-            # Todo add accumulation of cooc
-            self.current_adj =  pickle.load( open(self.path+'/{}.p'.format(self.focal_year), "rb" )) 
+            self.sum_cooc_matrix()
         else:
             self.current_adj =  pickle.load( open(self.path+'/{}.p'.format(self.focal_year), "rb" )) 
         
