@@ -131,7 +131,7 @@ class Dataset:
                 self.VAR_YEAR:self.focal_year
                 })
         else:
-            self.docs = pickle.load(open("Paper/Data/{}.p".format(self.focal_year), "rb" ) )
+            self.docs = pickle.load(open("Data/{}.p".format(self.focal_year), "rb" ) )
         
         # dict of every docs. Each one contains doc_items
         self.papers_items = dict()
@@ -154,7 +154,7 @@ class Dataset:
         unw = ['novelty']
         type1 = 'unweighted_network' if self.indicator in unw else 'weighted_network'
         type2 = 'no_self_loop' if self.indicator in unw else 'self_loop'
-        self.path = "Paper/Data/{}/{}_{}".format(self.VAR,type1,type2)
+        self.path = "Data/{}/{}_{}".format(self.VAR,type1,type2)
         self.name2index = pickle.load(open(self.path + "/name2index.p", "rb" ))
         if self.indicator == "foster":
             # Todo add accumulation of cooc
@@ -305,7 +305,7 @@ class create_output(Dataset):
         # Load the score of pairs given by the indicator
         self.comb_scores = pickle.load(
                 open(
-                    'Paper/Data/{}/indicators_adj/{}/{}_{}.p'.format(
+                    'Data/{}/indicators_adj/{}/{}_{}.p'.format(
                         self.VAR,self.indicator,self.indicator,self.focal_year),
                     "rb" ))       
         
