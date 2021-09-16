@@ -66,7 +66,8 @@ class create_cooc:
         self.path = "Data/{}/{}_{}".format(var,type1,type2)
         if not os.path.exists(self.path):
             os.makedirs(self.path)
-            
+    
+    """
     def item_list(self):
         '''
         Description
@@ -101,7 +102,42 @@ class create_cooc:
             final_list += item_list
             final_list = list(set(final_list))
         self.item_list = sorted(final_list)
-       
+    """
+        
+    def item_list(self):
+        '''
+        Description
+        -----------
+        
+        Create a set of the item of interests (e.g authors, keywords,ref)
+        
+        Parameters
+        ----------
+
+        Returns
+        -------
+        list of unique items
+
+        ''' 
+        final_list = []
+        self.client = pymongo.MongoClient(self.client_name)
+        self.db = self.client[self.db_name]
+        self.collection = self.db[self.collection_name]
+        docs = self.collection.find({},no_cursor_timeout=True)
+        n_processed = 0
+        for doc in tqdm.tqdm(docs, desc="Get item list, loop on every doc"):
+            try:
+                items = doc[self.var]
+            except:
+                continue
+            items = [item[self.sub_var] for item in items]
+            for item in items:
+                final_list.append(item)
+            n_processed += 1
+            if n_processed % 10000 == 0:
+                final_list = list(set(final_list))
+        self.item_list = sorted(final_list)
+
     def create_save_index(self):
         '''
         Description
