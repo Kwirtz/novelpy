@@ -342,8 +342,8 @@ class create_output(Dataset):
         for idx in tqdm.tqdm(list(self.papers_items),desc='start'):
         
             if self.indicator in ['atypicality','novelty','commonness','foster']:
-                # Check that you have more than 1 item else no combination and no novelty 
-                if len(self.papers_items[idx])>1:
+                # Check that you have more than 2 item (1 combi) else no combination and no novelty 
+                if len(self.papers_items[idx])>2:
                     self.current_items = pd.DataFrame(self.papers_items[idx])['item'].tolist()
                     if self.indicator != 'novelty':
                         self.unique_pairwise = False
