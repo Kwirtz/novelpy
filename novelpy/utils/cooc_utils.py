@@ -221,7 +221,7 @@ class create_cooc:
                 self.x[ind_2,ind_1] += 1
         
         if self.weighted_network == False:    
-            self.x = sp.find(self.x>1)
+             self.x[self.x != 0] = 1
             
         if self.self_loop == False:
             self.x.setdiag(0)
