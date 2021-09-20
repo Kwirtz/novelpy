@@ -1,5 +1,5 @@
 import community as community_louvain
-from novelpy.indicators.utils_foster2015 import *
+from .utils_foster2015 import *
 from collections import defaultdict
 import itertools
 

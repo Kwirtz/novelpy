@@ -332,7 +332,7 @@ class Embedding:
                 self.collection_authors)
             for doc in tqdm.tqdm(docs))
         
-    def get_references_embbeding(self,n_jobs=1):
+    def get_references_embbeding(self,skip_,limit_,n_jobs=1):
         """
         
 
@@ -364,24 +364,35 @@ class Embedding:
                 refs_emb = []
                 for ref in refs:
                     refs_emb.append({'id':ref[var_id],
-                                     'abstract_embedding': ref['abstract_embedding'],
-                                     'title_embedding': ref['title_embedding']})
+                                     'abstract_embedding': ref['abstract_embedding'] if 'abstract_embedding' in ref.keys() else None,
+                                     'title_embedding': ref['title_embedding'] if 'title_embedding' in ref.keys() else None})
                 collection.update_one({var_id:doc[var_id]},
                                       {'$set':{'refs_embedding':refs_emb}})
+                
+                client.close()
             
             
         client = pymongo.MongoClient(self.client_name)
         db = client[self.db_name]
         collection = db[self.collection_articles]
          
-        docs = collection.find()
-        Parallel(n_jobs=n_jobs)(
-            delayed(get_embedding_list)(
+        docs = collection.find().skip(skip_-1).limit(limit_)
+        
+        for doc in tqdm.tqdm(docs, total = limit_):
+            get_embedding_list(
                 doc,
                 self.client_name,
                 self.db_name,
                 self.collection_articles,
                 self.var_id,
                 self.var_pmid_list)
-            for doc in tqdm.tqdm(docs))
+        # Parallel(n_jobs=n_jobs)(
+        #     delayed(get_embedding_list)(
+        #         doc,
+        #         self.client_name,
+        #         self.db_name,
+        #         self.collection_articles,
+        #         self.var_id,
+        #         self.var_pmid_list)
+        #     for doc in tqdm.tqdm(docs))
             
