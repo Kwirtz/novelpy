@@ -213,15 +213,17 @@ class create_cooc:
             except:
                 continue
             items = [item[self.sub_var] for item in items]
-            for combi in list(itertools.combinations(items, r=2)):
+            if self.weighted_network == False:
+                combis = itertools.combinations(set(items), r=2)
+            else:
+                combis = itertools.combinations(combis, r=2)
+            for combi in list(combis):
                 combi = sorted(combi)
                 ind_1 = self.name2index[combi[0]]
                 ind_2 = self.name2index[combi[1]]
                 self.x[ind_1,ind_2] += 1
                 self.x[ind_2,ind_1] += 1
         
-        if self.weighted_network == False:    
-             self.x[self.x != 0] = 1
             
         if self.self_loop == False:
             self.x.setdiag(0)
