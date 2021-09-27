@@ -31,10 +31,10 @@ class Foster2015():
         if g.is_directed == True:
             raise ValueError("Invalid graph. Expected graph to be undirected")
         self.g = g
-        self.path = "Data/{}/indicators_adj/foster/".format(self.variable)
         self.year = year
         self.variable = variable
         self.community_algorithm = community_algorithm
+        self.path = "Data/{}/indicators_adj/foster/".format(self.variable)
         
         if not os.path.exists(self.path):
             os.makedirs(self.path)
