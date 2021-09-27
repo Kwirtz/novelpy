@@ -7,4 +7,3 @@ from .Foster2015 import *
 from .utils import *
 from .utils_atypicality import *
 from .utils_noveltyW import *
-from .utils_foster2015 import *
