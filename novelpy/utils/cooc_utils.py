@@ -216,7 +216,7 @@ class create_cooc:
             if self.weighted_network == False:
                 combis = itertools.combinations(set(items), r=2)
             else:
-                combis = itertools.combinations(combis, r=2)
+                combis = itertools.combinations(items, r=2)
             for combi in list(combis):
                 combi = sorted(combi)
                 ind_1 = self.name2index[combi[0]]
