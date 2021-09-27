@@ -169,9 +169,9 @@ class Dataset:
         """
         
         file_list = os.listdir(self.path)
-        file_list = [file for file in file_list if re.search(r'\d{4}', file)  and int(file.split(".")[0]) <= 2020]
+        file_list = [file for file in file_list if re.search(r'\d{4}', file)  and int(file.split(".")[0]) <= self.focal_year]
         i = 0
-        for file in file_list:
+        for file in tqdm.tqdm(file_list,desc= 'adding past cooc' ):
             if i == 0:
                 cooc = pickle.load(open( self.path + "/{}".format(file), "rb" ))
                 i += 1
@@ -206,7 +206,7 @@ class Dataset:
 
 
 class create_output(Dataset):
-    
+
     def get_paper_score(self,
                         **kwargs):
         """
@@ -226,98 +226,47 @@ class create_output(Dataset):
             scores and indicators infos.
     
         """
-        doc_comb_adj = lil_matrix(self.doc_adj.multiply(self.comb_scores))
-        unique_comb_idx = triu(doc_comb_adj,k=0).nonzero() if self.indicator in ['atypicality','commonness'] else triu(doc_comb_adj,k=1).nonzero()
-    
-        comb_idx = [[],[]]
-        for i, j in zip(list(unique_comb_idx[0]),
-                        list(unique_comb_idx[1])):
-            n = int(self.doc_adj[i,j])
-            for c in range(n):
-                comb_idx[0].append(i)
-                comb_idx[1].append(j)
+        if self.unique_pairwise and self.keep_diag == False:
+            combis = [(i,j) for i,j in combinations(set(self.current_items),2) if i != j]
+        elif self.keep_diag == False:
+            combis = [(i,j) for i,j in combinations(self.current_items,2) if i != j]
+        else:
+            combis = [(i,j) for i,j in combinations(self.current_items,2)]
         
-        comb_infos = pd.DataFrame([
-            {'item1':sorted(self.name2index)[i],
-            'item2':sorted(self.name2index)[j],
-            'score':doc_comb_adj[i,j]/int(self.doc_adj[i,j])
-                } for i,j in zip(comb_idx[0],comb_idx[1])])
+        comb_infos = []
+        for combi in combis:
+            comb_infos.append({"item1" : combi[0],
+                          "item2" : combi[1],
+                          "score" : int(self.comb_scores[self.name2index[combi[0]], self.name2index[combi[1]]]) })
         
-        if comb_idx[0]:
-            comb_list = comb_infos.score.tolist()
-            comb_infos = comb_infos.groupby(['item1','item2','score']).size().reset_index()
-            comb_infos = comb_infos.rename(columns = {0:'count'}).to_dict('records')
-            
-        if isinstance(comb_infos, pd.DataFrame):
-            comb_infos = comb_infos if not comb_infos.empty else None
-    
+        self.scores_array = np.array([self.comb_scores[self.name2index[combi[0]],self.name2index[combi[1]]] for combi in combis])
+        
+        doc_infos = {"combis":comb_infos}
+
         key = self.item_name + '_' + self.indicator
         if 'n_reutilisation' and 'time_window' in kwargs:
             key = key +'_'+str(kwargs['time_window'])+'y_'+str(kwargs['n_reutilisation'])+'reu'
         elif 'time_window' in kwargs:
             key = key +'_'+str(kwargs['time_window'])+'y'
            
-        doc_infos = {'nb_comb':len(comb_infos) if comb_infos else 0,
-                     'comb_infos': comb_infos}
-        
         if self.indicator == 'novelty':
-            score = {'novelty':sum(comb_list) if comb_idx[0] else 0}
+            score = {'novelty':sum(self.scores_array)}
             
         elif self.indicator == 'atypicality':
-            score = {'conventionality': np.median(comb_list) if comb_idx[0] else None,
-                     'novelty': np.quantile(comb_list,0.1) if comb_idx[0] else None}
+            score = {'conventionality': np.median(self.scores_array),
+                     'novelty': np.quantile(self.scores_array,0.1)}
             
         elif self.indicator == 'commonness':
-            score = {'novelty': -np.log(np.quantile(comb_list,0.1)) if comb_idx[0] else None}
-                
+            score = {'novelty': -np.log(np.quantile(self.scores_array,0.1))}
+        
+        elif self.indicator == 'foster':
+            score = {'novelty': float(np.mean(self.scores_array))}
+        
         doc_infos.update({'score':score })
+        self.key = key
+        self.doc_infos = doc_infos
         return {key:doc_infos}
     
-    def get_adjacency_matrix(self):
-        """
-        
-        Description
-        -----------
-        Compute adjacency matrix for single and multiple document
-    
-        Parameters
-        ----------
-        unique_items : dict
-            dict structured thi way name:index, file from the name2index.p generated with the cooccurrence matrices.
-        items_list : list 
-            list of list, each element of the list is the list of the item used
-        unique_pairwise : bool
-            to take into account multiple edges
-        keep_diag : bool
-            keep diagonal
-    
-        Returns
-        -------
-        adj_mat : scipy.sparse.csr.csr_matrix
-            adjacency matrix in csr format
-    
-        """
-        
-        if self.unique_pairwise:     
-            lb = preprocessing.MultiLabelBinarizer(classes=sorted(list(self.name2index.keys())))
-            dtm_mat = lil_matrix(lb.fit_transform(self.current_items))
-            adj_mat = dtm_mat.T.dot(dtm_mat)
-        else:
-            adj_mat = lil_matrix((len(self.name2index.keys()),len(self.name2index.keys())), dtype = np.uint32)
-            for item in [self.current_items]:
-                for combi in list(combinations(item, r=2)):
-                    combi = sorted(combi)
-                    ind_1 = self.name2index[combi[0]]
-                    ind_2 = self.name2index[combi[1]]
-                    adj_mat[ind_1,ind_2] += 1
-                    adj_mat[ind_2,ind_1] += 1          
-        adj_mat = lil_matrix(adj_mat)
-        if self.keep_diag == False:
-            adj_mat.setdiag(0)
-        adj_mat = adj_mat.tocsr()
-        adj_mat.eliminate_zeros()
-        return adj_mat
-
     def populate_list(self, **kwargs):
         """
         Description
@@ -334,8 +283,8 @@ class create_output(Dataset):
         # Load the score of pairs given by the indicator
         self.comb_scores = pickle.load(
                 open(
-                    'Data/{}/indicators_adj/{}/{}_{}.p'.format(
-                        self.VAR,self.indicator,self.indicator,self.focal_year),
+                    'Data/{}/indicators_adj/{}/{}.p'.format(
+                        self.VAR,self.indicator,self.focal_year),
                     "rb" ))       
         
         # Iterate over every docs 
@@ -344,17 +293,14 @@ class create_output(Dataset):
             if self.indicator in ['atypicality','novelty','commonness','foster']:
                 # Check that you have more than 2 item (1 combi) else no combination and no novelty 
                 if len(self.papers_items[idx])>2:
-                    self.current_items = pd.DataFrame(self.papers_items[idx])['item'].tolist()
+                    self.current_items = self.papers_items[idx]
                     if self.indicator != 'novelty':
                         self.unique_pairwise = False
                         self.keep_diag=True
                     else:
                         self.unique_pairwise = True
                         self.keep_diag=False
-                        
-                    # Transform curent_item list into comb matrix   
-                    self.doc_adj = self.get_adjacency_matrix()
-                   
+                                   
                     # Use novelty score of combination + Matrix of combi of papers to have novelty score of the paper with VAR_ID = idx
                     infos = self.get_paper_score(**kwargs)
                 else:
@@ -373,7 +319,7 @@ class create_output(Dataset):
                         self.collection_output.insert_one(query)
                         self.collection_output.update_one(query,newvalue)
             except Exception as e:
-                print(e)
+                print("line 422", e)
     
     def update_paper_values(self, **kwargs):
         """
