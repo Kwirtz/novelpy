@@ -226,20 +226,24 @@ class create_output(Dataset):
             scores and indicators infos.
     
         """
-        if self.unique_pairwise and self.keep_diag == False:
-            combis = [(i,j) for i,j in combinations(set(self.current_items),2) if i != j]
-        elif self.keep_diag == False:
+        if self.unique_pairwise and self.keep_diag:
+            combis = [(i,j) for i,j in combinations(set(self.current_items),2)]
+        elif self.unique_pairwise == False and self.keep_diag == False:
             combis = [(i,j) for i,j in combinations(self.current_items,2) if i != j]
+        elif self.unique_pairwise and self.keep_diag == False:
+            combis = [(i,j) for i,j in combinations(set(self.current_items),2) if i != j]
         else:
             combis = [(i,j) for i,j in combinations(self.current_items,2)]
         
         comb_infos = []
+        scores_array = []
         for combi in combis:
+            combi = sorted( (self.name2index[combi[0]]) , (self.name2index[combi[1]]) )
             comb_infos.append({"item1" : combi[0],
                           "item2" : combi[1],
-                          "score" : int(self.comb_scores[self.name2index[combi[0]], self.name2index[combi[1]]]) })
-        
-        self.scores_array = np.array([self.comb_scores[self.name2index[combi[0]],self.name2index[combi[1]]] for combi in combis])
+                          "score" : int(self.comb_scores[combi[0], combi[1]]) })
+            scores_array.append(int(self.comb_scores[combi[0], combi[1]]))
+        self.scores_array = np.array(scores_array)
         
         doc_infos = {"combis":comb_infos}
 

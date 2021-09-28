@@ -68,43 +68,6 @@ class create_cooc:
         if not os.path.exists(self.path):
             os.makedirs(self.path)
     
-    """
-    def item_list(self):
-        '''
-        Description
-        -----------
-        
-        Create a set of the item of interests (e.g authors, keywords,ref)
-        
-        Parameters
-        ----------
-
-        Returns
-        -------
-        list of unique items
-
-        ''' 
-        final_list = []
-        for year in tqdm.tqdm(self.time_window, desc="Get item list, loop on year"):
-            item_list = []
-            self.client = pymongo.MongoClient(self.client_name)
-            self.db = self.client[self.db_name]
-            self.collection = self.db[self.collection_name]
-            docs = self.collection.find({self.year_var:year},no_cursor_timeout=True)
-            for doc in tqdm.tqdm(docs, desc="Get item list, loop on doc"):
-                try:
-                    items = doc[self.var]
-                except:
-                    continue
-                items = [item[self.sub_var] for item in items]
-                for item in items:
-                    item_list.append(item)
-            item_list = list(set(item_list))
-            final_list += item_list
-            final_list = list(set(final_list))
-        self.item_list = sorted(final_list)
-    """
-        
     def item_list(self):
         '''
         Description
@@ -176,34 +139,6 @@ class create_cooc:
         ''' 
         self.x = lil_matrix((len(self.item_list), len(self.item_list)), dtype = np.int16)
         
-    """    
-    def populate_matrix(self,year):
-        docs = self.collection.find({self.year_var:year}, no_cursor_timeout=True)
-        
-        if self.weighted_network:
-            for doc in tqdm.tqdm(docs, desc = "Populate matrix"):
-                try:
-                    items = doc[self.var]
-                except:
-                    continue
-                items = [item[self.sub_var] for item in items]
-                for combi in list(itertools.combinations(items, r=2)):
-                    combi = sorted(combi)
-                    ind_1 = self.name2index[combi[0]]
-                    ind_2 = self.name2index[combi[1]]
-                    self.x[ind_1,ind_2] += 1
-                    self.x[ind_2,ind_1] += 1
-        else:
-            docs_items = [set([item[self.sub_var] for item in doc[self.var]])
-                          for doc in tqdm.tqdm(docs) if self.var in doc.keys()]
-            lb = preprocessing.MultiLabelBinarizer(classes=self.item_list)
-            dtm_mat = csr_matrix(lb.fit_transform(docs_items))
-            self.x = lil_matrix(dtm_mat.T.dot(dtm_mat))
-            
-        if self.self_loop:
-            self.x.setdiag(0)
-    """
-    
     def populate_matrix(self,year):
         docs = self.collection.find({self.year_var:year}, no_cursor_timeout=True)
         
@@ -218,11 +153,10 @@ class create_cooc:
             else:
                 combis = itertools.combinations(items, r=2)
             for combi in list(combis):
-                combi = sorted(combi)
-                ind_1 = self.name2index[combi[0]]
-                ind_2 = self.name2index[combi[1]]
+                combi = sorted( (self.name2index[combi[0]]) , (self.name2index[combi[1]]) )
+                ind_1 = combi[0]
+                ind_2 = combi[1]
                 self.x[ind_1,ind_2] += 1
-                self.x[ind_2,ind_1] += 1
         
             
         if self.self_loop == False:
