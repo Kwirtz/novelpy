@@ -78,7 +78,7 @@ class Embedding:
         self.var_pmid_list = var_pmid_list
         self.var_id_list = var_id_list
         self.var_auth_id = var_auth_id
-        self.nlp = spacy.load(pretrain_path)
+        self.pretrain_path = pretrain_path
         self.var_title = var_title
         self.var_abstract = var_abstract
         self.var_keyword = var_keyword
@@ -109,6 +109,7 @@ class Embedding:
         None.
 
         """
+        self.nlp = spacy.load(self.pretrain_path)
         for pmid in tqdm.tqdm(range(pmid_start,pmid_end,chunk_size)):
             client = pymongo.MongoClient(self.client_name)
             db = client[self.db_name]
@@ -221,14 +222,14 @@ class Embedding:
                 
                 abs_year = df_a.groupby('year').abstract.apply(list).to_dict()
                 title_year =  df_t.groupby('year').title.apply(list).to_dict()
-                keywords_year =  df_k.groupby('year')['keywords'].apply(lambda x: list(set(chain.from_iterable(x)))).to_dict()
+                keywords_year =  df_k.groupby('year')['keywords'].apply(list).to_dict()
                 
                 if title_year:
                     for year in title_year:
-                        title_year[year] = title_year[year].tolist()
+                        title_year[year] = [item.tolist() for item in title_year[year]]
                 if abs_year:
                     for year in abs_year:
-                        abs_year[year] = abs_year[year].tolist()
+                        abs_year[year] = [item.tolist() for item in abs_year[year]]
                 
                 
                 collection_authors.update_one({var_auth_id:doc[var_auth_id]},
