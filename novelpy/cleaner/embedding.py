@@ -219,8 +219,8 @@ class Embedding:
                 df_k = df[['year','keywords']].dropna()
                 
                 
-                abs_year = df_a.groupby('year').abstract.apply(np.mean).to_dict()
-                title_year =  df_t.groupby('year').title.apply(np.mean).to_dict()
+                abs_year = df_a.groupby('year').abstract.apply(list).to_dict()
+                title_year =  df_t.groupby('year').title.apply(list).to_dict()
                 keywords_year =  df_k.groupby('year')['keywords'].apply(lambda x: list(set(chain.from_iterable(x)))).to_dict()
                 
                 if title_year:
@@ -237,8 +237,21 @@ class Embedding:
                                                        'keywords':keywords_year}})
                 
 
-        Parallel(n_jobs=n_jobs)(
-            delayed(get_author_profile)(
+        # Parallel(n_jobs=n_jobs)(
+        #     delayed(get_author_profile)(
+        #         and_id,
+        #         self.client_name,
+        #         self.db_name,
+        #         self.collection_articles,
+        #         self.collection_authors,
+        #         self.var_year,
+        #         self.var_id,
+        #         self.var_auth_id,
+        #         self.var_id_list,
+        #         self.var_keyword)
+        #     for and_id in tqdm.tqdm(author_ids_list))
+        for and_id in tqdm.tqdm(author_ids_list):
+            get_author_profile(
                 and_id,
                 self.client_name,
                 self.db_name,
@@ -249,8 +262,8 @@ class Embedding:
                 self.var_auth_id,
                 self.var_id_list,
                 self.var_keyword)
-            for and_id in tqdm.tqdm(author_ids_list))
-               
+                
+                   
     
         
     def author_profile2papers(self,n_jobs=1):
