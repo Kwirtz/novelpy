@@ -21,10 +21,12 @@ class Dataset:
              var_year,
              focal_year,
              indicator,
-             sub_var = None,
+             sub_var,
+             tw_cooc = None,
              client_name = None,
              db_name = None,
-             collection_name = None):
+             collection_name = None,
+             mongo_output = False):
         """
         Description
         -----------
@@ -62,15 +64,18 @@ class Dataset:
         self.SUB_VAR = sub_var
         self.focal_year = focal_year
         self.indicator = indicator
+        self.tw_cooc = tw_cooc
         self.client_name = client_name
         self.db_name = db_name
         self.collection_name = collection_name
         self.item_name = self.VAR.split('_')[0]
+        self.mongo_output = mongo_output        
         
         if self.client_name:
             self.client = pymongo.MongoClient(client_name)
             self.db = self.client[db_name]
             self.collection = self.db[collection_name]
+
             
     def get_item_infos(self,
                        item):
@@ -150,7 +155,7 @@ class Dataset:
                     
             self.papers_items.update({int(doc[self.VAR_ID]):doc_items})  
 
-    def sum_cooc_matrix(self):
+    def sum_cooc_matrix(self,window):
         """
         
     
@@ -168,16 +173,14 @@ class Dataset:
     
         """
         
-        file_list = os.listdir(self.path)
-        file_list = [file for file in file_list if re.search(r'\d{4}', file)  and int(file.split(".")[0]) <= self.focal_year]
         i = 0
-        for file in tqdm.tqdm(file_list,desc= 'adding past cooc' ):
+        for year in window:
             if i == 0:
-                cooc = pickle.load(open( self.path + "/{}".format(file), "rb" ))
+                cooc = pickle.load(open( self.path + "/{}.p".format(year), "rb" ))
                 i += 1
             else:
-                cooc += pickle.load(open( self.path + "/{}".format(file), "rb" ))
-        self.current_adj = cooc
+                cooc += pickle.load(open( self.path + "/{}.p".format(year), "rb" ))            
+        return cooc
 
     def get_cooc(self):
         
@@ -187,7 +190,17 @@ class Dataset:
         self.path = "Data/{}/{}_{}".format(self.VAR,type1,type2)
         self.name2index = pickle.load(open(self.path + "/name2index.p", "rb" ))
         if self.indicator == "foster":
-            self.sum_cooc_matrix()
+            self.current_adj = self.sum_cooc_matrix( window = range(1980, self.focal_year))
+        
+        elif self.indicator == "novelty":
+            print("Calculate past matrix ")
+            self.past_adj = self.sum_cooc_matrix( window = range(1980, self.focal_year))
+
+            print('Calculate futur matrix')
+            self.futur_adj = self.sum_cooc_matrix(window = range(self.focal_year+1, self.focal_year+self.tw_cooc+1))
+
+            print('Calculate difficulty matrix')
+            self.difficulty_adj = self.sum_cooc_matrix(window = range(self.focal_year-self.tw_cooc,self.focal_year))
         else:
             self.current_adj =  pickle.load( open(self.path+'/{}.p'.format(self.focal_year), "rb" )) 
         
@@ -238,7 +251,7 @@ class create_output(Dataset):
         comb_infos = []
         scores_array = []
         for combi in combis:
-            combi = sorted( (self.name2index[combi[0]]) , (self.name2index[combi[1]]) )
+            combi = sorted( (self.name2index[combi[0]], self.name2index[combi[1]]) )
             comb_infos.append({"item1" : combi[0],
                           "item2" : combi[1],
                           "score" : int(self.comb_scores[combi[0], combi[1]]) })
@@ -292,6 +305,7 @@ class create_output(Dataset):
                     "rb" ))       
         
         # Iterate over every docs 
+        list_of_insertion = []
         for idx in tqdm.tqdm(list(self.papers_items),desc='start'):
         
             if self.indicator in ['atypicality','novelty','commonness','foster']:
@@ -312,18 +326,24 @@ class create_output(Dataset):
             
             elif 'new_infos' in kwargs:
                 infos = kwargs['new_infos']
-                
+            
             try :
-                if self.collection_output:
-                    query = { self.VAR_ID: int(idx) }
-                    newvalue =  { '$set': infos}
-                    if self.collection_output.find_one_and_update(query,newvalue):
-                        pass
-                    else:
-                        self.collection_output.insert_one(query)
-                        self.collection_output.update_one(query,newvalue)
+                if self.mongo_output == True:
+                    if self.collection_output:
+                        query = { self.VAR_ID: int(idx) }
+                        newvalue =  { '$set': infos}
+                        if self.collection_output.find_one_and_update(query,newvalue):
+                            pass
+                        else:
+                            self.collection_output.insert_one(query)
+                            self.collection_output.update_one(query,newvalue)
+                else:
+                    list_of_insertion.append({self.VAR_ID: int(idx),self.key: self.doc_infos})
             except Exception as e:
-                print("line 422", e)
+                print(e)
+        if self.mongo_output == False:            
+            with open(self.path_output + "/{}.json".format(self.focal_year), 'w') as outfile:
+                json.dump(list_of_insertion, outfile)
     
     def update_paper_values(self, **kwargs):
         """
@@ -342,14 +362,17 @@ class create_output(Dataset):
         None.
 
         """
-        
-        if "output" not in self.db.list_collection_names():
-            print("Init output collection with index on var_id ...")
-            self.collection_output = self.db["output"]
-            self.collection_output.create_index([ (self.VAR_ID,1) ])
+        if self.mongo_output == True:
+            if "output" not in self.db.list_collection_names():
+                print("Init output collection with index on var_id ...")
+                self.collection_output = self.db["output"]
+                self.collection_output.create_index([ (self.VAR_ID,1) ])
+            else:
+                self.collection_output = self.db["output"]
         else:
-            self.collection_output = self.db["output"]
-        
+            self.path_output = "Result/{}/{}".format(self.indicator, self.VAR)
+            if not os.path.exists(self.path_output):
+                os.makedirs(self.path_output)
         if self.indicator in ['atypicality','commonness','novelty','foster']:
             self.populate_list(**kwargs)
         else:
