@@ -149,16 +149,15 @@ class create_cooc:
                 continue
             items = [item[self.sub_var] for item in items]
             if self.weighted_network == False:
-                combis = itertools.combinations(set(items), r=2)
+                self.combis = itertools.combinations(set(items), r=2)
             else:
-                combis = itertools.combinations(items, r=2)
-            for combi in list(combis):
-                combi = sorted( (self.name2index[combi[0]]) , (self.name2index[combi[1]]) )
+                self.combis = itertools.combinations(items, r=2)
+            for combi in list(self.combis):
+                combi = sorted( (self.name2index[combi[0]] , self.name2index[combi[1]]) )
                 ind_1 = combi[0]
                 ind_2 = combi[1]
                 self.x[ind_1,ind_2] += 1
-        
-            
+                    
         if self.self_loop == False:
             self.x.setdiag(0)
             
