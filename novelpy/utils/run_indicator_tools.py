@@ -25,8 +25,7 @@ class Dataset:
              tw_cooc = None,
              client_name = None,
              db_name = None,
-             collection_name = None,
-             mongo_output = False):
+             collection_name = None):
         """
         Description
         -----------
@@ -68,8 +67,7 @@ class Dataset:
         self.client_name = client_name
         self.db_name = db_name
         self.collection_name = collection_name
-        self.item_name = self.VAR.split('_')[0]
-        self.mongo_output = mongo_output        
+        self.item_name = self.VAR.split('_')[0]      
         
         if self.client_name:
             self.client = pymongo.MongoClient(client_name)
@@ -328,7 +326,7 @@ class create_output(Dataset):
                 infos = kwargs['new_infos']
             
             try :
-                if self.mongo_output == True:
+                if self.client_name:
                     if self.collection_output:
                         query = { self.VAR_ID: int(idx) }
                         newvalue =  { '$set': infos}
@@ -341,7 +339,7 @@ class create_output(Dataset):
                     list_of_insertion.append({self.VAR_ID: int(idx),self.key: self.doc_infos})
             except Exception as e:
                 print(e)
-        if self.mongo_output == False:            
+        if self.client_name == None:            
             with open(self.path_output + "/{}.json".format(self.focal_year), 'w') as outfile:
                 json.dump(list_of_insertion, outfile)
     
@@ -362,7 +360,7 @@ class create_output(Dataset):
         None.
 
         """
-        if self.mongo_output == True:
+        if self.client_name:
             if "output" not in self.db.list_collection_names():
                 print("Init output collection with index on var_id ...")
                 self.collection_output = self.db["output"]
