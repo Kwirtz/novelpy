@@ -304,29 +304,39 @@ class Embedding:
             collection_articles = db[collection_articles]
             authors_profiles = list()
             current_year = doc[var_year]
-            
-            for auth in doc['a02_authorlist']: # TO CHANGE FOR OTHER DB
-            
-                profile = collection_authors.find({var_auth_id:auth['AID']})[0]
-                abs_profile = profile['embedded_abs']
-                title_profile = profile['embedded_titles']
+            if 'a02_authorlist' in doc.keys():
+                for auth in doc['a02_authorlist']: # TO CHANGE FOR OTHER DB
                 
-                abs_profile = drop_year_before_pub(abs_profile,
-                                                   current_year)
+                    profile = collection_authors.find({var_auth_id:auth['AID']})[0]
+                    
+                    try:
+                        abs_profile = profile['embedded_abs']
+                        abs_profile = drop_year_before_pub(abs_profile,
+                                                           current_year)
+                    except:
+                        abs_profile = None
+                    
+                    try:
+                        title_profile = profile['embedded_titles']
+                        title_profile = drop_year_before_pub(title_profile,
+                                                             current_year)
+                    except:
+                        title_profile = None
+                    
+                    try:
+                        k_profile = drop_year_before_pub(profile['keywords'],
+                                                         current_year)
+                    except:
+                        k_profile = None 
+                        
+                    authors_profiles.append({var_auth_id : auth['AID'],
+                                             'abs_profile' : abs_profile,
+                                             'title_profile' :title_profile,
+                                             'keywords_profile': k_profile})
+                    
+                collection_articles.update_one({var_id:doc[var_id]},
+                                               {'$set':{'authors_profiles':authors_profiles}})
                 
-                title_profile = drop_year_before_pub(title_profile,
-                                                     current_year)
-                
-                k_profile = drop_year_before_pub(profile['keywords'],
-                                                 current_year)
-                
-                authors_profiles.append({var_auth_id : auth['AID'],
-                                         'abs_profile' : abs_profile,
-                                         'title_profile' :title_profile,
-                                         'keywords_profile': k_profile})
-                
-            collection_articles.update_one({var_id:doc['var_id']},
-                                           {'$set':{'authors_profiles':authors_profiles}})
         
         
         client = pymongo.MongoClient(self.client_name)
@@ -334,8 +344,20 @@ class Embedding:
         collection = db[self.collection_articles]
         docs = collection.find()
         
-        Parallel(n_jobs=n_jobs)(
-            delayed(get_author_profile)(
+        # Parallel(n_jobs=n_jobs)(
+        #     delayed(get_author_profile)(
+        #         doc,
+        #         self.var_id,
+        #         self.var_auth_id, 
+        #         self.var_year,
+        #         self.client_name,
+        #         self.db_name,
+        #         self.collection_articles,
+        #         self.collection_authors)
+        #     for doc in tqdm.tqdm(docs))
+        
+        for doc in tqdm.tqdm(docs):
+            get_author_profile(
                 doc,
                 self.var_id,
                 self.var_auth_id, 
@@ -344,9 +366,10 @@ class Embedding:
                 self.db_name,
                 self.collection_articles,
                 self.collection_authors)
-            for doc in tqdm.tqdm(docs))
+            
         
-    def get_references_embbeding(self,skip_,limit_,n_jobs=1):
+        
+    def get_references_embbeding(self,year_var,from_year,to_year,skip_,limit_,n_jobs=1):
         """
         
 
@@ -390,7 +413,7 @@ class Embedding:
         db = client[self.db_name]
         collection = db[self.collection_articles]
          
-        docs = collection.find().skip(skip_-1).limit(limit_)
+        docs = collection.find({year_var:{'$gte':from_year,'$lte':to_year}}).skip(skip_-1).limit(limit_)
         
         for doc in tqdm.tqdm(docs, total = limit_):
             get_embedding_list(
