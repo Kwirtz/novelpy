@@ -1,17 +1,7 @@
 Change Log
 ============
 
-0.0.3(22/07/2021)
+0.1(22/07/2021)
 -----------------
 
-- Cleaning
-
-0.0.2(22/07/2021)
------------------
-
-- First release with something inside
-
-0.0.1(22/07/2021)
------------------
-
-- First release
+First beta release with only mongodb in backend
