@@ -34,6 +34,8 @@ class Commonness:
         None.
 
         """
+        self.var = var
+        self.var_year = var_year
         self.focal_year = focal_year
         self.current_adj = current_adj
         self.path2 = "Data/{}/indicators_adj/commonness/".format(var)
@@ -63,11 +65,7 @@ class Commonness:
         comb_scores[np.isnan(comb_scores)] =  0
         comb_scores = triu(comb_scores,format='csr')
         
-        pickle.dump(
-            comb_scores,
-            open(self.path2 + "/{}_{}.p".format('commonness',
-						self.focal_year),
-                 "wb" ) )
+        pickle.dump(comb_scores, open(self.path2 + "/{}.p".format(self.focal_year), "wb" ) )
         
 
 
