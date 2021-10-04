@@ -307,7 +307,7 @@ class Embedding:
             if 'a02_authorlist' in doc.keys():
                 for auth in doc['a02_authorlist']: # TO CHANGE FOR OTHER DB
                 
-                    profile = collection_authors.find({var_auth_id:auth['AID']})[0]
+                    profile = collection_authors.find_one({var_auth_id:auth['AID']})[0]
                     
                     try:
                         abs_profile = profile['embedded_abs']
