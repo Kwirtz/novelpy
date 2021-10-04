@@ -129,13 +129,13 @@ class Dataset:
         """
         
         # Get docs where variable of interest exists and published in focal_year
-        if self.client:
+        if self.client_name:
             self.docs = self.collection.find({
                 self.VAR:{'$exists':'true'},
                 self.VAR_YEAR:self.focal_year
                 })
         else:
-            self.docs = pickle.load(open("Data/{}.p".format(self.focal_year), "rb" ) )
+            self.docs = json.load(open("Data/docs/articles/{}.json".format(self.focal_year)) )
         
         # dict of every docs. Each one contains doc_items
         self.papers_items = dict()
@@ -318,30 +318,27 @@ class create_output(Dataset):
                         self.keep_diag=False
                                    
                     # Use novelty score of combination + Matrix of combi of papers to have novelty score of the paper with VAR_ID = idx
-                    infos = self.get_paper_score(**kwargs)
+                    self.get_paper_score(**kwargs)
                 else:
                     continue
             
             elif 'new_infos' in kwargs:
-                infos = kwargs['new_infos']
+                self.doc_infos = kwargs['new_infos']
             
-            try :
-                if self.client_name:
-                    if self.collection_output:
-                        query = { self.VAR_ID: int(idx) }
-                        newvalue =  { '$set': infos}
-                        if self.collection_output.find_one_and_update(query,newvalue):
-                            pass
-                        else:
-                            self.collection_output.insert_one(query)
-                            self.collection_output.update_one(query,newvalue)
-                else:
-                    list_of_insertion.append({self.VAR_ID: int(idx),self.key: self.doc_infos})
-            except Exception as e:
-                print(e)
-        if self.client_name == None:            
+            
+            if self.client_name:
+                list_of_insertion.append(pymongo.UpdateOne({self.VAR_ID: int(idx)},
+                                                           {'$set': {self.key: self.doc_infos}},
+                                                           upsert = True))
+            else:
+                list_of_insertion.append({self.VAR_ID: int(idx),self.key: self.doc_infos})
+
+        
+        if self.client_name:
+            self.collection_output.bulk_write(list_of_insertion)
+        else:
             with open(self.path_output + "/{}.json".format(self.focal_year), 'w') as outfile:
-                json.dump(list_of_insertion, outfile)
+                json.dump(list_of_insertion, outfile)        
     
     def update_paper_values(self, **kwargs):
         """
@@ -371,6 +368,7 @@ class create_output(Dataset):
             self.path_output = "Result/{}/{}".format(self.indicator, self.VAR)
             if not os.path.exists(self.path_output):
                 os.makedirs(self.path_output)
+                
         if self.indicator in ['atypicality','commonness','novelty','foster']:
             self.populate_list(**kwargs)
         else:

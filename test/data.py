@@ -1,28 +1,54 @@
 import pymongo
 
-
-db_input = [
+authors = [
+    
     {"PMID":1,
-     "year": 2001,
-     "CR_year_category":[{"ref_name":"lancet","year":1990, "doi":"10/123"},{"ref_name":"plosone","year":1995} ],
-     "Mesh_year_category":[{"desc_ui":"M1234", "year":1990,"cat":"Virusidontknow"},{"desc_ui":"M12345", "year":1991,"cat":"vaccineidontknow"}],
-     "Ref_we":[{"ref_name":"lancet","year":1990,"abstract_we":[0,1,2,3],"title_we":[0.89,100,2,3]},{"ref_name":"plosone","year":1995,"abstract_we":[0.3,4,0.2,1.3],"title_we":[21,10,0.2,0.3]} ],
+     "year":2001,
      "Authors":[
          {"AUID":1,"papers_done":[{"year":1990,"abstract_we":[0,1,2,3],"title_we":[0.89,100,2,3], "keywords":["math","cs"]},{"year":1990,"abstract_we":[0,1,2,3],"title_we":[0.89,100,2,3], "keywords":["math","cs"]}]},
          {"AUID":2,"papers_done":[{"year":1990,"abstract_we":[0,1,2,3],"title_we":[0.89,100,2,3], "keywords":["math","cs"]},{"year":1990,"abstract_we":[0,1,2,3],"title_we":[0.89,100,2,3], "keywords":["math","cs"]}]}
-             ]
-     },
+    ]},
+    
     {"PMID":2,
-     "year": 2002,
-     "CR_year_category":[{"ref_name":"lancet","year":1993},{"ref_name":"plosone","year":1991} ],
-     "Mesh_year_category":[{"desc_ui":"X1234", "year":1995,"cat":"Virusidontknow"},{"desc_ui":"M123456", "year":1991,"cat":"vaccineidontknow"}],
-     "Ref_we":[{"ref_name":"lancet","year":1990,"abstract_we":[0,1,2,3],"title_we":[0.89,100,2,3]},{"ref_name":"plosone","year":1995,"abstract_we":[0.3,4,0.2,1.3],"title_we":[21,10,0.2,0.3]} ],
+     "year":2003,
      "Authors":[
          {"AUID":1,"papers_done":[{"year":1990,"abstract_we":[0,1,2,3],"title_we":[0.89,100,2,3], "keywords":["math","cs"]},{"year":1990,"abstract_we":[0,1,2,3],"title_we":[0.89,100,2,3], "keywords":["math","cs"]}]},
          {"AUID":2,"papers_done":[{"year":1990,"abstract_we":[0,1,2,3],"title_we":[0.89,100,2,3], "keywords":["math","cs"]},{"year":1990,"abstract_we":[0,1,2,3],"title_we":[0.89,100,2,3], "keywords":["math","cs"]}]}
      ]
-     }
+    }
     ]
+
+
+references = [
+    
+    {"PMID":1,
+     "year":2001,
+     "c04_referencelist":[{"item":"0006-3002", "year":1971},{"item":"0026-895X", "year":1968}]
+     },
+    
+    {"PMID":2,
+     "year":2003,
+     "c04_referencelist":[{"item":"0002-7863", "year":1975},{"item":"0002-7863", "year":1973}]
+     }
+    
+    ]
+
+# year = creation of meshterms, needed for ?????
+keywords = [
+    
+    {"PMID":1,
+     "year":2001,
+     "a06_meshheadinglist":[{"item":"D005583", "year":1971},{"item":"D009682", "year":1968}]
+     },
+    
+    {"PMID":2,
+     "year":2003,
+     "a06_meshheadinglist":[{"item":"D000445", "year":1975},{"item":"D000818", "year":1973}]
+     }
+    
+    ]
+
+
 
 db_output = [
     {"PMID":1,
@@ -39,8 +65,13 @@ db_output = [
 
 client = pymongo.MongoClient('mongodb://localhost:27017')
 mydb = client["pkg"]
-collection_input = mydb["example_input"]
+
+collection_authors = mydb["example_authors"]
+collection_references =  mydb["example_references"]
+collection_keywords =  mydb["example_keywords"]
 collection_output =  mydb["example_output"]
 
-collection_input.insert_many(db_input)
+collection_authors.insert_many(authors)
+collection_references.insert_many(references)
+collection_keywords.insert_many(keywords)
 collection_output.insert_many(db_output)
