@@ -7,17 +7,18 @@ from sklearn import preprocessing
 import numpy as np
 import pickle
 import os
+import json
 
 class create_cooc:
     
     def __init__(self,
-                 client_name,
-                 db_name,
-                 collection_name,
+                 var,
+                 sub_var,
                  year_var,
+                 client_name = None,
+                 db_name = None,
+                 collection_name = None,
                  time_window = range(1980,2020),
-                 var = None,
-                 sub_var = None,
                  weighted_network = False,
                  self_loop = False):
         '''
@@ -50,25 +51,36 @@ class create_cooc:
             keep the diagonal on the coocurrence matrix
             
         '''
-        self.client_name = client_name
-        self.db_name = db_name
-        self.collection_name = collection_name
-        self.client = pymongo.MongoClient(client_name)
-        self.db = self.client[db_name]
-        self.collection = self.db[collection_name]
+
         self.var = var
         self.sub_var = sub_var
         self.year_var = year_var
         self.time_window = time_window
         self.weighted_network = weighted_network
         self.self_loop = self_loop
+        self.client_name = client_name
+        self.db_name = db_name
+        self.collection_name = collection_name
+        
         type1 = 'weighted_network' if self.weighted_network else 'unweighted_network'
         type2 = 'self_loop' if self.self_loop else 'no_self_loop'
-        self.path = "Data/{}/{}_{}".format(var,type1,type2)
-        if not os.path.exists(self.path):
-            os.makedirs(self.path)
+        
+        if client_name:
+            self.client = pymongo.MongoClient(self.client_name)
+            self.db = self.client[self.db_name]
+            self.collection = self.db[self.collection_name]
+        else:
+            self.collection_name = collection_name
+            self.path_input = "Data/docs/{}".format(self.collection_name)
+        
+        self.path_output = "Data/{}/{}_{}".format(var,type1,type2)
+        if not os.path.exists(self.path_output):
+            os.makedirs(self.path_output)
     
-    def item_list(self):
+
+
+
+    def get_item_list(self, docs):
         '''
         Description
         -----------
@@ -83,11 +95,7 @@ class create_cooc:
         list of unique items
 
         ''' 
-        final_list = []
-        self.client = pymongo.MongoClient(self.client_name)
-        self.db = self.client[self.db_name]
-        self.collection = self.db[self.collection_name]
-        docs = self.collection.find({},no_cursor_timeout=True)
+                
         n_processed = 0
         for doc in tqdm.tqdm(docs, desc="Get item list, loop on every doc"):
             try:
@@ -96,11 +104,24 @@ class create_cooc:
                 continue
             items = [item[self.sub_var] for item in items]
             for item in items:
-                final_list.append(item)
+                self.item_list.append(item)
             n_processed += 1
             if n_processed % 10000 == 0:
-                final_list = list(set(final_list))
-        self.item_list = sorted(list(set(final_list)))
+                self.item_list = list(set(self.item_list))
+        self.item_list = sorted(list(set(self.item_list)))
+
+    def create_item_list(self):
+        
+        self.item_list = []
+        
+        if self.client_name:
+            docs = self.collection.find({},no_cursor_timeout=True)
+            self.get_item_list(docs)
+        else:
+            for file in tqdm.tqdn(os.listdir(self.path_input), "for every year"):
+                with open(self.path_input + "/{}".format(file), 'r') as infile:
+                    docs = json.load(infile)   
+                self.get_item_list(docs)
 
     def create_save_index(self):
         '''
@@ -120,8 +141,8 @@ class create_cooc:
         ''' 
         self.name2index = {name:index for name,index in zip(self.item_list, range(0,len(self.item_list),1))}
         self.index2name = {index:name for name,index in zip(self.item_list, range(0,len(self.item_list),1))}
-        pickle.dump( self.name2index, open( self.path + "/name2index.p", "wb" ) )
-        pickle.dump( self.index2name, open( self.path + "/index2name.p", "wb" ) )
+        pickle.dump( self.name2index, open( self.path_output + "/name2index.p", "wb" ) )
+        pickle.dump( self.index2name, open( self.path_output + "/index2name.p", "wb" ) )
 
     def create_matrix(self):
         '''
@@ -140,8 +161,12 @@ class create_cooc:
         self.x = lil_matrix((len(self.item_list), len(self.item_list)), dtype = np.int16)
         
     def populate_matrix(self,year):
-        docs = self.collection.find({self.year_var:year}, no_cursor_timeout=True)
-        
+        if self.client_name:
+            docs = self.collection.find({self.year_var:year}, no_cursor_timeout=True)
+        else:
+             with open(self.path_input + "/{}.json".format(year), 'r') as infile:
+                docs = json.load(infile)   
+            
         for doc in tqdm.tqdm(docs, desc = "Populate matrix"):
             try:
                 items = doc[self.var]
@@ -176,7 +201,7 @@ class create_cooc:
 
         ''' 
         self.x = self.x.tocsr()
-        pickle.dump( self.x, open( self.path + "/{}.p".format(year), "wb" ) )
+        pickle.dump( self.x, open( self.path_output + "/{}.p".format(year), "wb" ) )
     
     def main(self):
         '''
@@ -192,7 +217,7 @@ class create_cooc:
         -------
 
         ''' 
-        self.item_list()
+        self.create_item_list()
         self.create_save_index()
         for year in tqdm.tqdm(self.time_window, desc="For each year in range"):
             self.create_matrix()
