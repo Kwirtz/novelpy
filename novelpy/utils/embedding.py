@@ -310,7 +310,7 @@ class Embedding:
             if 'a02_authorlist' in doc.keys():
                 for auth in doc['a02_authorlist']: # TO CHANGE FOR OTHER DB
                 
-                    profile = collection_authors.find_one({var_auth_id:auth['AID']})[0]
+                    profile = collection_authors.find_one({var_auth_id:auth['AID']})
                     
                     try:
                         abs_profile = profile['embedded_abs']
@@ -336,7 +336,12 @@ class Embedding:
                                              'abs_profile' : abs_profile,
                                              'title_profile' :title_profile,
                                              'keywords_profile': k_profile})
-                return {'authors_profiles':authors_profiles}
+                    
+            infos = {'authors_profiles':authors_profiles} if authors_profiles else {'authors_profiles': None}
+            return infos
+            
+                
+            
                 
         
         client = pymongo.MongoClient(self.client_name)
@@ -398,18 +403,17 @@ class Embedding:
                                var_id,
                                var_pmid_list):
             
+            refs_emb = []
             if var_pmid_list in doc.keys():
 
                 refs = collection_articles.find({var_id:{'$in':doc[var_pmid_list]}})
                 
-                refs_emb = []
                 for ref in refs:
                     refs_emb.append({'id':ref[var_id],
                                      'abstract_embedding': ref['abstract_embedding'] if 'abstract_embedding' in ref.keys() else None,
                                      'title_embedding': ref['title_embedding'] if 'title_embedding' in ref.keys() else None})
-                collection_articles.update_one({var_id:doc[var_id]},
-                                      {'$set':{'refs_embedding':refs_emb}})
-                
+            infos = {'refs_embedding':refs_emb} if refs_emb else  {'refs_embedding': None}
+            return infos
             
             
         client = pymongo.MongoClient(self.client_name)
@@ -417,15 +421,15 @@ class Embedding:
         collection_articles = db[self.collection_articles]
          
         docs = collection_articles.find({year_var:{'$gte':from_year,'$lte':to_year}}).skip(skip_-1).limit(limit_)
-        
+        list_of_insertion = []
         for doc in tqdm.tqdm(docs, total = limit_):
-            get_embedding_list(
+            infos = get_embedding_list(
                 doc,
                 collection_articles,
                 self.var_id,
                 self.var_pmid_list)
             try:
-                list_of_insertion.append(UpdateOne({self.var_id:self.doc[var_id]}, {'$set': infos}, upsert = False))    
+                list_of_insertion.append(UpdateOne({self.var_id:doc[self.var_id]}, {'$set': infos}, upsert = False))    
             except Exception as e:
                 print(e)
             if len(list_of_insertion) % 1000 == 0:
