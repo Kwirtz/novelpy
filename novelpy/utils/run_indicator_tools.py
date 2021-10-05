@@ -246,17 +246,18 @@ class create_output(Dataset):
         else:
             combis = [(i,j) for i,j in combinations(self.current_items,2)]
         
-        comb_infos = []
         scores_array = []
         for combi in combis:
             combi = sorted( (self.name2index[combi[0]], self.name2index[combi[1]]) )
+            """
             comb_infos.append({"item1" : combi[0],
                           "item2" : combi[1],
-                          "score" : int(self.comb_scores[combi[0], combi[1]]) })
-            scores_array.append(int(self.comb_scores[combi[0], combi[1]]))
+                          "score" : float(self.comb_scores[combi[0], combi[1]]) })
+            """
+            scores_array.append(float(self.comb_scores[combi[0], combi[1]]))
         self.scores_array = np.array(scores_array)
         
-        doc_infos = {"combis":comb_infos}
+        doc_infos = {"n_combi":len(scores_array)}
 
         key = self.item_name + '_' + self.indicator
         if 'n_reutilisation' and 'time_window' in kwargs:
