@@ -1,5 +1,5 @@
-from .utils_atypicality import *
-from .utils import *
+from novelpy.utils.Uzzi2013_utils import *
+from novelpy.utils.indicators_utils import *
 import os
 import pickle
 from scipy.sparse import triu, csr_matrix

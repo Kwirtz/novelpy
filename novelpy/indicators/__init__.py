@@ -5,6 +5,3 @@ from .Shibayama_PW import *
 from .WuBuBornmann import *
 from .keyword_scores import *
 from .Foster2015 import *
-from .utils import *
-from .utils_atypicality import *
-from .utils_noveltyW import *
