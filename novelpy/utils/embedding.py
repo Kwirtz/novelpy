@@ -8,6 +8,7 @@ import numpy as np
 from joblib import Parallel, delayed
 import pandas as pd
 from itertools import chain
+from pymongo import UpdateOne
 
 
 
@@ -116,6 +117,7 @@ class Embedding:
             collection = db[self.collection_articles]
             pmids = np.arange(pmid,(pmid+chunk_size)).tolist()
             docs = collection.find({self.var_id:{'$in':pmids}})
+            list_of_insertion = []
             for doc in tqdm.tqdm(docs):
                 # try:
                 try:
@@ -134,12 +136,15 @@ class Embedding:
                 else:
                     article_abs_centroid = None
                     
-                collection.update_one({self.var_id:doc[self.var_id]},
-                                      {'$set':{'title_embedding':article_title_centroid,
-                                               'abstract_embedding':article_abs_centroid}})
-                # except:
-                #     pass
-    
+                try:
+                    list_of_insertion.append(UpdateOne({
+                        self.var_id: doc[self.var_id]}, 
+                        {'$set':{'title_embedding':article_title_centroid,
+                                               'abstract_embedding':article_abs_centroid}}, upsert = False))    
+                except Exception as e:
+                    print(e)
+            collection.bulk_write(list_of_insertion)
+            list_of_insertion = []
     
         
     
@@ -161,8 +166,6 @@ class Embedding:
         """               
         
         def get_author_profile(and_id,
-                              client_name,
-                              db_name,
                               collection_articles,
                               collection_authors,
                               var_year,
@@ -184,18 +187,14 @@ class Embedding:
         
             """
         
-            client = pymongo.MongoClient(client_name)
-            db = client[db_name]
-            collection_authors = db[collection_authors]
-            collection_articles = db[collection_articles]
+            
             doc = collection_authors.find({var_auth_id:and_id})[0]
             
             
             infos = list()
-            for pmid in doc[var_id_list]:
+            articles = collection_articles.find({var_id:{'$in':doc[var_id_list]}},no_cursor_timeout  = True)
+            for article in articles :
                 try:
-                    article = collection_articles.find({var_id:pmid},no_cursor_timeout  = True)[0]
-                    
                     year = article[var_year]
                     title = np.array(
                         article['title_embedding']
@@ -231,13 +230,36 @@ class Embedding:
                     for year in abs_year:
                         abs_year[year] = [item.tolist() for item in abs_year[year]]
                 
+                return {'embedded_abs':abs_year,
+                'embedded_titles':title_year,
+                'keywords':keywords_year}
                 
-                collection_authors.update_one({var_auth_id:doc[var_auth_id]},
-                                              {'$set':{'embedded_abs':abs_year,
-                                                       'embedded_titles':title_year,
-                                                       'keywords':keywords_year}})
-                
+        client = pymongo.MongoClient( self.client_name)
+        db = client[self.db_name]
+        collection_authors = db[self.collection_authors]
+        collection_articles = db[self.collection_articles]
 
+
+        list_of_insertion = []
+        for and_id in tqdm.tqdm(author_ids_list):
+            infos = get_author_profile(
+                and_id,
+                collection_articles,
+                collection_authors,
+                self.var_year,
+                self.var_id,
+                self.var_auth_id,
+                self.var_id_list,
+                self.var_keyword)
+            try:
+                list_of_insertion.append(UpdateOne({self.var_auth_id : and_id}, {'$set': infos}, upsert = False))    
+            except Exception as e:
+                print(e)
+            if len(list_of_insertion) % 1000 == 0:
+                collection_authors.bulk_write(list_of_insertion)
+                list_of_insertion = []
+
+        collection_authors.bulk_write(list_of_insertion)
         # Parallel(n_jobs=n_jobs)(
         #     delayed(get_author_profile)(
         #         and_id,
@@ -251,19 +273,6 @@ class Embedding:
         #         self.var_id_list,
         #         self.var_keyword)
         #     for and_id in tqdm.tqdm(author_ids_list))
-        for and_id in tqdm.tqdm(author_ids_list):
-            get_author_profile(
-                and_id,
-                self.client_name,
-                self.db_name,
-                self.collection_articles,
-                self.collection_authors,
-                self.var_year,
-                self.var_id,
-                self.var_auth_id,
-                self.var_id_list,
-                self.var_keyword)
-                
                    
     
         
@@ -286,8 +295,6 @@ class Embedding:
                                var_id,
                                var_auth_id, 
                                var_year,
-                               client_name,
-                               db_name,
                                collection_articles,
                                collection_authors):
             """
@@ -298,10 +305,6 @@ class Embedding:
                 dict_ = {key:dict_[key] for key in dict_ if key < year}
                 return dict_
                 
-            client = pymongo.MongoClient(client_name)
-            db = client[db_name]
-            collection_authors = db[collection_authors]
-            collection_articles = db[collection_articles]
             authors_profiles = list()
             current_year = doc[var_year]
             if 'a02_authorlist' in doc.keys():
@@ -333,16 +336,14 @@ class Embedding:
                                              'abs_profile' : abs_profile,
                                              'title_profile' :title_profile,
                                              'keywords_profile': k_profile})
-                    
-                collection_articles.update_one({var_id:doc[var_id]},
-                                               {'$set':{'authors_profiles':authors_profiles}})
+                return {'authors_profiles':authors_profiles}
                 
-        
         
         client = pymongo.MongoClient(self.client_name)
         db = client[self.db_name]
-        collection = db[self.collection_articles]
-        docs = collection.find()
+        collection_articles = db[self.collection_articles]
+        collection_authors = db[self.collection_authors]
+        docs = collection_articles.find()
         
         # Parallel(n_jobs=n_jobs)(
         #     delayed(get_author_profile)(
@@ -356,16 +357,24 @@ class Embedding:
         #         self.collection_authors)
         #     for doc in tqdm.tqdm(docs))
         
+        list_of_insertion = []
         for doc in tqdm.tqdm(docs):
-            get_author_profile(
+            infos = get_author_profile(
                 doc,
                 self.var_id,
                 self.var_auth_id, 
                 self.var_year,
-                self.client_name,
-                self.db_name,
-                self.collection_articles,
-                self.collection_authors)
+                collection_articles,
+                collection_authors)
+            try:
+                list_of_insertion.append(UpdateOne({self.var_id: doc[self.var_id]}, {'$set': infos}, upsert = False))    
+            except Exception as e:
+                print(e)
+            if len(list_of_insertion) % 1000 == 0:
+                collection_articles.bulk_write(list_of_insertion)
+                list_of_insertion = []
+
+        collection_articles.bulk_write(list_of_insertion)
             
         
         
@@ -385,44 +394,45 @@ class Embedding:
         """
     
         def get_embedding_list(doc,
-                               client_name,
-                               db_name,
                                collection_articles,
                                var_id,
                                var_pmid_list):
             
             if var_pmid_list in doc.keys():
-                client = pymongo.MongoClient(client_name)
-                db = client[db_name]
-                collection = db[collection_articles]
-                
-                refs = collection.find({var_id:{'$in':doc[var_pmid_list]}})
+
+                refs = collection_articles.find({var_id:{'$in':doc[var_pmid_list]}})
                 
                 refs_emb = []
                 for ref in refs:
                     refs_emb.append({'id':ref[var_id],
                                      'abstract_embedding': ref['abstract_embedding'] if 'abstract_embedding' in ref.keys() else None,
                                      'title_embedding': ref['title_embedding'] if 'title_embedding' in ref.keys() else None})
-                collection.update_one({var_id:doc[var_id]},
+                collection_articles.update_one({var_id:doc[var_id]},
                                       {'$set':{'refs_embedding':refs_emb}})
                 
-                client.close()
             
             
         client = pymongo.MongoClient(self.client_name)
         db = client[self.db_name]
-        collection = db[self.collection_articles]
+        collection_articles = db[self.collection_articles]
          
-        docs = collection.find({year_var:{'$gte':from_year,'$lte':to_year}}).skip(skip_-1).limit(limit_)
+        docs = collection_articles.find({year_var:{'$gte':from_year,'$lte':to_year}}).skip(skip_-1).limit(limit_)
         
         for doc in tqdm.tqdm(docs, total = limit_):
             get_embedding_list(
                 doc,
-                self.client_name,
-                self.db_name,
-                self.collection_articles,
+                collection_articles,
                 self.var_id,
                 self.var_pmid_list)
+            try:
+                list_of_insertion.append(UpdateOne({self.var_id:self.doc[var_id]}, {'$set': infos}, upsert = False))    
+            except Exception as e:
+                print(e)
+            if len(list_of_insertion) % 1000 == 0:
+                collection_articles.bulk_write(list_of_insertion)
+                list_of_insertion = []
+
+        collection_articles.bulk_write(list_of_insertion)
         # Parallel(n_jobs=n_jobs)(
         #     delayed(get_embedding_list)(
         #         doc,
