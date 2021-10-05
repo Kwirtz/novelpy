@@ -16,12 +16,12 @@ import sys
 class Dataset:
     
     def __init__(self,
-             var,
-             var_id,
-             var_year,
-             focal_year,
-             indicator,
-             sub_var,
+             var = None,
+             var_id = None,
+             var_year = None,
+             focal_year = None,
+             indicator = None,
+             sub_var = None,
              tw_cooc = None,
              client_name = None,
              db_name = None,
@@ -67,7 +67,7 @@ class Dataset:
         self.client_name = client_name
         self.db_name = db_name
         self.collection_name = collection_name
-        self.item_name = self.VAR.split('_')[0]      
+        self.item_name = self.VAR.split('_')[0] if self.VAR else None
         
         if self.client_name:
             self.client = pymongo.MongoClient(client_name)
