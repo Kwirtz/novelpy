@@ -337,7 +337,7 @@ class Embedding:
                    
     
         
-    def author_profile2papers(self):
+    def author_profile2papers(self,skip_,limit_):
         """
         Description
         -----------
@@ -345,13 +345,17 @@ class Embedding:
 
         Parameters
         ----------
-        None.
+        skip_ : int
+            mongo skip argument.
+        limit_ : int
+            mongo limit argument.
 
+        
         Returns
         -------
         None.
 
-        """
+        """        
                 
         def get_author_profile(doc,
                                var_id,
@@ -408,16 +412,17 @@ class Embedding:
                     except:
                         title_profile = None
                     
-                    try:
-                        k_profile = drop_year_before_pub(profile['keywords'],
-                                                         current_year)
-                    except:
-                        k_profile = None 
+                    # try:
+                    #     k_profile = drop_year_before_pub(profile['keywords'],
+                    #                                      current_year)
+                    # except:
+                    #     k_profile = None 
                         
                     authors_profiles.append({var_auth_id : auth['AID'],
                                              'abs_profile' : abs_profile,
                                              'title_profile' :title_profile,
-                                             'keywords_profile': k_profile})
+                                             # 'keywords_profile': k_profile
+                                             })
                     
             infos = {'authors_profiles':authors_profiles} if authors_profiles else {'authors_profiles': None}
             return infos
@@ -430,7 +435,7 @@ class Embedding:
         db = client[self.db_name]
         collection_articles = db[self.collection_articles]
         collection_authors = db[self.collection_authors]
-        docs = collection_articles.find()
+        docs = collection_articles.find({}).skip(skip_-1).limit(limit_)
         
         # Parallel(n_jobs=n_jobs)(
         #     delayed(get_author_profile)(
