@@ -18,7 +18,7 @@ class create_cooc:
                  client_name = None,
                  db_name = None,
                  collection_name = None,
-                 time_window = range(1980,2020),
+                 time_window = range(1980,2021),
                  weighted_network = False,
                  self_loop = False):
         '''
@@ -118,7 +118,7 @@ class create_cooc:
             docs = self.collection.find({},no_cursor_timeout=True)
             self.get_item_list(docs)
         else:
-            for file in tqdm.tqdn(os.listdir(self.path_input), "for every year"):
+            for file in tqdm.tqdm(os.listdir(self.path_input), "for every year"):
                 with open(self.path_input + "/{}".format(file), 'r') as infile:
                     docs = json.load(infile)   
                 self.get_item_list(docs)
