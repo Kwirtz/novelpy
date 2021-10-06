@@ -20,6 +20,7 @@ class Embedding:
                  db_name,
                  collection_articles,
                  collection_authors,
+                 collection_keywords,
                  collection_embedding,
                  var_year,
                  var_id,
@@ -29,7 +30,8 @@ class Embedding:
                  pretrain_path,
                  var_title,
                  var_abstract,
-                 var_keyword):
+                 var_keyword,
+                 subvar_keyword):
         """
         
         Description
@@ -49,6 +51,8 @@ class Embedding:
             mongo collection name for articles.
         collection_authors : str
             mongo collection name for authors.
+        collection_keyword : pymongo.collection.Collection
+            mongo collection for articles keywords.
         collection_embedding : pymongo.collection.Collection
             mongo collection for articles embedding.
         var_year : str
@@ -65,6 +69,8 @@ class Embedding:
             abstract variable name.
         var_keyword : str
             keyword variable name.
+        subvar_keyword : str
+            keyword subvariable name.
 
         Returns
         -------
@@ -79,6 +85,7 @@ class Embedding:
         self.db_name = db_name
         self.collection_articles = collection_articles
         self.collection_authors = collection_authors
+        self.collection_keywords = collection_keywords
         self.collection_embedding = collection_embedding
         self.var_year = var_year
         self.var_id = var_id
@@ -89,6 +96,7 @@ class Embedding:
         self.var_title = var_title
         self.var_abstract = var_abstract
         self.var_keyword = var_keyword
+        self.subvar_keyword = subvar_keyword
         
         
         
@@ -154,7 +162,7 @@ class Embedding:
     
         
     
-    def feed_author_profile(self,author_ids_list):
+    def feed_author_profile(self,skip_,limit_):
         """
         Description
         -----------
@@ -162,8 +170,11 @@ class Embedding:
 
         Parameters
         ----------
-        author_ids_list : list
-            list of author ids.
+        skip_ : int
+            mongo skip argument.
+        limit_ : int
+            mongo limit argument.
+
         
         Returns
         -------
@@ -171,14 +182,16 @@ class Embedding:
 
         """               
         
-        def get_author_profile(and_id,
+        def get_author_profile(doc,
                               collection_embedding,
                               collection_authors,
+                              collection_keywords,
                               var_year,
                               var_id,
                               var_auth_id,
                               var_id_list,
-                              var_keyword):
+                              var_keyword,
+                              subvar_keyword):
             """
             Description
             -----------
@@ -189,12 +202,14 @@ class Embedding:
         
             Parameters
             ----------
-            and_id : int
-                author's id
+            doc : dict
+                document from the authors collection.
             collection_embedding : pymongo.collection.Collection
                 mongo collection for articles embedding.
             collection_authors : pymongo.collection.Collection
                 mongo collection for authors.
+            collection_keywords : pymongo.collection.Collection
+                mongo collection for keywords.
             var_year : str
                 name of the year variable.
             var_id : str
@@ -205,6 +220,8 @@ class Embedding:
                 list of id of artciles written by the author.
             var_keyword : str
                 keyword variable name.
+            subvar_keyword : str
+                keyword subvariable name.
 
             Returns
             -------
@@ -214,13 +231,15 @@ class Embedding:
 
             """
             
-            doc = collection_authors.find({var_auth_id:and_id})[0]
             
             
             infos = list()
-            articles = collection_embedding.find({var_id:{'$in':doc[var_id_list]}},no_cursor_timeout  = True)
+            articles = collection_embedding.find({var_id:{'$in':doc[var_id_list]}})
+            #keywords = collection_keywords.find({var_id:{'$in':doc[var_id_list]}},no_cursor_timeout  = True)
+            #for article, keyword in zip(articles,keywords) :
             for article in articles :
-                try:
+                if 'title_embedding' in article.keys():
+                #try:
                     year = article[var_year]
                     title = np.array(
                         article['title_embedding']
@@ -228,13 +247,14 @@ class Embedding:
                     abstract = np.array(
                         article['abstract_embedding']
                         ) if article['abstract_embedding'] else None
-                    keywords = pd.DataFrame(article[var_keyword])['DescriptorName_UI'].to_list() # TO CHANGE FOR OTHER DB
+                    #keywords = pd.DataFrame(keyword[var_keyword])[subvar_keyword].to_list() # TO CHANGE FOR OTHER DB
                     infos.append({'year':year,
                                  'title':title,
                                  'abstract':abstract,
-                                 'keywords':keywords})
-                except:
-                    pass
+                                 #'keywords':keywords
+                                 })
+                # except Exception as e:
+                #     print(e)
                 
             df = pd.DataFrame(infos)
             if not df.empty:
@@ -242,12 +262,12 @@ class Embedding:
                 df['year'] = df['year'].astype(str)
                 df_t = df[['year','title']].dropna()
                 df_a = df[['year','abstract']].dropna()
-                df_k = df[['year','keywords']].dropna()
+                #df_k = df[['year','keywords']].dropna()
                 
                 
                 abs_year = df_a.groupby('year').abstract.apply(list).to_dict()
                 title_year =  df_t.groupby('year').title.apply(list).to_dict()
-                keywords_year =  df_k.groupby('year')['keywords'].apply(list).to_dict()
+                #keywords_year =  df_k.groupby('year')['keywords'].apply(list).to_dict()
                 
                 if title_year:
                     for year in title_year:
@@ -258,7 +278,8 @@ class Embedding:
                 
                 infos = {'embedded_abs':abs_year,
                 'embedded_titles':title_year,
-                'keywords':keywords_year}
+                #'keywords':keywords_year
+                }
                 return infos
                 
 
@@ -267,22 +288,30 @@ class Embedding:
         db = client[self.db_name]
         collection_authors = db[self.collection_authors]
         collection_embedding = db[self.collection_embedding]
+        collection_keywords = db[self.collection_keywords]
 
-        #authors = collection_authors.find({})
+        # client = pymongo.MongoClient( client_name)
+        # db = client[db_name]
+        # collection_authors = db[collection_authors]
+        # collection_embedding = db[collection_embedding]
+        # collection_keywords = db[collection_keywords]
+        authors = collection_authors.find({}).skip(skip_-1).limit(limit_)
         list_of_insertion = []
 
-        #for author in tqdm.tqdm(authors):
-        for and_id in tqdm.tqdm(author_ids_list):
-            #and_id = author[self.var_auth_id]
+        for author in tqdm.tqdm(authors):
+        #for and_id in tqdm.tqdm(author_ids_list):
+            and_id = author[self.var_auth_id]
             infos = get_author_profile(
-                and_id,
+                author,
                 collection_embedding,
                 collection_authors,
+                collection_keywords,
                 self.var_year,
                 self.var_id,
                 self.var_auth_id,
                 self.var_id_list,
-                self.var_keyword)
+                self.var_keyword,
+                self.subvar_keyword)
             try:
                 list_of_insertion.append(UpdateOne({self.var_auth_id : and_id}, {'$set': infos}, upsert = False))    
             except Exception as e:
@@ -290,8 +319,8 @@ class Embedding:
             if len(list_of_insertion) % 1000 == 0:
                 collection_authors.bulk_write(list_of_insertion)
                 list_of_insertion = []
-
-        collection_authors.bulk_write(list_of_insertion)
+        if list_of_insertion:
+            collection_authors.bulk_write(list_of_insertion)
         # Parallel(n_jobs=n_jobs)(
         #     delayed(get_author_profile)(
         #         and_id,
@@ -452,7 +481,7 @@ class Embedding:
             Last year to restrict the dataset.
         skip_ : int
             mongo skip argument.
-        limit_ : TYPE
+        limit_ : int
             mongo limit argument.
 
         Returns

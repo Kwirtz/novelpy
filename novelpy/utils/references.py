@@ -54,7 +54,7 @@ class Reference_cleaner:
         Parameters
         ----------
         doc_items : list
-            List of iteù present in CR.
+            List of item present in CR.
         item_type : str
             'reference' or 'keyword' 
             
