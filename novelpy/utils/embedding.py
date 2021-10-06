@@ -20,6 +20,7 @@ class Embedding:
                  db_name,
                  collection_articles,
                  collection_authors,
+                 collection_embedding,
                  var_year,
                  var_id,
                  var_pmid_list,
@@ -33,33 +34,37 @@ class Embedding:
         
         Description
         -----------
-        Compute semantic centroid for each paper abstract and title, compute an author profil per year and
-        add author profil from previous work for each article.
+        This class allows to 
+        Compute semantic centroid for each paper (abstract and title)
+        Compute an author profile of embedded articles per year 
+        Add all authors previous work embedded representation for each article.
 
         Parameters
         ----------
-        client_name : TYPE
-            DESCRIPTION.
-        db_name : TYPE
-            DESCRIPTION.
-        collection_articles : TYPE
-            DESCRIPTION.
-        collection_authors : TYPE
-            DESCRIPTION.
-        var_year : TYPE
-            DESCRIPTION.
-        var_id : TYPE
-            DESCRIPTION.
-        var_auth_id : TYPE
-            DESCRIPTION.
-        pretrain_path : TYPE
-            DESCRIPTION.
-        var_title : TYPE
-            DESCRIPTION.
-        var_abstract : TYPE
-            DESCRIPTION.
-        var_keyword : TYPE
-            DESCRIPTION
+        client_name : str
+            mongo client name.
+        db_name : str
+            mongo db name.
+        collection_articles : str
+            mongo collection name for articles.
+        collection_authors : str
+            mongo collection name for authors.
+        collection_embedding : pymongo.collection.Collection
+            mongo collection for articles embedding.
+        var_year : str
+            year variable name.
+        var_id : str
+            identifier variable name.
+        var_auth_id : str
+            authors identifer variable name.
+        pretrain_path : str
+            path to the pretrain word2vec: 'your/path/to/en_core_sci_lg-0.4.0/en_core_sci_lg/en_core_sci_lg-0.4.0.
+        var_title : str
+            title variable name.
+        var_abstract : str
+            abstract variable name.
+        var_keyword : str
+            keyword variable name.
 
         Returns
         -------
@@ -74,6 +79,7 @@ class Embedding:
         self.db_name = db_name
         self.collection_articles = collection_articles
         self.collection_authors = collection_authors
+        self.collection_embedding = collection_embedding
         self.var_year = var_year
         self.var_id = var_id
         self.var_pmid_list = var_pmid_list
@@ -148,17 +154,17 @@ class Embedding:
     
         
     
-    def feed_author_profile(self,author_ids_list,n_jobs=1):
+    def feed_author_profile(self,author_ids_list):
         """
-        
+        Description
+        -----------
+        Store author profile in the authors collection
 
         Parameters
         ----------
         author_ids_list : list
             list of author ids.
-        n_jobs : int, optional
-            Number of cores used for calculation. The default is 1.
-
+        
         Returns
         -------
         None.
@@ -166,7 +172,7 @@ class Embedding:
         """               
         
         def get_author_profile(and_id,
-                              collection_articles,
+                              collection_embedding,
                               collection_authors,
                               var_year,
                               var_id,
@@ -176,23 +182,43 @@ class Embedding:
             """
             Description
             -----------
-            This function calculate a semantic representation of previous work for a given author,
-            for each year it calculate articles centroid semantic representation.
-            Finaly it stores the author representation by year in mongo
+            Track previous work for a given author, for each year it store all articles semantic
+            representation in a dict
+
+            Internal to allow for parallel computing latter
         
             Parameters
             ----------
             and_id : int
-                the id of the author
-        
+                author's id
+            collection_embedding : pymongo.collection.Collection
+                mongo collection for articles embedding.
+            collection_authors : pymongo.collection.Collection
+                mongo collection for authors.
+            var_year : str
+                name of the year variable.
+            var_id : str
+                name of identifier variable.
+            var_auth_id : str
+                name of the authors identifer.
+            var_id_list : str
+                list of id of artciles written by the author.
+            var_keyword : str
+                keyword variable name.
+
+            Returns
+            -------
+            infos : dict 
+                title/abstract embedded representation and keyword list by year 
+
+
             """
-        
             
             doc = collection_authors.find({var_auth_id:and_id})[0]
             
             
             infos = list()
-            articles = collection_articles.find({var_id:{'$in':doc[var_id_list]}},no_cursor_timeout  = True)
+            articles = collection_embedding.find({var_id:{'$in':doc[var_id_list]}},no_cursor_timeout  = True)
             for article in articles :
                 try:
                     year = article[var_year]
@@ -230,21 +256,27 @@ class Embedding:
                     for year in abs_year:
                         abs_year[year] = [item.tolist() for item in abs_year[year]]
                 
-                return {'embedded_abs':abs_year,
+                infos = {'embedded_abs':abs_year,
                 'embedded_titles':title_year,
                 'keywords':keywords_year}
+                return infos
                 
+
+
         client = pymongo.MongoClient( self.client_name)
         db = client[self.db_name]
         collection_authors = db[self.collection_authors]
-        collection_articles = db[self.collection_articles]
+        collection_embedding = db[self.collection_embedding]
 
-
+        #authors = collection_authors.find({})
         list_of_insertion = []
+
+        #for author in tqdm.tqdm(authors):
         for and_id in tqdm.tqdm(author_ids_list):
+            #and_id = author[self.var_auth_id]
             infos = get_author_profile(
                 and_id,
-                collection_articles,
+                collection_embedding,
                 collection_authors,
                 self.var_year,
                 self.var_id,
@@ -276,18 +308,19 @@ class Embedding:
                    
     
         
-    def author_profile2papers(self,n_jobs=1):
+    def author_profile2papers(self):
         """
-        
+        Description
+        -----------
+        Store in mongo for each article the profile by year for each of the author (title, abstract, keywords)
 
         Parameters
         ----------
-        n_jobs : int, optional
-            Number of cores used for calculation. The default is 1.
+        None.
 
         Returns
         -------
-        Store in mongo for each article the profile by year for each of the author (title, abstract, keywords)
+        None.
 
         """
                 
@@ -298,7 +331,27 @@ class Embedding:
                                collection_articles,
                                collection_authors):
             """
-            Internal to allow for parallel computing 
+            Get author profile from the authors collection, throwaway articles written after the focal publication
+            Internal to allow for parallel computing latter
+
+            Parameters
+            ----------
+            doc : dict
+                document from the articles collection.
+            var_id : str
+                name of identifier variable.
+            var_auth_id : str
+                name of the authors identifer.
+            var_year : str
+                name of the year variable.
+            collection_articles : pymongo.collection.Collection
+                mongo collection for articles.
+            collection_authors : pymongo.collection.Collection
+                mongo collection for authors.
+            Returns
+            -------
+            infos : dict
+                DESCRIPTION.
 
             """
             def drop_year_before_pub(dict_,year):
@@ -383,30 +436,39 @@ class Embedding:
             
         
         
-    def get_references_embbeding(self,year_var,from_year,to_year,skip_,limit_,n_jobs=1):
+    def get_references_embbeding(self,var_year,from_year,to_year,skip_,limit_):
         """
-        
+        Description
+        -----------
+        Store 
 
         Parameters
         ----------
-        n_jobs : int, optional
-            Number of cores used for calculation. The default is 1.
+        var_year : str
+            Name of the year variable.
+        from_year : int
+            First year to restrict the dataset.
+        to_year : int
+            Last year to restrict the dataset.
+        skip_ : int
+            mongo skip argument.
+        limit_ : TYPE
+            mongo limit argument.
 
         Returns
         -------
         None.
-
+        
         """
-    
         def get_embedding_list(doc,
-                               collection_articles,
+                               collection_embedding,
                                var_id,
                                var_pmid_list):
             
             refs_emb = []
             if var_pmid_list in doc.keys():
 
-                refs = collection_articles.find({var_id:{'$in':doc[var_pmid_list]}})
+                refs = collection_embedding.find({var_id:{'$in':doc[var_pmid_list]}})
                 
                 for ref in refs:
                     refs_emb.append({'id':ref[var_id],
@@ -419,8 +481,9 @@ class Embedding:
         client = pymongo.MongoClient(self.client_name)
         db = client[self.db_name]
         collection_articles = db[self.collection_articles]
+        collection_embedding = db[self.collection_embedding]
          
-        docs = collection_articles.find({year_var:{'$gte':from_year,'$lte':to_year}}).skip(skip_-1).limit(limit_)
+        docs = collection_articles.find({var_year:{'$gte':from_year,'$lte':to_year}}).skip(skip_-1).limit(limit_)
         list_of_insertion = []
         for doc in tqdm.tqdm(docs, total = limit_):
             infos = get_embedding_list(
