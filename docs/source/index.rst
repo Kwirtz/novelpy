@@ -1,7 +1,7 @@
-Welcome to novelpy's documentation!
+Welcome to Novelpy's documentation!
 ===================================
 
-**novelpy** is a Python library for scientometrician but also anyone that is interested in computing novelty indicators.
+**Novelpy** is a Python library for scientometrician but also anyone that is interested in computing novelty indicators.
 
 Check out the :doc:`usage` section for further information, including
 how to :ref:`installation` the project.
@@ -16,4 +16,5 @@ Contents
 .. toctree::
 
    usage
-   api
+   indicators
+   roadmap
