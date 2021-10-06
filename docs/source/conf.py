@@ -3,8 +3,8 @@
 # -- Project information
 
 project = 'novelpy'
-copyright = '2021, Graziella'
-author = 'Graziella'
+copyright = '2021, Pelletier, Wirtz'
+author = 'Pelletier, Wirtz'
 
 release = '0.1'
 version = '0.1.4'
