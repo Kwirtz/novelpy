@@ -6,30 +6,56 @@ from sklearn.metrics.pairwise import cosine_similarity
 class Novelty_embedding:
     
     def __init__(self,
-                var_id,
+                 var_id,
                  var_ref,
                  var_aut_profile,
                  var_year):
+        """
+        Description
+        -----------
+        Compute Shibayama et al (2021) novelty indicator and our alternative with author poximity
+
+        Parameters
+        ----------
+        var_id : str
+            identifier variable name.
+        var_ref : str
+            lembedded representation of references variable name.
+        var_aut_profile : str
+            embedded representation of author articles variable name.
+        var_year : str
+            year variable name.
+
+        Returns
+        -------
+        None.
+
+        """
         self.var_id = var_id
         self.var_ref = var_ref
         self.var_aut_profile = var_aut_profile
         self.var_year = var_year
         self.infos = dict()
         
+        
     
     def cosine_similarity_dist(self,n,doc_mat):
         """
-        
+        Description
+        -----------
+        Compute a list of cosine similarity for all articles
 
         Parameters
         ----------
-        list_ : TYPE
-            DESCRIPTION.
+        n : int
+            number of articles.
+        doc_mat : np.array
+            array of articles representation.
 
         Returns
         -------
-        dist_list : TYPE
-            DESCRIPTION.
+        dist_list : list
+            list of distances.
 
         """
 
@@ -43,6 +69,22 @@ class Novelty_embedding:
         return dist_list
     
     def get_percentiles(self,dist_list):
+        """
+        Description
+        -----------
+        Return percentiles of the novelty distribution
+
+        Parameters
+        ----------
+        dist_list : list
+            list of distances.
+
+        Returns
+        -------
+        nov_list : dict
+            dict of novelty percentiles.
+
+        """
         
         nov_list = dict()
         for q in [100, 99, 95, 90, 80, 50, 20, 10, 5, 1, 0]:
@@ -56,10 +98,10 @@ class Novelty_embedding:
 
         Parameters
         ----------
-        doc : TYPE
-            DESCRIPTION.
-        entity : TYPE
-            DESCRIPTION.
+        doc : dict
+            document from the embedded reference collection.
+        entity : str
+            title or abstract.
 
         Returns
         -------
@@ -89,10 +131,10 @@ class Novelty_embedding:
 
         Parameters
         ----------
-        doc : TYPE
-            DESCRIPTION.
-        entity : TYPE
-            DESCRIPTION.
+        doc : dict
+            document from the embedded author collection.
+        entity : str
+            title or abstract.
 
         Returns
         -------
