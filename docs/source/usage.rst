@@ -1,3 +1,5 @@
+.. _usage:
+
 Usage
 =====
 
@@ -19,6 +21,7 @@ Format supported
 
 The package currently supports JSON files which should be located in Data/docs or a MongoDB input. Here's a typical starting folder structure to run novelpy if you use JSON:
 
+::
 project
 ├── demo.py
 ├── Data          
@@ -27,9 +30,9 @@ project
          ├ references.json
          └ meshterms.json
 
-Depending on what kind of indicator you are running, you will need different kind of input (For example for Uzzi et al.(2013) you only need references.json).
-We intend to automatize the process with well known Databases (Web of science, arxiv, Pubmed Knowlede graph, ...). Please look into the :ref:`roadmap` section
-If you want to use your own data, please look into the :ref:`sample` made available to have a clear idea of the parsing we expect.
+Depending on what kind of indicator you are running, you will need different kind of input (For example for Uzzi et al.(2013) you only need references.json). 
+|We intend to automatize the process with well known Databases (Web of science, arxiv, Pubmed Knowlede graph, ...). Please look into the :ref:`roadmap` section.
+|If you want to use your own data, please look into the :ref:`usage:sample` made available to have a clear idea of the parsing we expect.
 
 .. _sample:
 Sample
@@ -45,6 +48,6 @@ Or if you want to test the package with MongoDB run:
 >>> download_sample(mongo=True)
 
 
-This will give you the file as seen in :ref:`format`
+This will give you the file as seen in :ref:`usage:format`
 
 
