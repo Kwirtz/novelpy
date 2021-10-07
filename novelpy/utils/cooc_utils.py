@@ -73,7 +73,7 @@ class create_cooc:
             self.collection_name = collection_name
             self.path_input = "Data/docs/{}".format(self.collection_name)
         
-        self.path_output = "Data/{}/{}_{}".format(var,type1,type2)
+        self.path_output = "Data/cooc/{}/{}_{}".format(var,type1,type2)
         if not os.path.exists(self.path_output):
             os.makedirs(self.path_output)
             

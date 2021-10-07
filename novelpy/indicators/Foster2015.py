@@ -34,7 +34,7 @@ class Foster2015():
         self.year = year
         self.variable = variable
         self.community_algorithm = community_algorithm
-        self.path = "Data/{}/indicators_adj/foster/".format(self.variable)
+        self.path = "Data/score/foster/{}".format(self.variable)
         
         if not os.path.exists(self.path):
             os.makedirs(self.path)

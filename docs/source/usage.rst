@@ -19,7 +19,7 @@ To use novelpy, first install it using pip:
 Format supported
 ----------------
 
-The package currently supports JSON files which should be located in Data/docs or a MongoDB input. Here's a typical starting folder structure to run novelpy if you use JSON:
+The package currently supports JSON files which should be located in Data/docs or a MongoDB. Here's a typical starting folder structure to run novelpy if you use JSON:
 
       | project
       | ├── demo.py
@@ -31,8 +31,11 @@ The package currently supports JSON files which should be located in Data/docs o
 
 
 | Depending on what kind of indicator you are running, you will need different kind of input (For example for Uzzi et al.(2013) you only need references.json). 
-| We intend to automatize the process with well known Databases (Web of science, arxiv, Pubmed Knowlede graph, ...). Please look into the :ref:`roadmap` section.
-| If you want to use your own data, please look into the :ref:`usage:sample` made available to have a clear idea of the parsing we expect.
+|
+| We intend to automatize the process with well known Databases (Web of science, arxiv, Pubmed Knowlede graph, ...). Look into the :ref:`roadmap` section to learn
+| more about future implementation.
+|
+| If you want to use your own data, please look into the Sample section below.
 
 .. _sample:
 Sample
