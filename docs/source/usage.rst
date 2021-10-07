@@ -10,25 +10,41 @@ To use novelpy, first install it using pip:
 
 .. code-block:: console
 
-   (.venv) $ pip install novelpy
+   $ pip install novelpy
 
-Creating recipes
+
+.. _format:
+Format supported
 ----------------
 
-To retrieve a list of random ingredients,
-you can use the ``lumache.get_random_ingredients()`` function:
+The package currently supports JSON files which should be located in Data/docs or a MongoDB input. Here's a typical starting folder structure to run novelpy if you use JSON:
 
-.. autofunction:: lumache.get_random_ingredients
+project
+├── demo.py
+├── Data          
+│   ├── docs
+         ├ authors.json
+         ├ references.json
+         └ meshterms.json
 
-The ``kind`` parameter should be either ``"meat"``, ``"fish"``,
-or ``"veggies"``. Otherwise, :py:func:`lumache.get_random_ingredients`
-will raise an exception.
+Depending on what kind of indicator you are running, you will need different kind of input (For example for Uzzi et al.(2013) you only need references.json).
+We intend to automatize the process with well known Databases (Web of science, arxiv, Pubmed Knowlede graph, ...). Please look into the :ref:`roadmap` section
+If you want to use your own data, please look into the :ref:`sample` made available to have a clear idea of the parsing we expect.
 
-.. autoexception:: lumache.InvalidKindError
+.. _sample:
+Sample
+----------------
 
-For example:
+We made available a small sample of data so you can get familiar with the package with well formated data. To get this sample run the following code in your project folder:
 
->>> import lumache
->>> lumache.get_random_ingredients()
-['shells', 'gorgonzola', 'parsley']
+>>> from novelpy.utils.get_sample import download_sample
+>>> download_sample()
+
+Or if you want to test the package with MongoDB run:
+
+>>> download_sample(mongo=True)
+
+
+This will give you the file as seen in :ref:`format`
+
 

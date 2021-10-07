@@ -1,12 +1,15 @@
+.. _roadmap:
+
 Roadmap
 =====
 
+.. _indicators:
 Indicators
 ------------
 
 Here's a list of indicators we are working on to implement:
 
-
+.. _input:
 Input
 ----------------
 
