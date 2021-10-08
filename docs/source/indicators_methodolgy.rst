@@ -1,4 +1,4 @@
-Indicators
+Indicators_methodology
 =====
 
 .. _Novelty:

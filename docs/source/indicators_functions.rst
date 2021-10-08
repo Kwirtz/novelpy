@@ -1,4 +1,4 @@
-Indicators
+Indicators_function
 =====
 
 .. _Novelty:

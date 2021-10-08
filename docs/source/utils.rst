@@ -9,8 +9,7 @@ cooc_utils
 List of novelty indicators we currently support:
 
 
-.. py:function:: create_cooc(var, sub_var, year_var, collection_name, client_name = None, db_name = None,
-                 time_window = range(1980,2021), weighted_network = False, self_loop = False)
+.. py:function:: create_cooc(var, sub_var, year_var, collection_name, client_name = None, db_name = None, time_window = range(1980,2021), weighted_network = False, self_loop = False)
 
    Create co-occurence matrix 
 
