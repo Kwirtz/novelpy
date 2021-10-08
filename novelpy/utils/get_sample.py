@@ -6,7 +6,7 @@ import os
 import pymongo
 import json
 
-def download_sample(mongo = False):
+def download_sample(client_name = None):
     
     
     url = 'https://github.com/Kwirtz/data_sample/blob/main/novelpy/docs.zip?raw=true'
@@ -32,9 +32,9 @@ def download_sample(mongo = False):
     os.remove("docs.zip")
     
     
-    print("")
-    if mongo == True:
-        Client = pymongo.MongoClient("mongodb://localhost:27017")
+    print("Loading to mongo...")
+    if client_name:
+        Client = pymongo.MongoClient(client_name)
         db = Client["novelty_sample_test"]
         collection_meshterms = db["meshterms"]
         collection_references = db["references"]
@@ -50,3 +50,4 @@ def download_sample(mongo = False):
         with open("Data/docs/authors_sample.json", 'r') as infile:
             docs = json.load(infile)        
         collection_authors.insert_many(docs)
+        

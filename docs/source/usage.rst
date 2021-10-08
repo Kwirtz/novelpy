@@ -46,11 +46,10 @@ We made available a small sample of data so you can get familiar with the packag
 >>> from novelpy.utils.get_sample import download_sample
 >>> download_sample()
 
-Or if you want to test the package with MongoDB run:
+| This will give you the file as seen in :ref:`roadmap:indicators`
+| Or if you want to test the package with MongoDB you can run the following which will create a database "novelty_sample_test" with everything needed:
 
->>> download_sample(mongo=True)
+>>> download_sample(client_name="mongodb://localhost:27017")
 
-
-This will give you the file as seen in :ref:`roadmap:indicators`
 
 
