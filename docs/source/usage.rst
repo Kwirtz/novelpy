@@ -46,10 +46,18 @@ We made available a small sample of data so you can get familiar with the packag
 >>> from novelpy.utils.get_sample import download_sample
 >>> download_sample()
 
-| This will give you the file as seen in :ref:`roadmap:indicators`
+| This will give you the file as seen in :ref:`format`. Read more about this sample structure `here <https://github.com/Kwirtz/data_sample/tree/main/novelpy>`.
 | Or if you want to test the package with MongoDB you can run the following which will create a database "novelty_sample_test" with everything needed:
 
 >>> download_sample(client_name="mongodb://localhost:27017")
 
 
+.. _tutorial:
+Tutorial
+----------------
 
+Here's a short implementation to run Foster et al.(2015) novelty indicator.
+
+.. code-block:: python
+   
+   import novelpy
