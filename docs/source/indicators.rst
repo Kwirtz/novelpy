@@ -1,4 +1,4 @@
-Indicators_function
+Indicators
 =====
 
 .. _Novelty:
@@ -7,7 +7,7 @@ Indicators_function
 Novelty indicators
 ------------
 
-List of novelty indicators we currently support:
+List of novelty indicators we currently support with methodology:
 
 
 .. py:function:: send_message(sender, recipient, message_body, [priority=1])

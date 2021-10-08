@@ -16,7 +16,6 @@ Contents
 .. toctree::
 
    usage
-   indicators_functions
-   indicators_methodology
+   indicators
    utils
    roadmap

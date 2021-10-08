@@ -1,4 +1,0 @@
-Indicators_methodology
-=====
-
-test
