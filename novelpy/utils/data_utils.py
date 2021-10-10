@@ -11,7 +11,7 @@ import os
 from multiprocessing import Process, Manager
 import traceback
 import sys
-from .indicators_utils import *
+from novelpy.indicators.utils import *
 
 
 def populate_list(idx = None,

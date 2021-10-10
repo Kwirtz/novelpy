@@ -18,7 +18,7 @@ class create_cooc:
                  client_name = None,
                  db_name = None,
                  collection_name = None,
-                 time_window = range(1980,2021),
+                 time_window = range(1980,2020),
                  weighted_network = False,
                  self_loop = False):
         '''
@@ -73,89 +73,11 @@ class create_cooc:
             self.collection_name = collection_name
             self.path_input = "Data/docs/{}".format(self.collection_name)
         
-        self.path_output = "Data/cooc/{}/{}_{}".format(var,type1,type2)
+        self.path_output = "Data/{}/{}_{}".format(var,type1,type2)
         if not os.path.exists(self.path_output):
             os.makedirs(self.path_output)
-            
-    def save_matrix(self,year):
-        '''
-        Description
-        -----------
-        Convert the sparse lilmatrix to csr (easier to do 2000+2001)
-        and save the sparse matrix to a pickle file
-        
-        Parameters
-        ----------
-
-        Returns
-        -------
-
-        ''' 
-        self.x = self.x.tocsr()
-        pickle.dump( self.x, open( self.path_output + "/{}.p".format(year), "wb" ) )
-        
-    def populate_matrix(self,year):
-        if self.client_name:
-            docs = self.collection.find({self.year_var:year}, no_cursor_timeout=True)
-        else:
-             with open(self.path_input + "/{}.json".format(year), 'r') as infile:
-                docs = json.load(infile)   
-            
-        for doc in tqdm.tqdm(docs, desc = "Populate matrix"):
-            try:
-                items = doc[self.var]
-            except:
-                continue
-            items = [item[self.sub_var] for item in items]
-            if self.weighted_network == False:
-                self.combis = itertools.combinations(set(items), r=2)
-            else:
-                self.combis = itertools.combinations(items, r=2)
-            for combi in list(self.combis):
-                combi = sorted( (self.name2index[combi[0]] , self.name2index[combi[1]]) )
-                ind_1 = combi[0]
-                ind_2 = combi[1]
-                self.x[ind_1,ind_2] += 1
-                    
-        if self.self_loop == False:
-            self.x.setdiag(0)
-
-    def create_matrix(self):
-        '''
-        Description
-        -----------
-        
-        Create sparse matrix that will hold the coocurences of items in self.item_list
-        Parameters
-        ----------
-
-        Returns
-        -------
-        sparse matrix
-
-        ''' 
-        self.x = lil_matrix((len(self.item_list), len(self.item_list)), dtype = np.int16)
     
-    def create_save_index(self):
-        '''
-        Description
-        -----------
-        
-        Create dicts that transforms the name in the item_list to an index.
-        Save the dicts to a pickle file.
-        Necessary to work with a sparse matrix and update this matrix
-        
-        Parameters
-        ----------
 
-        Returns
-        -------
-
-        ''' 
-        self.name2index = {name:index for name,index in zip(self.item_list, range(0,len(self.item_list),1))}
-        self.index2name = {index:name for name,index in zip(self.item_list, range(0,len(self.item_list),1))}
-        pickle.dump( self.name2index, open( self.path_output + "/name2index.p", "wb" ) )
-        pickle.dump( self.index2name, open( self.path_output + "/index2name.p", "wb" ) )
 
 
     def get_item_list(self, docs):
@@ -201,6 +123,86 @@ class create_cooc:
                     docs = json.load(infile)   
                 self.get_item_list(docs)
 
+    def create_save_index(self):
+        '''
+        Description
+        -----------
+        
+        Create dicts that transforms the name in the item_list to an index.
+        Save the dicts to a pickle file.
+        Necessary to work with a sparse matrix and update this matrix
+        
+        Parameters
+        ----------
+
+        Returns
+        -------
+
+        ''' 
+        self.name2index = {name:index for name,index in zip(self.item_list, range(0,len(self.item_list),1))}
+        self.index2name = {index:name for name,index in zip(self.item_list, range(0,len(self.item_list),1))}
+        pickle.dump( self.name2index, open( self.path_output + "/name2index.p", "wb" ) )
+        pickle.dump( self.index2name, open( self.path_output + "/index2name.p", "wb" ) )
+
+    def create_matrix(self):
+        '''
+        Description
+        -----------
+        
+        Create sparse matrix that will hold the coocurences of items in self.item_list
+        Parameters
+        ----------
+
+        Returns
+        -------
+        sparse matrix
+
+        ''' 
+        self.x = lil_matrix((len(self.item_list), len(self.item_list)), dtype = np.int16)
+        
+    def populate_matrix(self,year):
+        if self.client_name:
+            docs = self.collection.find({self.year_var:year}, no_cursor_timeout=True)
+        else:
+             with open(self.path_input + "/{}.json".format(year), 'r') as infile:
+                docs = json.load(infile)   
+            
+        for doc in tqdm.tqdm(docs, desc = "Populate matrix"):
+            try:
+                items = doc[self.var]
+            except:
+                continue
+            items = [item[self.sub_var] for item in items]
+            if self.weighted_network == False:
+                self.combis = itertools.combinations(set(items), r=2)
+            else:
+                self.combis = itertools.combinations(items, r=2)
+            for combi in list(self.combis):
+                combi = sorted( (self.name2index[combi[0]] , self.name2index[combi[1]]) )
+                ind_1 = combi[0]
+                ind_2 = combi[1]
+                self.x[ind_1,ind_2] += 1
+                    
+        if self.self_loop == False:
+            self.x.setdiag(0)
+            
+    def save_matrix(self,year):
+        '''
+        Description
+        -----------
+        Convert the sparse lilmatrix to csr (easier to do 2000+2001)
+        and save the sparse matrix to a pickle file
+        
+        Parameters
+        ----------
+
+        Returns
+        -------
+
+        ''' 
+        self.x = self.x.tocsr()
+        pickle.dump( self.x, open( self.path_output + "/{}.p".format(year), "wb" ) )
+    
     def main(self):
         '''
         Description

@@ -1,5 +1,5 @@
-from novelpy.utils.Wang2017_utils import *
-from novelpy.utils.indicators_utils import *
+from .utils_noveltyW import *
+from .utils import *
 from scipy.sparse import csr_matrix, lil_matrix
 import tqdm
 import pickle 

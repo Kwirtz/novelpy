@@ -16,12 +16,12 @@ import sys
 class Dataset:
     
     def __init__(self,
-             var = None,
-             var_id = None,
-             var_year = None,
-             focal_year = None,
-             indicator = None,
-             sub_var = None,
+             var,
+             var_id,
+             var_year,
+             focal_year,
+             indicator,
+             sub_var,
              tw_cooc = None,
              client_name = None,
              db_name = None,
@@ -67,7 +67,7 @@ class Dataset:
         self.client_name = client_name
         self.db_name = db_name
         self.collection_name = collection_name
-        self.item_name = self.VAR.split('_')[0] if self.VAR else None
+        self.item_name = self.VAR.split('_')[0]      
         
         if self.client_name:
             self.client = pymongo.MongoClient(client_name)
@@ -135,7 +135,7 @@ class Dataset:
                 self.VAR_YEAR:self.focal_year
                 })
         else:
-            self.docs = json.load(open("Data/docs/{}/{}.json".format(self.collection_name,self.focal_year)) )
+            self.docs = json.load(open("Data/docs/articles/{}.json".format(self.focal_year)) )
         
         # dict of every docs. Each one contains doc_items
         self.papers_items = dict()
@@ -185,7 +185,7 @@ class Dataset:
         unw = ['novelty']
         type1 = 'unweighted_network' if self.indicator in unw else 'weighted_network'
         type2 = 'no_self_loop' if self.indicator in unw else 'self_loop'
-        self.path = "Data/cooc/{}/{}_{}".format(self.VAR,type1,type2)
+        self.path = "Data/{}/{}_{}".format(self.VAR,type1,type2)
         self.name2index = pickle.load(open(self.path + "/name2index.p", "rb" ))
         if self.indicator == "foster":
             self.current_adj = self.sum_cooc_matrix( window = range(1980, self.focal_year))
@@ -299,8 +299,8 @@ class create_output(Dataset):
         # Load the score of pairs given by the indicator
         self.comb_scores = pickle.load(
                 open(
-                    'Data/score/{}/{}/{}.p'.format(
-                        self.indicator,self.VAR,self.focal_year),
+                    'Data/{}/indicators_adj/{}/{}.p'.format(
+                        self.VAR,self.indicator,self.focal_year),
                     "rb" ))       
         
         # Iterate over every docs 

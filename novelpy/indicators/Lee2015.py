@@ -1,5 +1,5 @@
 from scipy.sparse import csr_matrix, lil_matrix, triu
-from novelpy.utils.indicators_utils import *
+from .utils import *
 import tqdm
 import numpy as np
 import pickle 
@@ -38,7 +38,7 @@ class Commonness:
         self.var_year = var_year
         self.focal_year = focal_year
         self.current_adj = current_adj
-        self.path2 = "Data/score/commonness/{}".format(var)
+        self.path2 = "Data/{}/indicators_adj/commonness/".format(var)
         if not os.path.exists(self.path2):
             os.makedirs(self.path2)
             
