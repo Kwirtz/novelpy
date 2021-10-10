@@ -185,7 +185,7 @@ class Dataset:
         unw = ['novelty']
         type1 = 'unweighted_network' if self.indicator in unw else 'weighted_network'
         type2 = 'no_self_loop' if self.indicator in unw else 'self_loop'
-        self.path = "Data/{}/{}_{}".format(self.VAR,type1,type2)
+        self.path = "Data/cooc/{}/{}_{}".format(self.VAR,type1,type2)
         self.name2index = pickle.load(open(self.path + "/name2index.p", "rb" ))
         if self.indicator == "foster":
             self.current_adj = self.sum_cooc_matrix( window = range(1980, self.focal_year))
@@ -297,11 +297,7 @@ class create_output(Dataset):
         """
         
         # Load the score of pairs given by the indicator
-        self.comb_scores = pickle.load(
-                open(
-                    'Data/{}/indicators_adj/{}/{}.p'.format(
-                        self.VAR,self.indicator,self.focal_year),
-                    "rb" ))       
+        self.comb_scores = pickle.load(open('Data/score/{}/{}/{}.p'.format(self.indicator, self.VAR, self.focal_year),"rb" ))       
         
         # Iterate over every docs 
         list_of_insertion = []
