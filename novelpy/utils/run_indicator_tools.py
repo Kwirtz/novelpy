@@ -276,6 +276,7 @@ class create_output(Dataset):
             score = {'novelty': -np.log(np.quantile(self.scores_array,0.1))}
         
         elif self.indicator == 'foster':
+            self.scores_array = [1-i for i in self.scores_array]
             score = {'novelty': float(np.mean(self.scores_array))}
         
         doc_infos.update({'score':score })
