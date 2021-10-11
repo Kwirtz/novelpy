@@ -16,12 +16,12 @@ import sys
 class Dataset:
     
     def __init__(self,
-             var,
-             var_id,
-             var_year,
-             focal_year,
-             indicator,
-             sub_var,
+             var = None,
+             var_id = None,
+             var_year = None,
+             focal_year = None,
+             indicator = None,
+             sub_var = None,
              tw_cooc = None,
              client_name = None,
              db_name = None,
@@ -67,7 +67,7 @@ class Dataset:
         self.client_name = client_name
         self.db_name = db_name
         self.collection_name = collection_name
-        self.item_name = self.VAR.split('_')[0]      
+        self.item_name = self.VAR.split('_')[0] if self.VAR else None
         
         if self.client_name:
             self.client = pymongo.MongoClient(client_name)
@@ -135,7 +135,7 @@ class Dataset:
                 self.VAR_YEAR:self.focal_year
                 })
         else:
-            self.docs = json.load(open("Data/docs/articles/{}.json".format(self.focal_year)) )
+            self.docs = json.load(open("Data/docs/{}/{}.json".format(self.collection_name,self.focal_year)) )
         
         # dict of every docs. Each one contains doc_items
         self.papers_items = dict()
@@ -297,7 +297,11 @@ class create_output(Dataset):
         """
         
         # Load the score of pairs given by the indicator
-        self.comb_scores = pickle.load(open('Data/score/{}/{}/{}.p'.format(self.indicator, self.VAR, self.focal_year),"rb" ))       
+        self.comb_scores = pickle.load(
+                open(
+                    'Data/score/{}/{}/{}.p'.format(
+                        self.indicator,self.VAR,self.focal_year),
+                    "rb" ))       
         
         # Iterate over every docs 
         list_of_insertion = []
