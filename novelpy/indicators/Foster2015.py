@@ -1,6 +1,5 @@
 #https://mapequation.github.io/infomap/python/infomap.html
 
-
 import numpy as np
 import os
 from scipy.sparse import lil_matrix
@@ -9,6 +8,7 @@ from collections import defaultdict
 import itertools
 import pickle
 import networkx as nx
+
 class Foster2015():
     
     
