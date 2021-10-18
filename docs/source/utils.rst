@@ -16,12 +16,12 @@ List of novelty indicators we currently support:
    :param str var: The key of interest in the dict
    :param str sub_var: The key where the name of the variable is
    :param str year_var: The key that gives the year of the paper
-   :param str collection_name : Name of the collection (either Mongo or Json) where the data is
-   :param str client_name : name of the mongdb client
-   :param str db_name : name of the mongdb Database
-   :param range time_window : Compute the cooc for the years in range
-   :param str weighted_network : False if you want a combinaisons that appears multiple time in a single paper to be accounted as 1
-   :param str self_loop : True if you want the diagonal in the cooc-matrix
+   :param str collection_name: Name of the collection (either Mongo or Json) where the data is
+   :param str client_name: name of the mongdb client
+   :param str db_name: name of the mongdb Database
+   :param range time_window: Compute the cooc for the years in range
+   :param str weighted_network: False if you want a combinaisons that appears multiple time in a single paper to be accounted as 1
+   :param str self_loop: True if you want the diagonal in the cooc-matrix
 
    :return: 
    :raises ValueError: 
