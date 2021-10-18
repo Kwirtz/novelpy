@@ -34,7 +34,7 @@ The package currently supports JSON files which should be located in Data/docs o
 
 | Depending on what kind of indicator you are running, you will need different kind of input (For example for Uzzi et al.(2013) you only need references.json). 
 |
-| We intend to automatize the process with well known Databases (Web of science, arxiv, Pubmed Knowlede graph, ...). Look into the :ref:`roadmap`_ section to learn
+| We intend to automatize the process with well known Databases (Web of science, arxiv, Pubmed Knowlede graph, ...). Look into the :ref:`roadmap` section to learn
 | more about future implementation.
 |
 | If you want to use your own data, please look into the Sample section below.
@@ -76,33 +76,34 @@ Here's a short implementation to run Foster et al.(2015) novelty indicator. Some
    ref_cooc.main()
 
 
-Once the co-occurrence matrices are done you should have a new folder "cooc". Depending on which co-occurrence matrices you runned you will have different folder. In the tutorial case we wanted the co-occurrence matrix of journals cited per paper.
+| If you use MongoDB backend make sure to use the client_name and db_name arguments (:ref:`Utils`).
+| Once the co-occurrence matrices are done you should have a new folder "cooc". Depending on which co-occurrence matrices you runned you will have different folder. In the tutorial case we wanted the co-occurrence matrix of journals cited per paper.
 
 ::
 
 
    project
    ├── demo.py
-   ├── Data   
-   │  ├── docs
-   │  │   ├── authors.json       
-   │  │   ├── references.json
-   │  │   └── meshterms.json
-   │  │ 
-   │  │── cooc
-   │  │  └── c04_referencelist
-   │  │      └── weighted_network_self_loop.p
-   │  │ 
+   └── Data   
+      ├── docs
+      │   ├── authors.json       
+      │   ├── references.json
+      │   └── meshterms.json
+      │ 
+      └── cooc
+         └── c04_referencelist
+             └── weighted_network_self_loop.p
+        
 
 
-
-
-| Read more on the create_cooc function here :ref:`Utils`_ 
+| Read more on the create_cooc function here :ref:`Utils`
 | Now you can run the Foster et al. (2015) indicator
 
 .. code-block:: python
-
+   # Most (if not every) indicator works for a given year, here we want novelty for papers done in 2000
    focal_year = 2000
+
+   # Class that helps you load, save and compute scores 
    companion = novelpy.utils.run_indicator_tools.create_output(
                collection_name = 'meshterms_sample',
                var = 'c04_referencelist',
@@ -115,12 +116,37 @@ Once the co-occurrence matrices are done you should have a new folder "cooc". De
    # Load cooc, and items 
    companion.get_data()
    
-   # Run Foster algorithm and save novelty_score cooc matrix
-   Foster = novelpy.indicators.Foster2015(current_adj=companion.current_adj, year = focal_year,
+   # For Foster 2015 you only need the co-occurrence matrix
+
+   Foster = novelpy.indicators.Foster2015(current_adj=companion.current_adj,
+                                          year = focal_year,
                                           variable = "a06_meshheadinglist",
                                           community_algorithm = "Louvain")
    Foster.get_indicator()
    
-   # Attribute Novelty score to papers
+   # Iterate through the papers from the focal year and attribute a Novelty score to them
    companion.update_paper_values()
-   
+
+Now you should have one more folder "Results" with a json for the focal year with the results. 
+
+::
+
+
+   project
+   ├── demo.py
+   ├── Data   
+   │  ├── docs
+   │  │   ├── authors.json       
+   │  │   ├── references.json
+   │  │   └── meshterms.json
+   │  │ 
+   │  └── cooc
+   │     └── c04_referencelist
+   │         └── weighted_network_self_loop.p
+   │    
+   └── Results
+      └── foster
+         └── c04_referencelist
+
+| You can of course iterate through multiple years just by replacing the focal year by a range and a for loop
+| More info and demonstration are given in the section :ref:`Indicators`

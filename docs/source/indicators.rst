@@ -1,3 +1,5 @@
+.. _Indicators:
+
 Indicators
 =====
 
