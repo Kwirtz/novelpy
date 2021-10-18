@@ -8,11 +8,11 @@ import community as community_louvain
 from collections import defaultdict
 import itertools
 import pickle
-
+import networkx as nx
 class Foster2015():
     
     
-    def __init__(self, g, year, variable, community_algorithm):
+    def __init__(self, current_adj, year, variable, community_algorithm):
         
         '''
         Description
@@ -25,12 +25,14 @@ class Foster2015():
             The coocurence/adjacency matrix from the element we want to calculate the novelty score on.
         '''
         
+
+        self.g = nx.from_scipy_sparse_matrix(current_adj, edge_attribute='weight')
         type_="<class 'networkx.classes.graph.Graph'>"
-        if str(type(g)) != type_:
+        if str(type(self.g)) != type_:
             raise ValueError("Invalid type_. Expected networkx graph")
-        if g.is_directed == True:
+        if self.g.is_directed == True:
             raise ValueError("Invalid graph. Expected graph to be undirected")
-        self.g = g
+        
         self.year = year
         self.variable = variable
         self.community_algorithm = community_algorithm
