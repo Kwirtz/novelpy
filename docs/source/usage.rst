@@ -21,18 +21,20 @@ Format supported
 
 The package currently supports JSON files which should be located in Data/docs or a MongoDB. Here's a typical starting folder structure to run novelpy if you use JSON:
 
-      | project
-      | ├── demo.py
-      | └── Data          
-      |     └── docs
-      |         ├── authors.json
-      |         ├── references.json
-      |         └── meshterms.json
+::
 
+
+   project
+   ├── demo.py
+   └── Data   
+      └── docs
+          ├── authors.json       
+          ├── references.json
+          └── meshterms.json
 
 | Depending on what kind of indicator you are running, you will need different kind of input (For example for Uzzi et al.(2013) you only need references.json). 
 |
-| We intend to automatize the process with well known Databases (Web of science, arxiv, Pubmed Knowlede graph, ...). Look into the :ref:`roadmap` section to learn
+| We intend to automatize the process with well known Databases (Web of science, arxiv, Pubmed Knowlede graph, ...). Look into the :ref:`roadmap`_ section to learn
 | more about future implementation.
 |
 | If you want to use your own data, please look into the Sample section below.
@@ -93,23 +95,9 @@ Once the co-occurrence matrices are done you should have a new folder "cooc". De
    │  │ 
 
 
-::
 
-    project
-    ├── demo.py
-    ├── LICENCE.txt
-    ├── processes          
-    │   ├── area.py
-    │   └── bboxinout.py
-    ├── pywps.cfg          
-    ├── requirements.txt
-    ├── server.py          
-    ├── setup.py
-    ├── static
-    ├── templates
-    └── tests
 
-| Read more on the create_cooc function here :ref:`cooc_utils`_. 
+| Read more on the create_cooc function here :ref:`Utils`_ 
 | Now you can run the Foster et al. (2015) indicator
 
 .. code-block:: python
