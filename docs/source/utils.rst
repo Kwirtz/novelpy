@@ -6,7 +6,7 @@ Utils
 cooc_utils
 ------------
 
-List of novelty indicators we currently support:
+Most of the indicators are based on the idea that new ideas are created by combining already existing ones. In that end they look at the combination of items (Journals cited, keywords used, ...). cooc_utils creates an adjacency matrix that retraces the historic of these combination done in a given year:
 
 
 .. py:function:: create_cooc(var, sub_var, year_var, collection_name, client_name = None, db_name = None, time_window = range(1980,2021), weighted_network = False, self_loop = False)

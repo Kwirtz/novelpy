@@ -74,19 +74,22 @@ Here's a short implementation to run Foster et al.(2015) novelty indicator. Some
    ref_cooc.main()
 
 
-Once the co-occurrence matrices are done you should have a new folder
+Once the co-occurrence matrices are done you should have a new folder "cooc". Depending on which co-occurrence matrices you runned you will have different folder. In the tutorial case we wanted the co-occurrence matrix of journals cited per paper.
 
-      | project
-      | ├── demo.py
-      | |── Data          
-      | |   └── docs
-      | |       ├── authors.json
-      | |       ├── references.json
-      | |       └── meshterms.json
-      | | 
-      | └── cooc
-      |    └── c04_referencelist
-      |         └── weighted_network_self_loop.p
+
+   │ project
+   │ ├── demo.py
+   │ ├── LICENCE.txt
+   │ ├── Data   
+   │ │  ├── docs
+   │ │  │   ├── authors.json       
+   │ │  │   ├── references.json
+   │ │  │   └── meshterms.json
+   │ │  │ 
+   │ │  │── cooc
+   │ │  │  └── c04_referencelist
+   │ │  │      └── weighted_network_self_loop.p
+   │ │  │ 
 
 
 | Read more on the create_cooc function here :ref:`cooc_utils`_. 
