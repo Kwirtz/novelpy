@@ -76,21 +76,38 @@ Here's a short implementation to run Foster et al.(2015) novelty indicator. Some
 
 Once the co-occurrence matrices are done you should have a new folder "cooc". Depending on which co-occurrence matrices you runned you will have different folder. In the tutorial case we wanted the co-occurrence matrix of journals cited per paper.
 
+::
 
-   │ project
-   │ ├── demo.py
-   │ ├── LICENCE.txt
-   │ ├── Data   
-   │ │  ├── docs
-   │ │  │   ├── authors.json       
-   │ │  │   ├── references.json
-   │ │  │   └── meshterms.json
-   │ │  │ 
-   │ │  │── cooc
-   │ │  │  └── c04_referencelist
-   │ │  │      └── weighted_network_self_loop.p
-   │ │  │ 
 
+   project
+   ├── demo.py
+   ├── Data   
+   │  ├── docs
+   │  │   ├── authors.json       
+   │  │   ├── references.json
+   │  │   └── meshterms.json
+   │  │ 
+   │  │── cooc
+   │  │  └── c04_referencelist
+   │  │      └── weighted_network_self_loop.p
+   │  │ 
+
+
+::
+
+    project
+    ├── demo.py
+    ├── LICENCE.txt
+    ├── processes          
+    │   ├── area.py
+    │   └── bboxinout.py
+    ├── pywps.cfg          
+    ├── requirements.txt
+    ├── server.py          
+    ├── setup.py
+    ├── static
+    ├── templates
+    └── tests
 
 | Read more on the create_cooc function here :ref:`cooc_utils`_. 
 | Now you can run the Foster et al. (2015) indicator
@@ -109,12 +126,9 @@ Once the co-occurrence matrices are done you should have a new folder "cooc". De
    
    # Load cooc, and items 
    companion.get_data()
-
-   # Transform cooc in nx.Graph
-   g = nx.from_scipy_sparse_matrix(companion.current_adj, edge_attribute='weight')
    
    # Run Foster algorithm and save novelty_score cooc matrix
-   Foster = novelpy.indicators.Foster2015(g=g, year = focal_year,
+   Foster = novelpy.indicators.Foster2015(current_adj=companion.current_adj, year = focal_year,
                                           variable = "a06_meshheadinglist",
                                           community_algorithm = "Louvain")
    Foster.get_indicator()
