@@ -12,7 +12,7 @@ import networkx as nx
 class Foster2015():
     
     
-    def __init__(self, current_adj, year, variable, community_algorithm):
+    def __init__(self, current_adj, focal_year, variable, community_algorithm):
         
         '''
         Description
@@ -33,7 +33,7 @@ class Foster2015():
         if self.g.is_directed == True:
             raise ValueError("Invalid graph. Expected graph to be undirected")
         
-        self.year = year
+        self.focal_year = focal_year
         self.variable = variable
         self.community_algorithm = community_algorithm
         self.path = "Data/score/foster/{}".format(self.variable)
@@ -42,7 +42,7 @@ class Foster2015():
             os.makedirs(self.path)
         
     def save_score_matrix(self):
-        pickle.dump(self.df, open(self.path + "/{}.p".format(self.year),"wb" ) )
+        pickle.dump(self.df, open(self.path + "/{}.p".format(self.focal_year),"wb" ) )
         
     def Louvain_based(self):
             '''
@@ -115,7 +115,7 @@ class Foster2015():
         print("Create empty df ...")
         self.generate_commu_adj_matrix()
         print("Empty df created !")  
-        print("Compute community and community appartenance for {}".format(self.year))
+        print("Compute community and community appartenance for {}".format(self.focal_year))
         self.run_iteration()
         print("Done !")
         self.save_score_matrix()

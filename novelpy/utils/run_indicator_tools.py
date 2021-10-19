@@ -16,16 +16,16 @@ import sys
 class Dataset:
     
     def __init__(self,
-             var = None,
-             var_id = None,
-             var_year = None,
-             focal_year = None,
-             indicator = None,
-             sub_var = None,
-             tw_cooc = None,
              client_name = None,
              db_name = None,
-             collection_name = None):
+             collection_name = None,
+             id_variable = None,
+             year_variable = None,
+             variable = None,
+             sub_variable = None,
+             indicator = None,
+             focal_year = None,
+             time_window_cooc = None):
         """
         Description
         -----------
@@ -34,40 +34,43 @@ class Dataset:
         
         Parameters
         ----------
-        
-        var : str
-            variable of interest.
-        var_id : str
-            id variable name. 
-        var_year : str
-            year variable name.
-        focal_year : int
-            year of interest.
-        sub_var : str, optional
-            subvariable of interest. The default is None.
+
+
         client_name : str, optional
             client name. The default is None.
         db_name : str, optional
             db name. The default is None.
         collection_name : str, optional
-            collection name. The default is None.
-    
+            collection name. The default is None.        
+        id_variable : str
+            id variable name. 
+        year_variable : str
+            year variable name.
+        variable : str
+            variable of interest.
+        sub_variable : str, optional
+            subvariable of interest. The default is None.
+        focal_year : int
+            year of interest.
+        time_window_cooc: int
+            Sum the coocurence between the t-time_window_cooc and t+time_window_cooc
         Returns
         -------
         None.
     
         """
-        self.VAR = var
-        self.VAR_ID = var_id
-        self.VAR_YEAR = var_year
-        self.SUB_VAR = sub_var
-        self.focal_year = focal_year
-        self.indicator = indicator
-        self.tw_cooc = tw_cooc
+        
         self.client_name = client_name
         self.db_name = db_name
         self.collection_name = collection_name
-        self.item_name = self.VAR.split('_')[0] if self.VAR else None
+        self.id_variable = id_variable
+        self.year_variable = year_variable
+        self.variable = variable
+        self.sub_variable = sub_variable
+        self.indicator = indicator
+        self.focal_year = focal_year
+        self.time_window_cooc = time_window_cooc
+        self.item_name = self.variable.split('_')[0] if self.variable else None
         
         if self.client_name:
             self.client = pymongo.MongoClient(client_name)
@@ -99,12 +102,12 @@ class Dataset:
      
         if self.indicator == 'atypicality':
             if 'year' in item.keys():
-                doc_item = {'item':item[self.SUB_VAR],
+                doc_item = {'item':item[self.sub_variable],
                                   'year':item['year']}
         elif self.indicator == 'kscores': 
             doc_item = item
         else:
-            doc_item = item[self.SUB_VAR]
+            doc_item = item[self.sub_variable]
         
         return  doc_item
         
@@ -131,8 +134,8 @@ class Dataset:
         # Get docs where variable of interest exists and published in focal_year
         if self.client_name:
             self.docs = self.collection.find({
-                self.VAR:{'$exists':'true'},
-                self.VAR_YEAR:self.focal_year
+                self.variable:{'$exists':'true'},
+                self.year_variable:self.focal_year
                 })
         else:
             self.docs = json.load(open("Data/docs/{}/{}.json".format(self.collection_name,self.focal_year)) )
@@ -142,8 +145,8 @@ class Dataset:
         
         for doc in tqdm.tqdm(self.docs):
             doc_items = list()
-            for item in doc[self.VAR]:
-                if self.SUB_VAR:
+            for item in doc[self.variable]:
+                if self.sub_variable:
                     doc_item = self.get_item_infos(item)
                     if doc_item:
                         doc_items.append(doc_item)
@@ -151,7 +154,7 @@ class Dataset:
                     if doc:
                         doc_items.append(item)
                     
-            self.papers_items.update({int(doc[self.VAR_ID]):doc_items})  
+            self.papers_items.update({int(doc[self.id_variable]):doc_items})  
 
     def sum_cooc_matrix(self,window):
         """
@@ -185,7 +188,7 @@ class Dataset:
         unw = ['novelty']
         type1 = 'unweighted_network' if self.indicator in unw else 'weighted_network'
         type2 = 'no_self_loop' if self.indicator in unw else 'self_loop'
-        self.path = "Data/cooc/{}/{}_{}".format(self.VAR,type1,type2)
+        self.path = "Data/cooc/{}/{}_{}".format(self.variable,type1,type2)
         self.name2index = pickle.load(open(self.path + "/name2index.p", "rb" ))
         if self.indicator == "foster":
             self.current_adj = self.sum_cooc_matrix( window = range(1980, self.focal_year))
@@ -195,10 +198,10 @@ class Dataset:
             self.past_adj = self.sum_cooc_matrix( window = range(1980, self.focal_year))
 
             print('Calculate futur matrix')
-            self.futur_adj = self.sum_cooc_matrix(window = range(self.focal_year+1, self.focal_year+self.tw_cooc+1))
+            self.futur_adj = self.sum_cooc_matrix(window = range(self.focal_year+1, self.focal_year+self.time_window_cooc+1))
 
             print('Calculate difficulty matrix')
-            self.difficulty_adj = self.sum_cooc_matrix(window = range(self.focal_year-self.tw_cooc,self.focal_year))
+            self.difficulty_adj = self.sum_cooc_matrix(window = range(self.focal_year-self.time_window_cooc,self.focal_year))
         else:
             self.current_adj =  pickle.load( open(self.path+'/{}.p'.format(self.focal_year), "rb" )) 
         
@@ -301,7 +304,7 @@ class create_output(Dataset):
         self.comb_scores = pickle.load(
                 open(
                     'Data/score/{}/{}/{}.p'.format(
-                        self.indicator,self.VAR,self.focal_year),
+                        self.indicator,self.variable,self.focal_year),
                     "rb" ))       
         
         # Iterate over every docs 
@@ -319,7 +322,7 @@ class create_output(Dataset):
                         self.unique_pairwise = True
                         self.keep_diag=False
                                    
-                    # Use novelty score of combination + Matrix of combi of papers to have novelty score of the paper with VAR_ID = idx
+                    # Use novelty score of combination + Matrix of combi of papers to have novelty score of the paper with id_variable = idx
                     self.get_paper_score(**kwargs)
                 else:
                     continue
@@ -329,11 +332,11 @@ class create_output(Dataset):
             
             
             if self.client_name:
-                list_of_insertion.append(pymongo.UpdateOne({self.VAR_ID: int(idx)},
+                list_of_insertion.append(pymongo.UpdateOne({self.id_variable: int(idx)},
                                                            {'$set': {self.key: self.doc_infos}},
                                                            upsert = True))
             else:
-                list_of_insertion.append({self.VAR_ID: int(idx),self.key: self.doc_infos})
+                list_of_insertion.append({self.id_variable: int(idx),self.key: self.doc_infos})
 
         
         if self.client_name:
@@ -361,13 +364,13 @@ class create_output(Dataset):
         """
         if self.client_name:
             if "output" not in self.db.list_collection_names():
-                print("Init output collection with index on var_id ...")
+                print("Init output collection with index on id_variable ...")
                 self.collection_output = self.db["output"]
-                self.collection_output.create_index([ (self.VAR_ID,1) ])
+                self.collection_output.create_index([ (self.id_variable,1) ])
             else:
                 self.collection_output = self.db["output"]
         else:
-            self.path_output = "Result/{}/{}".format(self.indicator, self.VAR)
+            self.path_output = "Result/{}/{}".format(self.indicator, self.variable)
             if not os.path.exists(self.path_output):
                 os.makedirs(self.path_output)
                 

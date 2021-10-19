@@ -1,18 +1,16 @@
-from scipy.sparse import csr_matrix, lil_matrix, triu
-from novelpy.utils.indicators_utils import *
-import tqdm
+from scipy.sparse import csr_matrix, triu
 import numpy as np
 import pickle 
 import os 
+
 # np.seterr(divide='ignore', invalid='ignore')
 
-class Commonness:
+class Lee2015():
 
     def __init__(self,
-                 var,
-                 var_year,
-                 focal_year,
-                 current_adj):
+                 current_adj,
+                 variable,
+                 focal_year):
         """
         Description
         -----------
@@ -20,25 +18,22 @@ class Commonness:
 
         Parameters
         ----------
-        var : str
-            variable used.
-        var_year : str
-            year variable name
-        focal_year : int
-            year of interest.
         current_adj : scipy.sparse.csr.csr_matrix
             current adjacency matrix.
+        variable : str
+            variable used.
+        focal_year : int
+            year of interest.
 
         Returns
         -------
         None.
 
         """
-        self.var = var
-        self.var_year = var_year
+        self.varriable = variable
         self.focal_year = focal_year
         self.current_adj = current_adj
-        self.path2 = "Data/score/commonness/{}".format(var)
+        self.path2 = "Data/score/commonness/{}".format(variable)
         if not os.path.exists(self.path2):
             os.makedirs(self.path2)
             
