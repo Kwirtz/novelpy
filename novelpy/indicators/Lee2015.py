@@ -1,16 +1,21 @@
-from scipy.sparse import csr_matrix, triu
-import numpy as np
-import pickle 
 import os 
+import pickle 
+import numpy as np
+from scipy.sparse import csr_matrix, triu
+from novelpy.utils.run_indicator_tools import create_output
 
 # np.seterr(divide='ignore', invalid='ignore')
 
-class Lee2015():
+class Lee2015(create_output):
 
-    def __init__(self,
-                 current_adj,
-                 variable,
-                 focal_year):
+    def __init__(self, client_name = None,
+             db_name = None,
+             collection_name = None,
+             id_variable = None,
+             year_variable = None,
+             variable = None,
+             sub_variable = None,
+             focal_year = None):
         """
         Description
         -----------
@@ -19,20 +24,31 @@ class Lee2015():
         Parameters
         ----------
         current_adj : scipy.sparse.csr.csr_matrix
-            current adjacency matrix.
-        variable : str
-            variable used.
+            The accumulated coocurence/adjacency matrix of items we want to calculate the novelty score on.
         focal_year : int
-            year of interest.
+            Calculate novelty for object that have a creation/publication year = focal_year.
+        variable : str
+            Variable of interest (only for path purpose)
 
         Returns
         -------
         None.
 
         """
-        self.varriable = variable
-        self.focal_year = focal_year
-        self.current_adj = current_adj
+        
+        self.indicator = "commonness"
+        
+        create_output.__init__(self,
+                               client_name = client_name,
+                               db_name = db_name,
+                               collection_name = collection_name ,
+                               id_variable = id_variable,
+                               year_variable = year_variable,
+                               variable = variable,
+                               sub_variable = sub_variable,
+                               focal_year = focal_year)
+        
+
         self.path2 = "Data/score/commonness/{}".format(variable)
         if not os.path.exists(self.path2):
             os.makedirs(self.path2)
@@ -63,4 +79,11 @@ class Lee2015():
         pickle.dump(comb_scores, open(self.path2 + "/{}.p".format(self.focal_year), "wb" ) )
         
 
-
+    def get_indicator(self):
+        self.get_data()      
+        print("Create empty df ...")
+        self.compute_comb_score()
+        print("Empty df created !")  
+        print('Getting score per paper ...')        
+        self.update_paper_values()
+        print("Done !")        

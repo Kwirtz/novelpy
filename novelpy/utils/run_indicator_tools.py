@@ -1,17 +1,10 @@
 import numpy as np
-from sklearn import preprocessing
-from scipy.sparse import csr_matrix, triu, lil_matrix
 from itertools import combinations
-import pandas as pd
 import tqdm
 import pymongo
 import pickle
 import json
 import os
-import re
-from multiprocessing import Process, Manager
-import traceback
-import sys
 
 class Dataset:
     
@@ -23,9 +16,10 @@ class Dataset:
              year_variable = None,
              variable = None,
              sub_variable = None,
-             indicator = None,
              focal_year = None,
-             time_window_cooc = None):
+             time_window_cooc = None,
+             n_reutilisation = None,
+             new_infos = None):
         """
         Description
         -----------
@@ -67,9 +61,10 @@ class Dataset:
         self.year_variable = year_variable
         self.variable = variable
         self.sub_variable = sub_variable
-        self.indicator = indicator
         self.focal_year = focal_year
         self.time_window_cooc = time_window_cooc
+        self.n_reutilisation = n_reutilisation
+        self.new_infos = new_infos
         self.item_name = self.variable.split('_')[0] if self.variable else None
         
         if self.client_name:
@@ -177,10 +172,10 @@ class Dataset:
         i = 0
         for year in window:
             if i == 0:
-                cooc = pickle.load(open( self.path + "/{}.p".format(year), "rb" ))
+                cooc = pickle.load(open( self.path_input + "/{}.p".format(year), "rb" ))
                 i += 1
             else:
-                cooc += pickle.load(open( self.path + "/{}.p".format(year), "rb" ))            
+                cooc += pickle.load(open( self.path_input + "/{}.p".format(year), "rb" ))            
         return cooc
 
     def get_cooc(self):
@@ -188,8 +183,9 @@ class Dataset:
         unw = ['novelty']
         type1 = 'unweighted_network' if self.indicator in unw else 'weighted_network'
         type2 = 'no_self_loop' if self.indicator in unw else 'self_loop'
-        self.path = "Data/cooc/{}/{}_{}".format(self.variable,type1,type2)
-        self.name2index = pickle.load(open(self.path + "/name2index.p", "rb" ))
+        self.path_input = "Data/cooc/{}/{}_{}".format(self.variable,type1,type2)
+        self.name2index = pickle.load(open(self.path_input + "/name2index.p", "rb" ))
+        
         if self.indicator == "foster":
             self.current_adj = self.sum_cooc_matrix( window = range(1980, self.focal_year))
         
@@ -203,7 +199,7 @@ class Dataset:
             print('Calculate difficulty matrix')
             self.difficulty_adj = self.sum_cooc_matrix(window = range(self.focal_year-self.time_window_cooc,self.focal_year))
         else:
-            self.current_adj =  pickle.load( open(self.path+'/{}.p'.format(self.focal_year), "rb" )) 
+            self.current_adj =  pickle.load( open(self.path_input+'/{}.p'.format(self.focal_year), "rb" )) 
         
 
     def get_data(self):
@@ -221,8 +217,7 @@ class Dataset:
 
 class create_output(Dataset):
 
-    def get_paper_score(self,
-                        **kwargs):
+    def get_paper_score(self):
         """
     
         Description
@@ -263,10 +258,10 @@ class create_output(Dataset):
         doc_infos = {"n_combi":len(scores_array)}
 
         key = self.item_name + '_' + self.indicator
-        if 'n_reutilisation' and 'time_window' in kwargs:
-            key = key +'_'+str(kwargs['time_window'])+'y_'+str(kwargs['n_reutilisation'])+'reu'
-        elif 'time_window' in kwargs:
-            key = key +'_'+str(kwargs['time_window'])+'y'
+        if self.n_reutilisation and self.time_window_cooc:
+            key = key +'_'+str(self.time_window_cooc)+'y_'+str(self.n_reutilisation)+'reu'
+        elif self.time_window_cooc:
+            key = key +'_'+str(self.time_window_cooc)+'y'
            
         if self.indicator == 'novelty':
             score = {'novelty':sum(self.scores_array)}
@@ -287,7 +282,7 @@ class create_output(Dataset):
         self.doc_infos = doc_infos
         return {key:doc_infos}
     
-    def populate_list(self, **kwargs):
+    def populate_list(self):
         """
         Description
         -----------
@@ -323,12 +318,12 @@ class create_output(Dataset):
                         self.keep_diag=False
                                    
                     # Use novelty score of combination + Matrix of combi of papers to have novelty score of the paper with id_variable = idx
-                    self.get_paper_score(**kwargs)
+                    self.get_paper_score()
                 else:
                     continue
             
-            elif 'new_infos' in kwargs:
-                self.doc_infos = kwargs['new_infos']
+            elif self.new_infos:
+                self.doc_infos = self.new_infos
             
             
             if self.client_name:
@@ -375,7 +370,7 @@ class create_output(Dataset):
                 os.makedirs(self.path_output)
                 
         if self.indicator in ['atypicality','commonness','novelty','foster']:
-            self.populate_list(**kwargs)
+            self.populate_list()
         else:
             print('''indicator must be in 'atypicality', 'commonness', 'novelty' ''')
         print('saved')
