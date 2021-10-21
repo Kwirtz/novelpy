@@ -99,7 +99,7 @@ def get_cell_mean_sd(value,all_sampled_adj_freq):
         count.append(sampled_adj[value[0],value[1]])
     return value, np.mean(count), np.std(count)
 
-def get_comb_mean_sd(path2,all_sampled_adj_freq,unique_values,var,focal_year):
+def get_comb_mean_sd(path2,all_sampled_adj_freq,unique_values,variable,focal_year):
     """
     
 
@@ -182,15 +182,18 @@ def get_comb_mean_sd(path2,all_sampled_adj_freq,unique_values,var,focal_year):
     return mean_comb, sd_comb
 
 
-class Atypicality:
+class Uzzi2013(create_output):
 
     def __init__(self,
-                 var,
-                 var_year,
-                 focal_year,
-                 current_items,
-                 unique_items,
-                 true_current_adj_freq):
+                client_name = client_name,
+                db_name = db_name,
+                collection_name = collection_name ,
+                id_variable = id_variable,
+                year_variable = year_variable,
+                variable = variable,
+                sub_variable = sub_variable,
+                focal_year = focal_year,
+                nb_sample = 20):
         """
         Description
         -----------
@@ -216,13 +219,24 @@ class Atypicality:
         None.
 
         """
-        self.current_items = current_items
-        self.unique_items = unique_items
-        self.true_current_adj_freq = true_current_adj_freq
+
+        self.indicator = "atypicality"
+        create_output.__init__(self,
+                           client_name = client_name,
+                           db_name = db_name,
+                           collection_name = collection_name ,
+                           id_variable = id_variable,
+                           year_variable = year_variable,
+                           variable = variable,
+                           sub_variable = sub_variable,
+                           focal_year = focal_year)
+        
+        self.nb_sample = self.nb_sample
+        self.true_current_adj_freq = self.current_adj
         self.focal_year = focal_year
-        self.var = var
-        self.path1 = "Data/{}/sample_network/".format(self.var)
-        self.path2 = "Data/{}/indicators_adj/atypicality/".format(self.var)
+        self.variable = variable
+        self.path1 = "Data/{}/sample_network/".format(self.variable)
+        self.path2 = "Data/{}/indicators_adj/atypicality/".format(self.variable)
         if not os.path.exists(self.path1):
             os.makedirs(self.path1)
         if not os.path.exists(self.path2 + 'iteration/'):
@@ -290,7 +304,7 @@ class Atypicality:
         mean_adj_freq, sd_adj_freq = get_comb_mean_sd(self.path2,
                                                       all_sampled_adj_freq,
                                                       unique_values,
-                                                      self.var,
+                                                      self.variable,
                                                       self.focal_year)
         
         comb_scores = (self.true_current_adj_freq-mean_adj_freq)/sd_adj_freq  
@@ -305,4 +319,15 @@ class Atypicality:
 						self.focal_year),
                  "wb" ) )
         
+    def get_indicator(self):
+        self.get_data()      
+        print("sample network ...")
+        self.sample_network(nb_sample = self.nb_sample)
+        print("Create empty df ...")
+        self.compute_comb_score()
+        print("Empty df created !")  
+        print('Getting score per paper ...')        
+        self.update_paper_values()
+        print("Done !")        
+
 
