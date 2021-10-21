@@ -136,27 +136,6 @@ class create_cooc:
         ''' 
         self.x = lil_matrix((len(self.item_list), len(self.item_list)), dtype = np.int16)
     
-    def create_save_index(self):
-        '''
-        Description
-        -----------
-        
-        Create dicts that transforms the name in the item_list to an index.
-        Save the dicts to a pickle file.
-        Necessary to work with a sparse matrix and update this matrix
-        
-        Parameters
-        ----------
-
-        Returns
-        -------
-
-        ''' 
-        self.name2index = {name:index for name,index in zip(self.item_list, range(0,len(self.item_list),1))}
-        self.index2name = {index:name for name,index in zip(self.item_list, range(0,len(self.item_list),1))}
-        pickle.dump( self.name2index, open( self.path_output + "/name2index.p", "wb" ) )
-        pickle.dump( self.index2name, open( self.path_output + "/index2name.p", "wb" ) )
-
 
     def get_item_list(self, docs):
         '''
@@ -187,6 +166,28 @@ class create_cooc:
             if n_processed % 10000 == 0:
                 self.item_list = list(set(self.item_list))
         self.item_list = sorted(list(set(self.item_list)))
+
+    def create_save_index(self):
+        '''
+        Description
+        -----------
+        
+        Create dicts that transforms the name in the item_list to an index.
+        Save the dicts to a pickle file.
+        Necessary to work with a sparse matrix and update this matrix
+        
+        Parameters
+        ----------
+
+        Returns
+        -------
+
+        ''' 
+        self.name2index = {name:index for name,index in zip(self.item_list, range(0,len(self.item_list),1))}
+        self.index2name = {index:name for name,index in zip(self.item_list, range(0,len(self.item_list),1))}
+        pickle.dump( self.name2index, open( self.path_output + "/name2index.p", "wb" ) )
+        pickle.dump( self.index2name, open( self.path_output + "/index2name.p", "wb" ) )
+
 
     def create_item_list(self):
         

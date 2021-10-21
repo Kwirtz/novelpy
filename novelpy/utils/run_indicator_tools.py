@@ -310,6 +310,10 @@ class create_output(Dataset):
                 # Check that you have more than 2 item (1 combi) else no combination and no novelty 
                 if len(self.papers_items[idx])>2:
                     self.current_items = self.papers_items[idx]
+                    
+                    if self.indicator == 'atypicality':
+                        self.current_items = [item["item"] for item in self.current_items]
+                    
                     if self.indicator != 'novelty':
                         self.unique_pairwise = False
                         self.keep_diag=True

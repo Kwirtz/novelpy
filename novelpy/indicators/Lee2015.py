@@ -49,9 +49,9 @@ class Lee2015(create_output):
                                focal_year = focal_year)
         
 
-        self.path2 = "Data/score/commonness/{}".format(variable)
-        if not os.path.exists(self.path2):
-            os.makedirs(self.path2)
+        self.path_score = "Data/score/commonness/{}".format(variable)
+        if not os.path.exists(self.path_score):
+            os.makedirs(self.path_score)
             
     def compute_comb_score(self):
         """
@@ -76,14 +76,14 @@ class Lee2015(create_output):
         comb_scores[np.isnan(comb_scores)] =  0
         comb_scores = triu(comb_scores,format='csr')
         
-        pickle.dump(comb_scores, open(self.path2 + "/{}.p".format(self.focal_year), "wb" ) )
+        pickle.dump(comb_scores, open(self.path_score + "/{}.p".format(self.focal_year), "wb" ) )
         
 
     def get_indicator(self):
         self.get_data()      
-        print("Create empty df ...")
+        print('Getting score per year ...')  
         self.compute_comb_score()
-        print("Empty df created !")  
-        print('Getting score per paper ...')        
+        print("Matrice done !")  
+        print('Getting score per paper ...')       
         self.update_paper_values()
         print("Done !")        
