@@ -7,20 +7,30 @@ import tqdm
 import pandas as pd
 import matplotlib.pyplot as plt
 
-files = glob.glob("D:/kevin_data/WoS_novelpy/savedrecs*.txt")
+data = []
 
-date = defaultdict(int)
-for rec in tqdm.tqdm(wosfile.records_from(files)):
-    if rec.get("PY") != None:
-        date[int(rec.get("PY"))] += 1
-    
-df = pd.DataFrame(date,index=[0])
+file_name = ["bibliometrics",'scientometrics','novelty']
+
+
+for cat in file_name:
+    files = glob.glob("D:/kevin_data/WoS_novelpy/{}/savedrecs*.txt".format(cat))
+    date = defaultdict(int)
+    for rec in tqdm.tqdm(wosfile.records_from(files)):
+        if rec.get("PY") != None:
+            date[int(rec.get("PY"))] += 1
+    date = {i:j for i,j in zip(date.keys(),date.values()) if i>=2000 and i <= 2020}
+    data.append(date)
+
+
+df = pd.DataFrame(data,index=[0,0,0])
 df = df.reindex(sorted(df.columns), axis=1)
-
+df = df.T
+df.columns = ['Bibliometrics indicator','Scientometrics indicator','Novelty indicator']
+df = df.T
 fig, ax = plt.subplots(1, 1, figsize=(3, 2), dpi=300)
-df.T[:-1].plot(ax = ax, lw=1.5,title="Number of publication per year")
-ax.set_ylabel("Number of publication")
+df.T[:-1].plot(ax = ax, lw=1.5,title="Number of publications per year")
+ax.set_ylabel("Number of publications")
 ax.set_xlabel("Year")
-ax.get_legend().remove()
+ax.legend(loc='upper left', prop={'size': 6})
 plt.savefig('D:/Github/novelpy/Paper/publication.png')
 
