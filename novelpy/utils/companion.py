@@ -14,8 +14,7 @@ class get_novelty_score:
              variable,
              indicator,
              client_name = None,
-             db_name = None,
-             collection_name = None):
+             db_name = None):
         """
         Description
         -----------
@@ -38,9 +37,7 @@ class get_novelty_score:
         client_name : str, optional
             client name. The default is None.
         db_name : str, optional
-            db name. The default is None.
-        collection_name : str, optional
-            collection name. The default is None.        
+            db name. The default is None.    
             
         Returns
         -------
@@ -50,18 +47,23 @@ class get_novelty_score:
         
         self.client_name = client_name
         self.db_name = db_name
-        self.collection_name = collection_name
         self.entity_id = entity_id
         self.entity_year = entity_year
         self.variable = variable
         self.indicator = indicator
-        self.focal_year = focal_year
 
-        
         if self.client_name:
             self.client = pymongo.MongoClient(client_name)
             self.db = self.client[db_name]
-            self.collection = self.db[collection_name]
+            self.collection = self.db["output"]
+        else:
+            self.path_doc = "Result/{}/{}/{}".format(self.indicator, self.variable,self.year)
+
+        
+        
+        def plot_dist(self):
+    
+    
 
 class plot_dist:
     
