@@ -255,7 +255,7 @@ class create_output(Dataset):
             scores_array.append(float(self.comb_scores[combi[0], combi[1]]))
         self.scores_array = np.array(scores_array)
         
-        doc_infos = {"n_combi":len(scores_array)}
+        doc_infos = {"scores_array": scores_array}
 
         key = self.item_name + '_' + self.indicator
         if self.n_reutilisation and self.time_window_cooc:
