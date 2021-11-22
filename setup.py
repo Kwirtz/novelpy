@@ -10,7 +10,7 @@ classifiers = [
  
 setup(
   name='novelpy',
-  version='0.1.8',
+  version='0.2',
   description='Calculate novelty indicators',
   long_description=open('README.txt').read() + '\n\n' + open('CHANGELOG.txt').read(),
   url='',  
@@ -21,5 +21,6 @@ setup(
   keywords='Novelty, scientometrics', 
   packages=find_packages(),
   install_requires=['pymongo','joblib','sklearn','glob2','tqdm','networkx','python-louvain',
-  'numpy','pickle-mixin','scipy','pandas','tqdm','multiprocess','pyyaml','spacy','scispacy','cycler'] 
+  'numpy','pickle-mixin','scipy','pandas','tqdm','multiprocess','pyyaml','spacy','scispacy','cycler',
+  'wosfile','seaborn'] 
 )
