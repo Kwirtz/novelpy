@@ -100,32 +100,22 @@ Here's a short implementation to run Foster et al.(2015) novelty indicator. Some
 | Now you can run the Foster et al. (2015) indicator
 
 .. code-block:: python
+
+   import novelpy
+
    # Most (if not every) indicator works for a given year, here we want novelty for papers done in 2000
    focal_year = 2000
 
-   # Class that helps you load, save and compute scores 
-   companion = novelpy.utils.run_indicator_tools.create_output(
-               collection_name = 'meshterms_sample',
-               var = 'c04_referencelist',
-               sub_var = "item",
-               var_id = 'PMID',
-               var_year = 'year',
-               indicator = "foster",
-               focal_year = focal_year)
-   
-   # Load cooc, and items 
-   companion.get_data()
-   
-   # For Foster 2015 you only need the co-occurrence matrix
 
-   Foster = novelpy.indicators.Foster2015(current_adj=companion.current_adj,
-                                          year = focal_year,
-                                          variable = "a06_meshheadinglist",
+   Foster = novelpy.indicators.Foster2015(collection_name = 'references_sample',
+                                          id_variable = 'PMID',
+                                          year_variable = 'year',
+                                          variable = "c04_referencelist",
+                                          sub_variable = "item",
+                                          focal_year = focal_year,
                                           community_algorithm = "Louvain")
    Foster.get_indicator()
-   
-   # Iterate through the papers from the focal year and attribute a Novelty score to them
-   companion.update_paper_values()
+    
 
 Now you should have one more folder "Results" with a json for the focal year with the results. 
 
@@ -148,5 +138,16 @@ Now you should have one more folder "Results" with a json for the focal year wit
       └── foster
          └── c04_referencelist
 
-| You can of course iterate through multiple years just by replacing the focal year by a range and a for loop
-| More info and demonstration are given in the section :ref:`Indicators`
+| You can iterate through multiple years just by replacing the focal year by a range and a for loop
+| More info and demonstration are given in the section :ref:`Indicators`.
+
+| Some pre-build functions can help you perform your analysis by gettting the novelty score of a document or plotting the distribution
+
+.. code-block:: python
+
+   import novelpy
+
+   doc_infos = novelpy.utils.get_doc_infos(doc_id = 10564583, doc_year = 2000, variable = "c04_referencelist" , indicator = "foster")
+
+   doc_infos.novelty_score
+   doc_infos.plot_dist()
