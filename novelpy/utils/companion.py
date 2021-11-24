@@ -1,18 +1,18 @@
-import numpy as np
-from itertools import combinations
-import tqdm
-import pymongo
-import pickle
-import json
 import os
+import json
+import pymongo
+import pandas as pd
+import seaborn as sns
 
-class get_novelty_score:
+class plot_dist:
     
     def __init__(self,
-             entity_id,
-             entity_year,
+             doc_id,
+             doc_year,
              variable,
              indicator,
+             time_window_cooc = None,
+             n_reutilisation = None,
              client_name = None,
              db_name = None):
         """
@@ -24,9 +24,9 @@ class get_novelty_score:
         ----------
 
 
-        entity_id : int
+        doc_id : int
             The id of the entity (paper/patent/others) you want to plot the distribution.
-        entity_year : int
+        doc_year : int
             The year of the entity (paper/patent/others) you want to plot the distribution.
         variable : str/list of str
             Plot the distribution for a specific unit of knowledge. 
@@ -47,33 +47,99 @@ class get_novelty_score:
         
         self.client_name = client_name
         self.db_name = db_name
-        self.entity_id = entity_id
-        self.entity_year = entity_year
+        self.doc_id = doc_id
+        self.doc_year = doc_year
         self.variable = variable
         self.indicator = indicator
-
+        self.time_window_cooc = time_window_cooc
+        self.n_reutilisation = n_reutilisation
+        
+        if not isinstance(variable, list) or not isinstance(indicator, list):
+            raise ValueError('indicator and variable should be a list')
+        if "novelty" in self.indicator:
+            if not isinstance(time_window_cooc, list) or not isinstance(n_reutilisation, list):
+                raise ValueError('time_window_cooc and n_reutilisation should be a list')
+                
+        self.df = pd.DataFrame(columns = ["Scores","Variable","Indicator"])
         if self.client_name:
-            self.client = pymongo.MongoClient(client_name)
-            self.db = self.client[db_name]
-            self.collection = self.db["output"]
+            self.get_info_mongo()
         else:
-            self.path_doc = "Result/{}/{}/{}".format(self.indicator, self.variable,self.year)
+            self.get_info_json()
 
+    def get_info_mongo(self):                
+        self.client = pymongo.MongoClient(client_name)
+        self.db = self.client[db_name]
+        self.collection = self.db["output"]
+        self.doc = self.collection.find_one({"PMID":self.doc_id,"year":self.doc_year})
+        for x in self.indicator:
+            for y in self.variable:
+                if x == 'novelty':
+                    for time,reu in zip(self.time_window_cooc,self.n_reutilisation):
+                        key_name = y + "_" + x + "_" + str(self.time_window_cooc) + "y_" + str(self.n_reutilisation) + "reu"
+                        df_temp = pd.DataFrame(self.doc[key_name]["scores_array"], columns=["Scores"])
+                        df_temp['Variable'], df_temp['Indicator'] = [y + "_" + str(self.time_window_cooc) + "y_" + str(self.n_reutilisation) + "reu", x]
+                        self.df = pd.concat([self.df,df_temp], ignore_index=True)                           
+                else:
+                    key_name = y + "_" + x
+                    df_temp = pd.DataFrame(self.doc[key_name]["scores_array"], columns=["Scores"])
+                    df_temp['Variable'], df_temp['Indicator'] = [y, x]
+                    self.df = pd.concat([self.df,df_temp], ignore_index=True)
+                    
+    def get_info_json(self):
+        for x in self.indicator:
+            for y in self.variable:
+                if x == 'novelty':
+                    for time,reu in zip(self.time_window_cooc,self.n_reutilisation):
+                        key_name = y + "_" + x + "_" + str(time) + "y_" + str(reu) + "reu"
+                        self.path_doc= "Result/{}/{}/{}".format(x, y + "_" + str(time) + "y_" + str(reu) + "reu" ,self.doc_year)
+                        with open(self.path_doc + ".json", "r") as read_file:
+                            self.docs = json.load(read_file)
+                        self.doc = [x for x in self.docs if x['PMID'] == self.doc_id][0]
+                        df_temp = pd.DataFrame(self.doc[key_name]["scores_array"], columns=["Scores"])
+                        df_temp['Variable'], df_temp['Indicator'] = [y + "_" + str(time) + "y_" + str(reu) + "reu", x]
+                        self.df = pd.concat([self.df,df_temp], ignore_index=True)                           
+                else:                        
+                    key_name = y + "_" + x
+                    self.path_doc= "Result/{}/{}/{}".format(x, y,self.doc_year)
+                    with open(self.path_doc + ".json", "r") as read_file:
+                        self.docs = json.load(read_file)
+                    self.doc = [x for x in self.docs if x['PMID'] == self.doc_id][0]
+                    df_temp = pd.DataFrame(self.doc[key_name]["scores_array"], columns=["Scores"])
+                    df_temp['Variable'], df_temp['Indicator'] = [y, x]
+                    self.df = pd.concat([self.df,df_temp], ignore_index=True)        
         
-        
-        def plot_dist(self):
-    
-    
+    def get_plot(self):
 
-class plot_dist:
-    
+        """
+   
+        Description
+        -----------        
+        Returns the distribution of novelty score
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        plot
+
+        """
+        g = sns.FacetGrid(self.df, col="Variable", row="Indicator", sharex=False, sharey=False, margin_titles=True)
+        g.set_titles('{col_name}')
+        g.fig.suptitle('Doc id: {}'.format(self.doc_id))
+        g.map(sns.kdeplot, "Scores")
+
+class novelty_trend:
+
     def __init__(self,
-             entity_id = None,
-             variable = None,
-             indicator = None,
+             doc_id,
+             doc_year,
+             variable,
+             indicator,
+             time_window_cooc = None,
+             n_reutilisation = None,
              client_name = None,
-             db_name = None,
-             collection_name = None):
+             db_name = None):
         """
         Description
         -----------
@@ -83,18 +149,20 @@ class plot_dist:
         ----------
 
 
+        doc_id : int
+            The id of the entity (paper/patent/others) you want to plot the distribution.
+        doc_year : int
+            The year of the entity (paper/patent/others) you want to plot the distribution.
+        variable : str/list of str
+            Plot the distribution for a specific unit of knowledge. 
+            If arg is a list draw the different distribution on the same plot 
+        indicator : str/ list of str
+            Plot the distribution for a specific indicator.
+            If arg is a list draw the different distribution on the same plot 
         client_name : str, optional
             client name. The default is None.
         db_name : str, optional
-            db name. The default is None.
-        collection_name : str, optional
-            collection name. The default is None.  
-        client_name : str, optional
-            client name. The default is None.
-        db_name : str, optional
-            db name. The default is None.
-        collection_name : str, optional
-            collection name. The default is None.        
+            db name. The default is None.    
             
         Returns
         -------
@@ -104,54 +172,38 @@ class plot_dist:
         
         self.client_name = client_name
         self.db_name = db_name
-        self.collection_name = collection_name
-        self.id_variable = id_variable
-        self.year_variable = year_variable
+        self.doc_id = doc_id
+        self.doc_year = doc_year
         self.variable = variable
-        self.sub_variable = sub_variable
-        self.focal_year = focal_year
+        self.indicator = indicator
         self.time_window_cooc = time_window_cooc
         self.n_reutilisation = n_reutilisation
-        self.new_infos = new_infos
-        self.item_name = self.variable.split('_')[0] if self.variable else None
         
+        if not isinstance(variable, list) or not isinstance(indicator, list):
+            raise ValueError('indicator and variable should be a list')
+        if "novelty" in self.indicator:
+            if not isinstance(time_window_cooc, list) or not isinstance(n_reutilisation, list):
+                raise ValueError('time_window_cooc and n_reutilisation should be a list')
+                
+        self.df = pd.DataFrame(columns = ["Scores","Variable","Indicator"])
         if self.client_name:
-            self.client = pymongo.MongoClient(client_name)
-            self.db = self.client[db_name]
-            self.collection = self.db[collection_name]
-
-            
-    def get_item_infos(self):
-        """
-   
-        Description
-        -----------        
-        Get item info depedning on the indicator
-
-        Parameters
-        ----------
-        item : dict
-            item from a document list of items.
-        indicator : str
-            indicator for which the score is computed.
-
-        Returns
-        -------
-        doc_item : dict/list
-            dict or list depending on the indicator structured as needed for later usage.
-
-        """
-     
-        if self.indicator == 'atypicality':
-            if 'year' in item.keys():
-                doc_item = {'item':item[self.sub_variable],
-                                  'year':item['year']}
-        elif self.indicator == 'kscores': 
-            doc_item = item
+            self.get_info_mongo()
         else:
-            doc_item = item[self.sub_variable]
-        
-        return  doc_item
-        
+            self.get_info_json()
     
+
+doc_infos = plot_dist(doc_id = 10564583,
+                      doc_year = 2000,
+                      variable = ["c04_referencelist","a06_meshheadinglist"],
+                      indicator = ["foster","commonness"],
+                      time_window_cooc = [3],
+                      n_reutilisation = [1]
+                      )
+doc_infos.get_plot()
+df = doc_infos.df
+
+
+
+
+
 
