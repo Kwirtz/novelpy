@@ -192,9 +192,7 @@ class novelty_trend:
             self.get_info_json()
     
 
-doc_infos = plot_dist(doc_id = 10564583,
-                      doc_year = 2000,
-                      variable = ["c04_referencelist","a06_meshheadinglist"],
+doc_infos = plot_dist(variable = ["c04_referencelist","a06_meshheadinglist"],
                       indicator = ["foster","commonness"],
                       time_window_cooc = [3],
                       n_reutilisation = [1]
