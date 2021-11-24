@@ -80,7 +80,7 @@ class Wang2017(create_output):
                                time_window_cooc = time_window_cooc,
                                n_reutilisation = n_reutilisation)        
 
-        self.path_score = "Data/score/novelty/{}/".format(self.variable)
+        self.path_score = "Data/score/novelty/{}/".format(self.variable + "_" + str(self.time_window_cooc) + "y_" + str(self.n_reutilisation) + "reu" )
         if not os.path.exists(self.path_score):
             os.makedirs(self.path_score)        
 
