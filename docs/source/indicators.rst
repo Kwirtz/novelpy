@@ -20,16 +20,19 @@ To run "Atypicality" you'll need the co-occurence matrix of the focal year but a
 
 
 
-.. py:function:: Atypicality(var, var_year, focal_year, current_items, unique_items, true_current_adj_freq)
+.. py:function:: Atypicality(client_name = None, db_name = None, collection_name = None, id_variable = None, year_variable = None, variable = None, sub_variable = None, focal_year = None, nb_sample = 20)
 
    Create co-occurence matrix 
 
-   :param str var: The key of interest in the dict
-   :param str var_year: The key that gives the year of the paper
-   :param str focal_year: Name of the collection (either Mongo or Json) where the data is
-   :param dict current_items: dict with id as key and item info as value.
-   :param dict unique_items: dict structured this way name:index, file from the name2index.p generated with the cooccurrence matrices.
-   :param scipy.sparse.csr.csr_matrix true_current_adj_freq: current adjacency matrix.
+   :param str client_name: Mongo URI if your data is hosted on a MongoDB instead of a JSON file
+   :param str db_name: Name of the db
+   :param str collection_name: Name of the collection or the json file containing the data   
+   :param str id_variable: Name of the key which value give the identity of the document.
+   :param str year_variable: Name of the key which value is the year of creation of the document.
+   :param str variable: Name of the key that holds the variable of interest used in combinations.
+   :param str sub_variable: Name of the key which holds the ID of the variable of interest.
+   :param int focal_year: Calculate the novelty score for every document which has a date of creation = focal_year.
+   :param int nb_sample: Number of resample of the co-occurence matrix.
 
    :return: 
    :raises ValueError: 

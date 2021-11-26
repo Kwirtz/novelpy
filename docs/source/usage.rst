@@ -144,7 +144,25 @@ Now you should have one more folder "Results" with a json for the focal year wit
 | Some pre-build functions can help you perform your analysis by getting the novelty score of a document, plotting the distribution or do a correlation analysis
 
 .. code-block:: python
+   
+   # Get distribution for paper with id 10564583
+   import novelpy
 
+   dist = novelpy.utils.plot_dist(doc_id = 10564583,
+                         doc_year = 2000,
+                         variable = ["c04_referencelist"],
+                         indicator = ["foster"]
+                         )
+   dist.get_plot_dist()
+   
+   # The data used for the plot can be found in dist.df
+
+.. image:: img/dist.png
+   :width: 600
+
+.. code-block:: python
+   
+   # A more complex example
    import novelpy
 
    dist = novelpy.utils.plot_dist(doc_id = 10564583,
@@ -153,8 +171,31 @@ Now you should have one more folder "Results" with a json for the focal year wit
                          indicator = ["foster","commonness"],
                          )
    dist.get_plot_dist()
-   
-   # The data used for the plot can be found in dist.df
 
-.. image:: img/dist.png
+.. image:: img/dist_complex.png
+   :width: 600
+
+.. code-block:: python
+
+   trend = novelpy.utils.novelty_trend(year_range = range(2000,2015,1),
+                 variable = ["c04_referencelist","a06_meshheadinglist"],
+                 indicator = ["foster","commonness"],
+                 time_window_cooc = [3],
+                 n_reutilisation = [1])
+
+   trend.get_plot_trend()
+
+.. image:: img/trend.png
+   :width: 600
+
+.. code-block:: python
+   corr = correlation_indicators(year_range = range(2000,2015,1),
+                 variable = ["c04_referencelist","a06_meshheadinglist"],
+                 indicator = ["foster","commonness"],
+                 time_window_cooc = [3],
+                 n_reutilisation = [1])
+
+   corr.correlation_heatmap()
+
+.. image:: img/heatmap.png
    :width: 600
