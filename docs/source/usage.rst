@@ -141,13 +141,22 @@ Now you should have one more folder "Results" with a json for the focal year wit
 | You can iterate through multiple years just by replacing the focal year by a range and a for loop
 | More info and demonstration are given in the section :ref:`Indicators`.
 
-| Some pre-build functions can help you perform your analysis by gettting the novelty score of a document or plotting the distribution
+| Some pre-build functions can help you perform your analysis by getting the novelty score of a document, plotting the distribution or do a correlation analysis
 
 .. code-block:: python
 
    import novelpy
 
-   doc_infos = novelpy.utils.get_doc_infos(doc_id = 10564583, doc_year = 2000, variable = "c04_referencelist" , indicator = "foster")
+   dist = novelpy.utils.plot_dist(doc_id = 10564583,
+                         doc_year = 2000,
+                         variable = ["c04_referencelist","a06_meshheadinglist"],
+                         indicator = ["foster","commonness"],
+                         time_window_cooc = [3],
+                         n_reutilisation = [1]
+                         )
+   dist.get_plot_dist()
+   
+   # The data used for the plot can be found in dist.df
 
-   doc_infos.novelty_score
-   doc_infos.plot_dist()
+.. image:: img/dist.png
+   :width: 600
