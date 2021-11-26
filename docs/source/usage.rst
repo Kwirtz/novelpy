@@ -151,8 +151,6 @@ Now you should have one more folder "Results" with a json for the focal year wit
                          doc_year = 2000,
                          variable = ["c04_referencelist","a06_meshheadinglist"],
                          indicator = ["foster","commonness"],
-                         time_window_cooc = [3],
-                         n_reutilisation = [1]
                          )
    dist.get_plot_dist()
    
