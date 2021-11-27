@@ -363,7 +363,7 @@ class correlation_indicators:
         for year in self.year_range:
             self.corr[year] = pd.DataFrame.from_dict(self.corr[year], orient='index').T
     
-    def correlation_heatmap(self):
+    def correlation_heatmap(self, log = False):
 
         """
    
@@ -380,7 +380,8 @@ class correlation_indicators:
 
         """
         for year in self.year_range:
-            sns.heatmap(self.corr[year].corr())
+            cleaned_corr = self.corr[year][~self.corr[year].isin([np.nan, np.inf, -np.inf]).any(1)]
+            sns.heatmap(cleaned_corr.corr())
 
             
 """
