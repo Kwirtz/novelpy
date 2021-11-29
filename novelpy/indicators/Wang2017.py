@@ -33,16 +33,16 @@ class Wang2017(create_output):
 
 
     def __init__(self,
+                 collection_name,
+                 id_variable,
+                 year_variable,
+                 variable,
+                 sub_variable,
+                 focal_year,
+                 time_window_cooc,
+                 n_reutilisation,
                  client_name = None,
-                 db_name = None,
-                 collection_name = None,
-                 id_variable = None,
-                 year_variable = None,
-                 variable = None,
-                 sub_variable = None,
-                 focal_year = None,
-                 time_window_cooc = None,
-                 n_reutilisation = None):
+                 db_name = None,):
         """
         
         Description
