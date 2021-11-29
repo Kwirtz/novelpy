@@ -11,12 +11,15 @@ version = '0.1.4'
 
 # -- General configuration
 
+autosectionlabel_prefix_document = True
+
 extensions = [
     'sphinx.ext.duration',
     'sphinx.ext.doctest',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.autosectionlabel',
 ]
 
 intersphinx_mapping = {

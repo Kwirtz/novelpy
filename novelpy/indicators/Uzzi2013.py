@@ -231,14 +231,15 @@ def get_comb_mean_sd(path2,all_sampled_adj_freq,unique_values,variable,focal_yea
 
 class Uzzi2013(create_output):
 
-    def __init__(self, client_name = None,
+    def __init__(self, 
+             collection_name,
+             id_variable,
+             year_variable,
+             variable,
+             sub_variable,
+             focal_year,                 
+             client_name = None,
              db_name = None,
-             collection_name = None,
-             id_variable = None,
-             year_variable = None,
-             variable = None,
-             sub_variable = None,
-             focal_year = None,
              nb_sample = 20):
         """
         Description
