@@ -179,6 +179,7 @@ Now you should have one more folder "Results" with a json for the focal year wit
 
    trend = novelpy.utils.novelty_trend(year_range = range(2000,2015,1),
                  variable = ["c04_referencelist","a06_meshheadinglist"],
+                 id_variable = "PMID",
                  indicator = ["foster","commonness"],
                  time_window_cooc = [3],
                  n_reutilisation = [1])

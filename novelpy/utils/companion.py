@@ -15,6 +15,7 @@ class plot_dist:
                  doc_id,
                  doc_year,
                  variable,
+                 id_variable,
                  indicator,
                  time_window_cooc = None,
                  n_reutilisation = None,
@@ -36,6 +37,8 @@ class plot_dist:
         variable : str/list of str
             Plot the distribution for a specific unit of knowledge. 
             If arg is a list draw the different distribution on the same plot 
+        id_variable : str
+            Name of the key which value give the identity of the document.
         indicator : str/ list of str
             Plot the distribution for a specific indicator.
             If arg is a list draw the different distribution on the same plot 
@@ -388,6 +391,7 @@ class correlation_indicators:
 doc_infos = plot_dist(doc_id = 10564583,
                       doc_year = 2000,
                       variable = ["c04_referencelist","a06_meshheadinglist"],
+                      id_variable = "PMID",
                       indicator = ["foster","commonness"],
                       time_window_cooc = [3],
                       n_reutilisation = [1]
@@ -396,16 +400,15 @@ doc_infos.get_plot_dist()
 df = doc_infos.df
 
 
-trend = novelty_trend(year_range = range(2000,2015,1),
+trend = novelty_trend(year_range = range(2000,2016,1),
               variable = ["c04_referencelist","a06_meshheadinglist"],
               indicator = ["foster","commonness"],
               time_window_cooc = [3],
               n_reutilisation = [1])
 
 trend.get_plot_trend()
-"""
 
-corr = correlation_indicators(year_range = range(2000,2015,1),
+corr = correlation_indicators(year_range = range(2000,2016,1),
               variable = ["c04_referencelist","a06_meshheadinglist"],
               indicator = ["foster","commonness"],
               time_window_cooc = [3],
@@ -414,3 +417,4 @@ corr = correlation_indicators(year_range = range(2000,2015,1),
 corr.correlation_heatmap()
 df = corr.corr
 sns.heatmap(df[2014].corr())
+"""

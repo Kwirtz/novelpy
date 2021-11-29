@@ -39,21 +39,21 @@ To run "Atypicality" you'll need the co-occurence matrix of the focal year but a
    :raises TypeError: 
 
 
-In order to run Atypicality you first need to create a co-occurence matrix, read more in :ref:`Usage` and :ref:`Utils:cooc_utils`
+In order to run Atypicality you first need to create a co-occurence matrix with self-loop = True and weighted_network = True, read more in :ref:`Usage` and :ref:`Utils:cooc_utils`
 
 .. code-block:: python
 
    import novelpy
    import tqdm
 
-   for focal_year in tqdm.tqdm(range(2000,2016), desc = "Computing indicator for window of time"):
-       Uzzi = novelpy.indicators.Uzzi2013(collection_name = 'meshterms_sample',
-                                              id_variable = 'PMID',
-                                              year_variable = 'year',
-                                              variable = "a06_meshheadinglist",
-                                              sub_variable = "descUI",
-                                              focal_year = focal_year)
-       Uzzi.get_indicator()
+   focal_year = 2000
+   Uzzi = novelpy.indicators.Uzzi2013(collection_name = 'meshterms_sample',
+                                          id_variable = 'PMID',
+                                          year_variable = 'year',
+                                          variable = "a06_meshheadinglist",
+                                          sub_variable = "descUI",
+                                          focal_year = focal_year)
+   Uzzi.get_indicator()
 
 Foster et al. [2015]
 ~~~~~~~~~~~~~~~~~~~~~~
