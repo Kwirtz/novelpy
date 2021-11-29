@@ -42,6 +42,7 @@ To run "Atypicality" you'll need the co-occurence matrix of the focal year but a
 In order to run Atypicality you first need to create a co-occurence matrix, read more in :ref:`Usage` and :ref:`Utils:cooc_utils`
 
 .. code-block:: python
+
    import novelpy
    import tqdm
 
