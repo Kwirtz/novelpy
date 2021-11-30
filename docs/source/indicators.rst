@@ -21,7 +21,7 @@ The goal of the measure proposed by Uzzi et al. [2013] :cite:p:`uzzi2013atypical
    :align: center
 
 .. image:: img/uzzi2.png
-   :width: 300
+   :width: 250
    :align: center
 
 .. py:function:: Uzzi2013(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, client_name = None, db_name = None, nb_sample = 20)
@@ -68,6 +68,7 @@ Foster et al. [2015] :cite:p:`foster2015tradition` define novelty as an inter-co
 
 .. image:: img/foster.png
    :width: 300
+   :align: center
 
 .. py:function:: Foster2015(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, client_name = None, db_name = None, community_algorithm = "Louvain")
 
@@ -112,7 +113,8 @@ Lee et al. [2015]
 Lee et al. [2015] :cite:p:`lee2015creativity` compare the observed number of combination with the theoretical number of combination between two items. The higher (lower) the observed (theoretical) number of combination the more novel is the paper. They call this measure "commonness".
 
 .. image:: img/lee.png
-   :width: 300
+   :width: 250
+   :align: center
 
 .. py:function:: Lee2015(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, client_name = None, db_name = None)
 
@@ -156,6 +158,7 @@ Wang et al. [2017] :cite:p:`wang2017bias` proposed a measure of difficulty on pa
 
 .. image:: img/wang.png
    :width: 600
+   :align: center
 
 .. py:function:: Wang2017(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, time_window_cooc, n_reutilisation,client_name = None, db_name = None)
 
@@ -205,7 +208,8 @@ Shibayama et al. [2021]
 
 .. image:: img/shibayama.png
    :width: 300
-
+   :align: center
+   
 Disruptiveness indicators
 ----------------
 
