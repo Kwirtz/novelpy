@@ -14,7 +14,7 @@ Here are the novelty indicators we currently support:
 Uzzi et al. [2013]
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The goal of the measure proposed by Uzzi et al. [2013] :footcite:p:`uzzi2013atypical` is to compare an observed network (hear co-occurrence matrix) with a random network where edges are rearranged randomly at a year level.  They call it "Atypicality".
+The goal of the measure proposed by Uzzi et al. [2013] :cite:p:`uzzi2013atypical` is to compare an observed network (hear co-occurrence matrix) with a random network where edges are rearranged randomly at a year level.  They call it "Atypicality".
 
 .. py:function:: Uzzi2013(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, client_name = None, db_name = None, nb_sample = 20)
 
@@ -52,12 +52,11 @@ In order to run Atypicality you first need to create a co-occurence matrix with 
                                           focal_year = focal_year)
    Uzzi.get_indicator()
 
-.. footbibliography::
 
 Foster et al. [2015]
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Foster et al. [2015]:footcite:p:`foster2015tradition` define novelty as an inter-community combination. A combination has a novelty score of 1 if the two items are not in the same community. The original paper was using the infomap community detection algorithm. Most recently Foster et al [2021]:footcite:p:`foster2021surprise` used the louvain algorithm. Currently only Louvain is supporte see the :ref:`roadmap` section. The score for a given entity is the proportion of novel combination on the total number of combination.
+Foster et al. [2015]:cite:p:`foster2015tradition` define novelty as an inter-community combination. A combination has a novelty score of 1 if the two items are not in the same community. The original paper was using the infomap community detection algorithm. Most recently Foster et al [2021]:cite:p:`foster2021surprise` used the louvain algorithm. Currently only Louvain is supporte see the :ref:`roadmap` section. The score for a given entity is the proportion of novel combination on the total number of combination.
 
 
 .. py:function:: Foster2015(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, client_name = None, db_name = None, community_algorithm = "Louvain")
@@ -95,7 +94,7 @@ In order to run this novelty indicator you first need to create a co-occurence m
                                           community_algorithm = "Louvain")
    Foster.get_indicator()
 
-.. footbibliography::
+
 
 Lee et al. [2015]
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -194,3 +193,5 @@ Wu et al. [2019]
 
 Bu et al. [2019]
 ~~~~~~~~~~~~~~~~~~~~~~
+
+.. bibliography::
