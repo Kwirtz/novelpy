@@ -13,8 +13,6 @@ version = '0.1.4'
 
 autosectionlabel_prefix_document = True
 
-bibtex_bibfiles = ['refs.bib']
-
 extensions = [
     'sphinx.ext.duration',
     'sphinx.ext.doctest',
@@ -24,6 +22,8 @@ extensions = [
     'sphinx.ext.autosectionlabel',
     'sphinxcontrib.bibtex',
 ]
+
+bibtex_bibfiles = ['refs.bib']
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
