@@ -18,9 +18,11 @@ The goal of the measure proposed by Uzzi et al. [2013] :cite:p:`uzzi2013atypical
 
 .. image:: img/uzzi.png
    :width: 600
+   :align: center
 
 .. image:: img/uzzi2.png
    :width: 300
+   :align: center
 
 .. py:function:: Uzzi2013(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, client_name = None, db_name = None, nb_sample = 20)
 
