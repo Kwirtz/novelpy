@@ -17,7 +17,7 @@ Uzzi et al. [2013]
 The goal of the measure proposed by Uzzi et al. [2013] :cite:p:`uzzi2013atypical` is to compare an observed network (hear co-occurrence matrix) with a random network where edges are rearranged randomly at a year level.  They call it "Atypicality".
 
 .. image:: img/uzzi.png
-   :width: 600
+   :width: 450
    :align: center
 
 .. image:: img/uzzi2.png
