@@ -64,7 +64,7 @@ In order to run Atypicality you first need to create a co-occurence matrix with 
 Foster et al. [2015]
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Foster et al. [2015] :cite:p:`foster2015tradition` define novelty as an inter-community combination. A combination has a novelty score of 1 if the two items are not in the same community. The original paper was using the infomap community detection algorithm. Most recently Foster et al [2021] :cite:p:`foster2021surprise` used the louvain algorithm. Currently only Louvain is supporte see the :ref:`roadmap` section. The score for a given entity is the proportion of novel combination on the total number of combination.
+Foster et al. [2015] :cite:p:`foster2015tradition` define novelty as an inter-community combination. A combination has a novelty score of 1 if the two items are not in the same community. The original paper was using the infomap community detection algorithm. Most recently Foster et al [2021] :cite:p:`foster2021surprise` used the louvain algorithm. Currently only Louvain is supported see the :ref:`roadmap` section. The score for a given entity is the proportion of novel combination on the total number of combination.
 
 .. image:: img/foster.png
    :width: 300
@@ -209,7 +209,7 @@ Shibayama et al. [2021]
 .. image:: img/shibayama.png
    :width: 300
    :align: center
-   
+
 Disruptiveness indicators
 ----------------
 
