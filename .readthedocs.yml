@@ -7,7 +7,7 @@ version: 1
 
 # Optionally declare the Python requirements required to build your docs
 python:
-  version: 3.6.8
+  version: 3.6
   install:
     - requirements: docs/source/requirements.txt
 
