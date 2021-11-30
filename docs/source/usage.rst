@@ -86,9 +86,9 @@ Here's a short implementation to run Foster et al.(2015) novelty indicator. Some
    ├── demo.py
    └── Data   
       ├── docs
-      │   ├── authors.json       
-      │   ├── references.json
-      │   └── meshterms.json
+      │   ├── authors_sample.json       
+      │   ├── references_sample.json
+      │   └── meshterms_sample.json
       │ 
       └── cooc
          └── c04_referencelist
@@ -96,14 +96,13 @@ Here's a short implementation to run Foster et al.(2015) novelty indicator. Some
         
 
 
-| Read more on the create_cooc function here :ref:`Utils`
-| Now you can run the Foster et al. (2015) indicator
+| Read more on the create_cooc function here :ref:`Utils`. Now you can run the Foster et al. (2015) novelty indicator.
 
 .. code-block:: python
 
    import novelpy
 
-   # Most (if not every) indicator works for a given year, here we want novelty for papers done in 2000
+   # Most (if not all) indicator works for a given year, here we want novelty for papers published in 2000
    focal_year = 2000
 
 
@@ -126,9 +125,9 @@ Now you should have one more folder "Results" with a json for the focal year wit
    ├── demo.py
    ├── Data   
    │  ├── docs
-   │  │   ├── authors.json       
-   │  │   ├── references.json
-   │  │   └── meshterms.json
+   │  │   ├── authors_sample.json       
+   │  │   ├── references_sample.json
+   │  │   └── meshterms_sample.json
    │  │ 
    │  └── cooc
    │     └── c04_referencelist
@@ -141,7 +140,7 @@ Now you should have one more folder "Results" with a json for the focal year wit
 | You can iterate through multiple years just by replacing the focal year by a range and a for loop
 | More info and demonstration are given in the section :ref:`Indicators`.
 
-| Some pre-build functions can help you perform your analysis by getting the novelty score of a document, plotting the distribution or do a correlation analysis
+| Some pre-build functions can help you perform your analysis by getting the novelty score of a document, plotting the distribution or do a correlation analysis between multiple indicator/variable.
 
 .. code-block:: python
    
