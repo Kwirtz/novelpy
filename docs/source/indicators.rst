@@ -56,7 +56,7 @@ In order to run Atypicality you first need to create a co-occurence matrix with 
 Foster et al. [2015]
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Foster et al. [2015]:cite:p:`foster2015tradition` define novelty as an inter-community combination. A combination has a novelty score of 1 if the two items are not in the same community. The original paper was using the infomap community detection algorithm. Most recently Foster et al [2021]:cite:p:`foster2021surprise` used the louvain algorithm. Currently only Louvain is supporte see the :ref:`roadmap` section. The score for a given entity is the proportion of novel combination on the total number of combination.
+Foster et al. [2015] :cite:p:`foster2015tradition` define novelty as an inter-community combination. A combination has a novelty score of 1 if the two items are not in the same community. The original paper was using the infomap community detection algorithm. Most recently Foster et al [2021] :cite:p:`foster2021surprise` used the louvain algorithm. Currently only Louvain is supporte see the :ref:`roadmap` section. The score for a given entity is the proportion of novel combination on the total number of combination.
 
 
 .. py:function:: Foster2015(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, client_name = None, db_name = None, community_algorithm = "Louvain")
@@ -99,7 +99,7 @@ In order to run this novelty indicator you first need to create a co-occurence m
 Lee et al. [2015]
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Lee et al. [2015] compare the observed number of combination with the theoretical number of combination between two items. The higher (lower) the observed (theoretical) number of combination the more novel is the paper. They call this measure "commonness".
+Lee et al. [2015] :cite:p:`lee2015creativity` compare the observed number of combination with the theoretical number of combination between two items. The higher (lower) the observed (theoretical) number of combination the more novel is the paper. They call this measure "commonness".
 
 .. py:function:: Lee2015(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, client_name = None, db_name = None)
 
@@ -139,7 +139,7 @@ In order to run "commonness" you first need to create a co-occurence matrix with
 Wang et al. [2017]
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Wang et al. [2017] proposed a measure of difficulty on pair of references that were never made before, but that are reused after the given publication’s year (Scholars do not have to cite directly the paper that create the combination but only the combination itself). The idea is to compute the cosine similarity for each journal combination based on their co-citation profile b years before t.
+Wang et al. [2017] :cite:p:`wang2017bias` proposed a measure of difficulty on pair of references that were never made before, but that are reused after the given publication’s year (Scholars do not have to cite directly the paper that create the combination but only the combination itself). The idea is to compute the cosine similarity for each journal combination based on their co-citation profile b years before t.
 
 .. py:function:: Wang2017(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, time_window_cooc, n_reutilisation,client_name = None, db_name = None)
 
@@ -185,13 +185,18 @@ In order to run the indicator you first need to create a co-occurence matrix wit
 Shibayama et al. [2021]
 ~~~~~~~~~~~~~~~~~~~~~~
 
+:cite:p:`shibayama2021measuring`
+
 Disruptiveness indicators
 ----------------
 
 Wu et al. [2019]
 ~~~~~~~~~~~~~~~~~~~~~~
 
+:cite:p:`wu2019solo`
+
 Bu et al. [2019]
 ~~~~~~~~~~~~~~~~~~~~~~
+
 
 .. bibliography::
