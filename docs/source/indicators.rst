@@ -16,6 +16,12 @@ Uzzi et al. [2013]
 
 The goal of the measure proposed by Uzzi et al. [2013] :cite:p:`uzzi2013atypical` is to compare an observed network (hear co-occurrence matrix) with a random network where edges are rearranged randomly at a year level.  They call it "Atypicality".
 
+.. image:: img/uzzi.png
+   :width: 600
+
+.. image:: img/uzzi2.png
+   :width: 600
+
 .. py:function:: Uzzi2013(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, client_name = None, db_name = None, nb_sample = 20)
 
    Compute novelty score for every paper for the focal_year based on Uzzi et al. 2013 
@@ -58,6 +64,8 @@ Foster et al. [2015]
 
 Foster et al. [2015] :cite:p:`foster2015tradition` define novelty as an inter-community combination. A combination has a novelty score of 1 if the two items are not in the same community. The original paper was using the infomap community detection algorithm. Most recently Foster et al [2021] :cite:p:`foster2021surprise` used the louvain algorithm. Currently only Louvain is supporte see the :ref:`roadmap` section. The score for a given entity is the proportion of novel combination on the total number of combination.
 
+.. image:: img/foster.png
+   :width: 600
 
 .. py:function:: Foster2015(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, client_name = None, db_name = None, community_algorithm = "Louvain")
 
@@ -101,6 +109,9 @@ Lee et al. [2015]
 
 Lee et al. [2015] :cite:p:`lee2015creativity` compare the observed number of combination with the theoretical number of combination between two items. The higher (lower) the observed (theoretical) number of combination the more novel is the paper. They call this measure "commonness".
 
+.. image:: img/lee.png
+   :width: 600
+
 .. py:function:: Lee2015(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, client_name = None, db_name = None)
 
    Compute novelty score for every paper for the focal_year based on Foster et al. 2015 
@@ -140,6 +151,9 @@ Wang et al. [2017]
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Wang et al. [2017] :cite:p:`wang2017bias` proposed a measure of difficulty on pair of references that were never made before, but that are reused after the given publication’s year (Scholars do not have to cite directly the paper that create the combination but only the combination itself). The idea is to compute the cosine similarity for each journal combination based on their co-citation profile b years before t.
+
+.. image:: img/wang.png
+   :width: 600
 
 .. py:function:: Wang2017(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, time_window_cooc, n_reutilisation,client_name = None, db_name = None)
 
@@ -186,6 +200,9 @@ Shibayama et al. [2021]
 ~~~~~~~~~~~~~~~~~~~~~~
 
 :cite:p:`shibayama2021measuring`
+
+.. image:: img/shibayama.png
+   :width: 600
 
 Disruptiveness indicators
 ----------------
