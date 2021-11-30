@@ -34,7 +34,7 @@ The package currently supports JSON files which should be located in Data/docs o
 
 | Depending on what kind of indicator you are running, you will need different kind of input (For example for Uzzi et al.(2013) you only need references.json). 
 |
-| We intend to automatize the process with well known Databases (Web of science, arxiv, Pubmed Knowlede graph, ...). Look into the :ref:`roadmap` section to learn
+| We intend to automatize the process with well known Databases (Web of science, ArXiv, Pubmed Knowlede graph, ...). Look into the :ref:`roadmap` section to learn
 | more about future implementation.
 |
 | If you want to use your own data, please look into the Sample section below.
@@ -48,7 +48,7 @@ We made available a small sample of data so you can get familiar with the packag
 >>> from novelpy.utils.get_sample import download_sample
 >>> download_sample()
 
-| This will give you the file as seen in :ref:`format`_. Read more about this sample structure `here <https://github.com/Kwirtz/data_sample/tree/main/novelpy>`_.
+| This will give you the file as seen in :ref:`Usage:format`. Read more about this sample structure `here <https://github.com/Kwirtz/data_sample/tree/main/novelpy>`_.
 | Or if you want to test the package with MongoDB you can run the following which will create a database "novelty_sample_test" with everything needed:
 
 >>> download_sample(client_name="mongodb://localhost:27017")

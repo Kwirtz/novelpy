@@ -36,7 +36,7 @@ The goal of the measure proposed by Uzzi et al. [2013] is to compare an observed
    :raises TypeError: 
 
 
-In order to run Atypicality you first need to create a co-occurence matrix with self-loop = True and weighted_network = True, read more in :ref:`Usage` and :ref:`Utils:cooc_utils`
+In order to run Atypicality you first need to create a co-occurence matrix with self-loop = True and weighted_network = True, read more in :ref:`Usage:tutorial` and :ref:`Utils:cooc_utils`
 
 .. code-block:: python
 
@@ -78,7 +78,7 @@ Foster et al. [2015] define novelty as an inter-community combination. A combina
 
    :raises TypeError: 
 
-In order to run this novelty indicator you first need to create a co-occurence matrix with self-loop = True and weighted_network = True, read more in :ref:`Usage` and :ref:`Utils:cooc_utils`
+In order to run this novelty indicator you first need to create a co-occurence matrix with self-loop = True and weighted_network = True, read more in :ref:`Usage:tutorial` and :ref:`Utils:cooc_utils`
 
 .. code-block:: python
 
@@ -118,11 +118,13 @@ Lee et al. [2015] compare the observed number of combination with the theoretica
 
    :raises TypeError: 
 
-In order to run "commonness" you first need to create a co-occurence matrix with self-loop = True and weighted_network = True, read more in :ref:`Usage` and :ref:`Utils:cooc_utils`
+In order to run "commonness" you first need to create a co-occurence matrix with self-loop = True and weighted_network = True, read more in :ref:`Usage:tutorial` and :ref:`Utils:cooc_utils`
 
 .. code-block:: python
 
    import novelpy
+
+   focal_year = 2000
 
    Lee = novelpy.indicators.Lee2015(collection_name = 'references_sample',
                                           id_variable = 'PMID',
@@ -158,11 +160,13 @@ Wang et al. [2017] proposed a measure of difficulty on pair of references that w
    :raises ValueError: 
    :raises TypeError: 
 
-In order to run the indicator you first need to create a co-occurence matrix with self-loop = True and weighted_network = True, read more in :ref:`Usage` and :ref:`Utils:cooc_utils`
+In order to run the indicator you first need to create a co-occurence matrix with self-loop = True and weighted_network = True, read more in :ref:`Usage:tutorial` and :ref:`Utils:cooc_utils`
 
 .. code-block:: python
 
    import novelpy
+
+   focal_year = 2000
 
    Wang = novelpy.indicators.Wang2017(collection_name = 'meshterms_sample',
                                           id_variable = 'PMID',
