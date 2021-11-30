@@ -14,7 +14,7 @@ Here are the novelty indicators we currently support:
 Uzzi et al. [2013]
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The goal of the measure proposed by Uzzi et al. [2013] is to compare an observed network (hear co-occurrence matrix) with a random network where edges are rearranged randomly at a year level.  They call it "Atypicality".
+The goal of the measure proposed by Uzzi et al. [2013] :footcite:p:`uzzi2013atypical` is to compare an observed network (hear co-occurrence matrix) with a random network where edges are rearranged randomly at a year level.  They call it "Atypicality".
 
 .. py:function:: Uzzi2013(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, client_name = None, db_name = None, nb_sample = 20)
 
@@ -51,6 +51,8 @@ In order to run Atypicality you first need to create a co-occurence matrix with 
                                           sub_variable = "items",
                                           focal_year = focal_year)
    Uzzi.get_indicator()
+
+.. footbibliography::
 
 Foster et al. [2015]
 ~~~~~~~~~~~~~~~~~~~~~~
