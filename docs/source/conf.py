@@ -39,9 +39,3 @@ html_theme = 'sphinx_rtd_theme'
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
-
-
-python:
-  version: 3.7
-  install:
-    - requirements: docs/requirements.txt
