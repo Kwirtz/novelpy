@@ -36,7 +36,7 @@ class Lee2015(create_output):
 
         """
         
-        self.indicator = "commonness"
+        self.indicator = "lee"
         
         create_output.__init__(self,
                                client_name = client_name,
@@ -49,7 +49,7 @@ class Lee2015(create_output):
                                focal_year = focal_year)
         
 
-        self.path_score = "Data/score/commonness/{}".format(variable)
+        self.path_score = "Data/score/lee/{}".format(variable)
         if not os.path.exists(self.path_score):
             os.makedirs(self.path_score)
             

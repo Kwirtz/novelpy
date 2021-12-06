@@ -95,7 +95,7 @@ class Dataset:
 
         """
      
-        if self.indicator == 'atypicality':
+        if self.indicator == 'uzzi':
             if 'year' in item.keys():
                 doc_item = {'item':item[self.sub_variable],
                                   'year':item['year']}
@@ -180,7 +180,7 @@ class Dataset:
 
     def get_cooc(self):
         
-        unw = ['novelty']
+        unw = ['wang']
         type1 = 'unweighted_network' if self.indicator in unw else 'weighted_network'
         type2 = 'no_self_loop' if self.indicator in unw else 'self_loop'
         self.path_input = "Data/cooc/{}/{}_{}".format(self.variable,type1,type2)
@@ -189,7 +189,7 @@ class Dataset:
         if self.indicator == "foster":
             self.current_adj = self.sum_cooc_matrix( window = range(1980, self.focal_year))
         
-        elif self.indicator == "novelty":
+        elif self.indicator == "wang":
             print("Calculate past matrix ")
             self.past_adj = self.sum_cooc_matrix( window = range(1980, self.focal_year))
 
@@ -204,7 +204,7 @@ class Dataset:
 
     def get_data(self):
         
-        if self.indicator in ['atypicality','novelty','commonness',"foster"]:
+        if self.indicator in ['uzzi','wang','lee',"foster"]:
             # Get the coocurence for self.focal_year
             print("loading cooc for focal year {}".format(self.focal_year))
             self.get_cooc()
@@ -260,18 +260,18 @@ class create_output(Dataset):
 
         key = self.variable + '_' + self.indicator
         if self.n_reutilisation and self.time_window_cooc:
-            key = key +'_'+str(self.time_window_cooc)+'y_'+str(self.n_reutilisation)+'reu'
+            key = key +'_'+str(self.time_window_cooc)+'_'+str(self.n_reutilisation)
         elif self.time_window_cooc:
-            key = key +'_'+str(self.time_window_cooc)+'y'
+            key = key +'_'+str(self.time_window_cooc)
            
-        if self.indicator == 'novelty':
+        if self.indicator == 'wang':
             score = {'novelty':sum(self.scores_array)}
             
-        elif self.indicator == 'atypicality':
+        elif self.indicator == 'uzzi':
             score = {'conventionality': np.median(self.scores_array),
                      'novelty': np.quantile(self.scores_array,0.1)}
             
-        elif self.indicator == 'commonness':
+        elif self.indicator == 'lee':
             score = {'novelty': -np.log(np.quantile(self.scores_array,0.1))}
         
         elif self.indicator == 'foster':
@@ -297,25 +297,32 @@ class create_output(Dataset):
         """
         
         # Load the score of pairs given by the indicator
-        self.comb_scores = pickle.load(
-                open(
-                    'Data/score/{}/{}/{}.p'.format(
-                        self.indicator,self.variable,self.focal_year),
-                    "rb" ))       
+        if self.indicator == 'wang':
+            self.comb_scores = pickle.load(
+                    open(
+                        'Data/score/{}/{}_{}_{}/{}.p'.format(
+                            self.indicator,self.variable,str(self.time_window_cooc), str(self.n_reutilisation), self.focal_year),
+                        "rb" ))       
+        else:
+            self.comb_scores = pickle.load(
+                    open(
+                        'Data/score/{}/{}/{}.p'.format(
+                            self.indicator,self.variable,self.focal_year),
+                        "rb" ))  
         
         # Iterate over every docs 
         list_of_insertion = []
         for idx in tqdm.tqdm(list(self.papers_items),desc='start'):
         
-            if self.indicator in ['atypicality','novelty','commonness','foster']:
+            if self.indicator in ['uzzi','wang','lee','foster']:
                 # Check that you have more than 2 item (1 combi) else no combination and no novelty 
                 if len(self.papers_items[idx])>2:
                     self.current_items = self.papers_items[idx]
                     
-                    if self.indicator == 'atypicality':
+                    if self.indicator == 'uzzi':
                         self.current_items = [item["item"] for item in self.current_items]
                     
-                    if self.indicator != 'novelty':
+                    if self.indicator != 'wang':
                         self.unique_pairwise = False
                         self.keep_diag=True
                     else:
@@ -370,15 +377,15 @@ class create_output(Dataset):
             else:
                 self.collection_output = self.db["output"]
         else:
-            if self.indicator == "novelty":
-                self.path_output = "Result/{}/{}".format(self.indicator, self.variable+ "_" + str(self.time_window_cooc) + "y_" + str(self.n_reutilisation) + "reu")
+            if self.indicator == "wang":
+                self.path_output = "Result/{}/{}".format(self.indicator, self.variable+ "_" + str(self.time_window_cooc) + "_" + str(self.n_reutilisation))
             else:
                 self.path_output = "Result/{}/{}".format(self.indicator, self.variable)
             if not os.path.exists(self.path_output):
                 os.makedirs(self.path_output)
                 
-        if self.indicator in ['atypicality','commonness','novelty','foster']:
+        if self.indicator in ['uzzi','lee','wang','foster']:
             self.populate_list()
         else:
-            print('''indicator must be in 'atypicality', 'commonness', 'novelty' ''')
+            print('''indicator must be in 'uzzi', 'lee', 'wang' ''')
         print('saved')

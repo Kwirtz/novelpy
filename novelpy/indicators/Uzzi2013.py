@@ -192,14 +192,14 @@ def get_comb_mean_sd(path2,all_sampled_adj_freq,unique_values,variable,focal_yea
     #                               shape=all_sampled_adj_freq[0].shape)
     
     try:
-        with open(path2 + "/iteration/mean_info_{}_{}.p".format('atypicality',focal_year),
+        with open(path2 + "/iteration/mean_info_{}_{}.p".format('uzzi',focal_year),
               'rb') as f:
             mean_comb = pickle.load(f)
     except:
         mean_comb = lil_matrix(all_sampled_adj_freq[0].shape)
     
     try:
-        with open(path2 + "/iteration/sd_info_{}_{}.p".format('atypicality',focal_year),
+        with open(path2 + "/iteration/sd_info_{}_{}.p".format('uzzi',focal_year),
             'rb') as f:
             sd_comb = pickle.load(f)
     except:
@@ -207,7 +207,7 @@ def get_comb_mean_sd(path2,all_sampled_adj_freq,unique_values,variable,focal_yea
     
    
     try:
-        with open(path2 + "/iteration/mean_sd_last_i_{}_{}.txt".format('atypicality',focal_year),
+        with open(path2 + "/iteration/mean_sd_last_i_{}_{}.txt".format('uzzi',focal_year),
               'r') as last_i:
             i = int(last_i.read())
     except:
@@ -219,12 +219,12 @@ def get_comb_mean_sd(path2,all_sampled_adj_freq,unique_values,variable,focal_yea
         mean_comb[value[0],value[1]] = mean
         sd_comb[value[0],value[1]] = sd
         if int(i)%1e7 == 0 :
-            with open(path2 + "/iteration/mean_sd_last_i_{}_{}.txt".format('atypicality',focal_year),
+            with open(path2 + "/iteration/mean_sd_last_i_{}_{}.txt".format('uzzi',focal_year),
                       'w') as last_i:
                 last_i.write(str(i))
-            pickle.dump(mean_comb, open(path2 + "/iteration/mean_info_{}_{}.p".format('atypicality',focal_year),
+            pickle.dump(mean_comb, open(path2 + "/iteration/mean_info_{}_{}.p".format('uzzi',focal_year),
                                         "wb" ) )
-            pickle.dump(sd_comb, open(path2 + "/iteration/sd_info_{}_{}.p".format('atypicality',focal_year),
+            pickle.dump(sd_comb, open(path2 + "/iteration/sd_info_{}_{}.p".format('uzzi',focal_year),
                                         "wb" ) )
     return mean_comb, sd_comb
 
@@ -268,7 +268,7 @@ class Uzzi2013(create_output):
         """
 
         self.nb_sample = nb_sample
-        self.indicator = "atypicality"
+        self.indicator = "uzzi"
         
         create_output.__init__(self,
                                client_name = client_name,
@@ -282,7 +282,7 @@ class Uzzi2013(create_output):
         
         
         self.path_sample = "Data/cooc_sample/{}/".format(self.variable)
-        self.path_score = "Data/score/atypicality/{}".format(self.variable)
+        self.path_score = "Data/score/uzzi/{}".format(self.variable)
         if not os.path.exists(self.path_sample):
             os.makedirs(self.path_sample)
         if not os.path.exists(self.path_score):

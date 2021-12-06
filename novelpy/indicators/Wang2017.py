@@ -67,7 +67,7 @@ class Wang2017(create_output):
         None.
 
         """
-        self.indicator = "novelty"
+        self.indicator = "wang"
         create_output.__init__(self,
                                client_name = client_name,
                                db_name = db_name,
@@ -80,7 +80,7 @@ class Wang2017(create_output):
                                time_window_cooc = time_window_cooc,
                                n_reutilisation = n_reutilisation)        
 
-        self.path_score = "Data/score/novelty/{}/".format(self.variable + "_" + str(self.time_window_cooc) + "y_" + str(self.n_reutilisation) + "reu" )
+        self.path_score = "Data/score/wang/{}/".format(self.variable + "_" + str(self.time_window_cooc) + "_" + str(self.n_reutilisation) )
         if not os.path.exists(self.path_score):
             os.makedirs(self.path_score)        
 
