@@ -7,13 +7,13 @@ from novelpy.utils.run_indicator_tools import create_output
 class Disruptiveness(create_output):
 
     def __init__(self,
-                client_name = None,
-                db_name = None,
                 collection_name,
                 focal_year,
                 id_variable,
                 refs_list_variable,
-                year_variable):
+                year_variable,
+                client_name = None,
+                db_name = None,):
         """
         
         Description
