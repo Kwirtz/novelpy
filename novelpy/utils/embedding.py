@@ -470,7 +470,7 @@ class Embedding:
             
         
         
-    def get_references_embbeding(self,var_year,from_year,to_year,skip_,limit_):
+    def get_references_embbeding(self,from_year,to_year,skip_,limit_):
         """
         Description
         -----------
@@ -478,8 +478,6 @@ class Embedding:
 
         Parameters
         ----------
-        var_year : str
-            Name of the year variable.
         from_year : int
             First year to restrict the dataset.
         to_year : int
@@ -517,7 +515,7 @@ class Embedding:
         collection_articles = db[self.collection_articles]
         collection_embedding = db[self.collection_embedding]
          
-        docs = collection_articles.find({var_year:{'$gte':from_year,'$lte':to_year}}).skip(skip_-1).limit(limit_)
+        docs = collection_articles.find({self.var_year:{'$gte':from_year,'$lte':to_year}}).skip(skip_-1).limit(limit_)
         list_of_insertion = []
         for doc in tqdm.tqdm(docs, total = limit_):
             infos = get_embedding_list(
