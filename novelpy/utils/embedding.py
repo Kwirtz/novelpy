@@ -388,7 +388,7 @@ class Embedding:
 
             """
             def drop_year_before_pub(dict_,year):
-                dict_ = {key:dict_[key] for key in dict_ if key < year}
+                dict_ = {key:dict_[key] for key in dict_ if int(key) < int(year)}
                 return dict_
                 
             authors_profiles = list()
