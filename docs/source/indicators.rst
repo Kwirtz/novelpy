@@ -206,9 +206,50 @@ Shibayama et al. [2021]
 
 :cite:p:`shibayama2021measuring`
 
+
+
 .. image:: img/shibayama.png
    :width: 300
    :align: center
+
+. py:function:: Shibayama2021(collection_name, id_variable, year_variable, ref_variable, entity, focal_year, client_name = None, db_name = None)
+
+   Compute novelty score for every paper for the focal_year based on Uzzi et al. 2013 
+
+   :param str collection_name: Name of the collection or the json file containing the data   
+   :param str id_variable: Name of the key which value give the identity of the document.
+   :param str year_variable: Name of the key which value is the year of creation of the document.
+   :param str ref_variable: variable name for embedded representation of references.
+   :param list entity: list of variables to use, 'title_embedding' or 'abstract_embedding' or both.
+   :param int focal_year: Calculate the novelty score for every document which has a date of creation = focal_year.
+   :param str client_name: Mongo URI if your data is hosted on a MongoDB instead of a JSON file
+   :param str db_name: Name of the db
+
+
+   :return: 
+
+   :raises ValueError: 
+   :raises TypeError: 
+
+
+In order to run the indicator you first need to embed articles using the function "Embedding",
+ read more in :ref:`Usage:tutorial` and :ref:`Utils:embedding`
+
+.. code-block:: python
+
+   import novelpy
+
+   focal_year = 2000
+
+   shibayama = novelpy.indicators.Shibayama2021(
+	collection_name = 'articles',
+	id_variable = 'PMID',
+	year_variable = 'year',
+	ref_variable = 'refs_embedding',
+  	entity = ['title_embedding','abstract_embedding'],
+  	focal_year = focal_year)
+
+   shibayama.get_indicator()
 
 Disruptiveness indicators
 ----------------
