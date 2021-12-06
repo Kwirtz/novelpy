@@ -212,7 +212,7 @@ Shibayama et al. [2021]
    :width: 300
    :align: center
 
-. py:function:: Shibayama2021(collection_name, id_variable, year_variable, ref_variable, entity, focal_year, client_name = None, db_name = None)
+.. py:function:: Shibayama2021(collection_name, id_variable, year_variable, ref_variable, entity, focal_year, client_name = None, db_name = None)
 
    Compute novelty score for every paper for the focal_year based on Uzzi et al. 2013 
 
