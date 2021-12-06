@@ -33,16 +33,16 @@ class Wang2017(create_output):
 
 
     def __init__(self,
+                 collection_name,
+                 id_variable,
+                 year_variable,
+                 variable,
+                 sub_variable,
+                 focal_year,
+                 time_window_cooc,
+                 n_reutilisation,
                  client_name = None,
-                 db_name = None,
-                 collection_name = None,
-                 id_variable = None,
-                 year_variable = None,
-                 variable = None,
-                 sub_variable = None,
-                 focal_year = None,
-                 time_window_cooc = None,
-                 n_reutilisation = None):
+                 db_name = None,):
         """
         
         Description
@@ -80,7 +80,7 @@ class Wang2017(create_output):
                                time_window_cooc = time_window_cooc,
                                n_reutilisation = n_reutilisation)        
 
-        self.path_score = "Data/score/novelty/{}/".format(self.variable)
+        self.path_score = "Data/score/novelty/{}/".format(self.variable + "_" + str(self.time_window_cooc) + "y_" + str(self.n_reutilisation) + "reu" )
         if not os.path.exists(self.path_score):
             os.makedirs(self.path_score)        
 

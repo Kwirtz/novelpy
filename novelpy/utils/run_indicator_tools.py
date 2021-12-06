@@ -255,9 +255,10 @@ class create_output(Dataset):
             scores_array.append(float(self.comb_scores[combi[0], combi[1]]))
         self.scores_array = np.array(scores_array)
         
-        doc_infos = {"n_combi":len(scores_array)}
+        doc_infos = {"scores_array": scores_array,
+                     "year":self.focal_year}
 
-        key = self.item_name + '_' + self.indicator
+        key = self.variable + '_' + self.indicator
         if self.n_reutilisation and self.time_window_cooc:
             key = key +'_'+str(self.time_window_cooc)+'y_'+str(self.n_reutilisation)+'reu'
         elif self.time_window_cooc:
@@ -369,7 +370,10 @@ class create_output(Dataset):
             else:
                 self.collection_output = self.db["output"]
         else:
-            self.path_output = "Result/{}/{}".format(self.indicator, self.variable)
+            if self.indicator == "novelty":
+                self.path_output = "Result/{}/{}".format(self.indicator, self.variable+ "_" + str(self.time_window_cooc) + "y_" + str(self.n_reutilisation) + "reu")
+            else:
+                self.path_output = "Result/{}/{}".format(self.indicator, self.variable)
             if not os.path.exists(self.path_output):
                 os.makedirs(self.path_output)
                 

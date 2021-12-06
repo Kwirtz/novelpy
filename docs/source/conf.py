@@ -11,14 +11,20 @@ version = '0.1.4'
 
 # -- General configuration
 
+autosectionlabel_prefix_document = True
+
 extensions = [
     'sphinx.ext.duration',
     'sphinx.ext.doctest',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.autosectionlabel',
+    'sphinxcontrib.bibtex',
 ]
 
+bibtex_bibfiles = ['refs.bib']
+bibtex_default_style = 'unsrt'
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
     'sphinx': ('https://www.sphinx-doc.org/en/master/', None),

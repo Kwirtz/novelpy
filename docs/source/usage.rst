@@ -1,4 +1,4 @@
-.. _usage:
+.. _Usage:
 
 Usage
 =====
@@ -34,7 +34,7 @@ The package currently supports JSON files which should be located in Data/docs o
 
 | Depending on what kind of indicator you are running, you will need different kind of input (For example for Uzzi et al.(2013) you only need references.json). 
 |
-| We intend to automatize the process with well known Databases (Web of science, arxiv, Pubmed Knowlede graph, ...). Look into the :ref:`roadmap` section to learn
+| We intend to automatize the process with well known Databases (Web of science, ArXiv, Pubmed Knowlede graph, ...). Look into the :ref:`roadmap` section to learn
 | more about future implementation.
 |
 | If you want to use your own data, please look into the Sample section below.
@@ -48,7 +48,7 @@ We made available a small sample of data so you can get familiar with the packag
 >>> from novelpy.utils.get_sample import download_sample
 >>> download_sample()
 
-| This will give you the file as seen in :ref:`format`_. Read more about this sample structure `here <https://github.com/Kwirtz/data_sample/tree/main/novelpy>`_.
+| This will give you the file as seen in :ref:`Usage:format`. Read more about this sample structure `here <https://github.com/Kwirtz/data_sample/tree/main/novelpy>`_.
 | Or if you want to test the package with MongoDB you can run the following which will create a database "novelty_sample_test" with everything needed:
 
 >>> download_sample(client_name="mongodb://localhost:27017")
@@ -86,9 +86,9 @@ Here's a short implementation to run Foster et al.(2015) novelty indicator. Some
    ├── demo.py
    └── Data   
       ├── docs
-      │   ├── authors.json       
-      │   ├── references.json
-      │   └── meshterms.json
+      │   ├── authors_sample.json       
+      │   ├── references_sample.json
+      │   └── meshterms_sample.json
       │ 
       └── cooc
          └── c04_referencelist
@@ -96,36 +96,25 @@ Here's a short implementation to run Foster et al.(2015) novelty indicator. Some
         
 
 
-| Read more on the create_cooc function here :ref:`Utils`
-| Now you can run the Foster et al. (2015) indicator
+| Read more on the create_cooc function here :ref:`Utils`. Now you can run the Foster et al. (2015) novelty indicator.
 
 .. code-block:: python
-   # Most (if not every) indicator works for a given year, here we want novelty for papers done in 2000
+
+   import novelpy
+
+   # Most (if not all) indicator works for a given year, here we want novelty for papers published in 2000
    focal_year = 2000
 
-   # Class that helps you load, save and compute scores 
-   companion = novelpy.utils.run_indicator_tools.create_output(
-               collection_name = 'meshterms_sample',
-               var = 'c04_referencelist',
-               sub_var = "item",
-               var_id = 'PMID',
-               var_year = 'year',
-               indicator = "foster",
-               focal_year = focal_year)
-   
-   # Load cooc, and items 
-   companion.get_data()
-   
-   # For Foster 2015 you only need the co-occurrence matrix
 
-   Foster = novelpy.indicators.Foster2015(current_adj=companion.current_adj,
-                                          year = focal_year,
-                                          variable = "a06_meshheadinglist",
+   Foster = novelpy.indicators.Foster2015(collection_name = 'references_sample',
+                                          id_variable = 'PMID',
+                                          year_variable = 'year',
+                                          variable = "c04_referencelist",
+                                          sub_variable = "item",
+                                          focal_year = focal_year,
                                           community_algorithm = "Louvain")
    Foster.get_indicator()
-   
-   # Iterate through the papers from the focal year and attribute a Novelty score to them
-   companion.update_paper_values()
+    
 
 Now you should have one more folder "Results" with a json for the focal year with the results. 
 
@@ -136,9 +125,9 @@ Now you should have one more folder "Results" with a json for the focal year wit
    ├── demo.py
    ├── Data   
    │  ├── docs
-   │  │   ├── authors.json       
-   │  │   ├── references.json
-   │  │   └── meshterms.json
+   │  │   ├── authors_sample.json       
+   │  │   ├── references_sample.json
+   │  │   └── meshterms_sample.json
    │  │ 
    │  └── cooc
    │     └── c04_referencelist
@@ -148,5 +137,65 @@ Now you should have one more folder "Results" with a json for the focal year wit
       └── foster
          └── c04_referencelist
 
-| You can of course iterate through multiple years just by replacing the focal year by a range and a for loop
-| More info and demonstration are given in the section :ref:`Indicators`
+| You can iterate through multiple years just by replacing the focal year by a range and a for loop
+| More info and demonstration are given in the section :ref:`Indicators`.
+
+| Some pre-build functions can help you perform your analysis by getting the novelty score of a document, plotting the distribution or do a correlation analysis between multiple indicator/variable.
+
+.. code-block:: python
+   
+   # Get distribution for paper with id 10564583
+   import novelpy
+
+   dist = novelpy.utils.plot_dist(doc_id = 10564583,
+                         doc_year = 2000,
+                         variable = ["c04_referencelist"],
+                         indicator = ["foster"]
+                         )
+   dist.get_plot_dist()
+   
+   # The data used for the plot can be found in dist.df
+
+.. image:: img/dist.png
+   :width: 600
+
+.. code-block:: python
+   
+   # A more complex example
+   import novelpy
+
+   dist = novelpy.utils.plot_dist(doc_id = 10564583,
+                         doc_year = 2000,
+                         variable = ["c04_referencelist","a06_meshheadinglist"],
+                         indicator = ["foster","commonness"],
+                         )
+   dist.get_plot_dist()
+
+.. image:: img/dist_complex.png
+   :width: 600
+
+.. code-block:: python
+
+   trend = novelpy.utils.novelty_trend(year_range = range(2000,2015,1),
+                 variable = ["c04_referencelist","a06_meshheadinglist"],
+                 id_variable = "PMID",
+                 indicator = ["foster","commonness"],
+                 time_window_cooc = [3],
+                 n_reutilisation = [1])
+
+   trend.get_plot_trend()
+
+.. image:: img/trend.png
+   :width: 600
+
+.. code-block:: python
+   corr = correlation_indicators(year_range = range(2000,2015,1),
+                 variable = ["c04_referencelist","a06_meshheadinglist"],
+                 indicator = ["foster","commonness"],
+                 time_window_cooc = [3],
+                 n_reutilisation = [1])
+
+   corr.correlation_heatmap()
+
+.. image:: img/heatmap.png
+   :width: 600

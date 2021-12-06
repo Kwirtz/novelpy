@@ -22,7 +22,7 @@ def download_sample(client_name = None):
         for data in resp.iter_content(chunk_size=1024):
             size = file.write(data)
             bar.update(size)
-    shutil.unpack_archive("docs.zip","Data")
+    shutil.unpack_archive("docs.zip","Data/docs")
     """
     with open("sample_data.zip", 'rb') as f:
         buf = f.read()
@@ -32,8 +32,9 @@ def download_sample(client_name = None):
     os.remove("docs.zip")
     
     
-    print("Loading to mongo...")
+    
     if client_name:
+        print("Loading to mongo...")
         Client = pymongo.MongoClient(client_name)
         db = Client["novelty_sample_test"]
         collection_meshterms = db["meshterms"]

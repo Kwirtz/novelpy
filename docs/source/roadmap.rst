@@ -17,4 +17,3 @@ Here's a list of database we would like to support as input:
 
 - WoS
 - Arxiv
-
