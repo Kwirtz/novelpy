@@ -1,15 +1,19 @@
 import pymongo
 import numpy as np 
 import pandas as pd
+from novelpy.utils.run_indicator_tools import create_output
 # import dask.dataframe as dd
 
-class Disruptiveness:
+class Disruptiveness(create_output):
 
     def __init__(self,
+                client_name = None,
+                db_name = None,
+                collection_name,
                 focal_year,
-                var_id,
-                var_refs_list,
-                var_year):
+                id_variable,
+                refs_list_variable,
+                year_variable):
         """
         
         Description
@@ -20,11 +24,11 @@ class Disruptiveness:
         ----------
         focal_year : int
             year of interest
-        var_id : str
+        id_variable : str
             id variable name.
-        var_refs_list : str
+        refs_list_variable : str
             cited references list variable name .
-        var_year : str
+        year_variable : str
             year variable name
 
         Returns
@@ -32,11 +36,20 @@ class Disruptiveness:
         None.
 
         """
-        
+        self.indicator = 'disruptiveness'
         self.focal_year = focal_year
-        self.var_id = var_id 
-        self.var_refs_list = var_refs_list
-        self.var_year = var_year
+        self.id_variable = id_variable 
+        self.refs_list_variable = refs_list_variable
+        self.year_variable = year_variable
+
+        create_output__init__(
+           client_name = client_name,
+           db_name = db_name,
+           collection_name = collection_name,
+           id_variable = id_variable,
+           year_variable = year_variable,
+           variable = refs_list_variable,
+           focal_year = focal_year)
 
     def get_citation_network(self,path2citnet):
         """
@@ -59,19 +72,19 @@ class Disruptiveness:
         """
         citation_network = pd.read_json(path2citnet,
                                         dtype={self.var_id:'uint32',
-                                               self.var_refs_list:'uint32',
-                                               self.var_year:'uint16'})
+                                               self.refs_list_variable:'uint32',
+                                               self.year_variable:'uint16'})
         # citation_network = dd.from_pandas(citation_network,npartitions = 8)                                                        
-        citation_network = citation_network.dropna(subset=[self.var_refs_list])
-        citation_network = citation_network[citation_network[self.var_year] != '']\
-            .astype({self.var_year:'uint32'})
+        citation_network = citation_network.dropna(subset=[self.refs_list_variable])
+        citation_network = citation_network[citation_network[self.year_variable] != '']\
+            .astype({self.year_variable:'uint32'})
         # Restrict to pmids that are published from one year before the focal_year to present
         # (a cited paper pmid may be finaly published in a journal a bit later than the citing paper)
-        citation_network = citation_network[citation_network[self.var_year]>=(self.focal_year-1)]
-        citation_network = citation_network.explode(self.var_refs_list)
+        citation_network = citation_network[citation_network[self.year_variable]>=(self.focal_year-1)]
+        citation_network = citation_network.explode(self.refs_list_variable)
         # citation_network = citation_network.compute()
         # citation_network =  dd.from_pandas(citation_network,npartitions = 8)
-        self.citation_network = citation_network.set_index([self.var_id,self.var_refs_list])
+        self.citation_network = citation_network.set_index([self.var_id,self.refs_list_variable])
         return self.citation_network
 
     def compute_scores(self,
@@ -110,44 +123,44 @@ class Disruptiveness:
             collection = db[kwargs['collection_name']]
             focal_paper_id = int(focal_paper_id)
             
-            docs =[doc for doc in collection.find({self.var_refs_list:focal_paper_id})]
+            docs =[doc for doc in collection.find({self.refs_list_variable:focal_paper_id})]
             citing_focal_paper = pd.DataFrame(docs)
             
-            docs =[doc for doc in collection.find({self.var_refs_list:{'$in':focal_paper_refs},
+            docs =[doc for doc in collection.find({self.refs_list_variable:{'$in':focal_paper_refs},
                                                    self.var_id:{'$ne':focal_paper_id},
-                                                   self.var_year:{'$gt':(self.focal_year-1)}})]
+                                                   self.year_variable:{'$gt':(self.focal_year-1)}})]
             
             citing_ref_from_focal_paper = pd.DataFrame(docs)
     
         else:
-            idx = self.citation_network.index.get_level_values(self.var_refs_list) == focal_paper_id
+            idx = self.citation_network.index.get_level_values(self.refs_list_variable) == focal_paper_id
             citing_focal_paper_pmid = list(self.citation_network[idx].reset_index()[self.var_id])
         
             idx = self.citation_network.index.isin(citing_focal_paper_pmid, level=self.var_id)
             citing_focal_paper = self.citation_network[idx]\
                 .reset_index()\
-                .groupby(self.var_id)[self.var_refs_list]\
+                .groupby(self.var_id)[self.refs_list_variable]\
                 .apply(list)\
                 .reset_index()
             
-            idx = self.citation_network.index.isin(focal_paper_refs, level=self.var_refs_list)
+            idx = self.citation_network.index.isin(focal_paper_refs, level=self.refs_list_variable)
             citing_ref_from_focal_paper = self.citation_network[idx].reset_index()
             
             idx = citing_ref_from_focal_paper.PMID != focal_paper_id
             citing_ref_from_focal_paper = citing_ref_from_focal_paper[idx]
             citing_ref_from_focal_paper = citing_ref_from_focal_paper\
                 .reset_index()\
-                .groupby(self.var_id)[self.var_refs_list]\
+                .groupby(self.var_id)[self.refs_list_variable]\
                 .apply(list)\
                 .reset_index()
         
         
         citing_focal_paper = {
-            row[self.var_id]:row[self.var_refs_list] for index, row in citing_focal_paper.iterrows()
+            row[self.var_id]:row[self.refs_list_variable] for index, row in citing_focal_paper.iterrows()
             }
 
         citing_ref_from_focal_paper = {
-            row[self.var_id]:row[self.var_refs_list] for index, row in citing_ref_from_focal_paper.iterrows()
+            row[self.var_id]:row[self.refs_list_variable] for index, row in citing_ref_from_focal_paper.iterrows()
             }
         # papers that cite the focal paper that also cite reference from the focal paper
         J = set(citing_focal_paper.keys()).intersection(citing_ref_from_focal_paper.keys())
@@ -201,3 +214,26 @@ class Disruptiveness:
                 print(e)
         else:
             return {focal_paper_id:disruptiveness_indicators}
+
+    def get_indicators(self,parallel = False):
+        self.get_item_paper()
+        if parallel:
+            Parallel(n_jobs=30)(delayed(self.compute_scores)(
+                        focal_paper_id = idx,
+                        focal_paper_refs = companion.papers_items[idx],
+                        tomongo = True,
+                        client_name = pars['client_name'], 
+                        db_name = 'novelty',
+                        collection_name = 'citation_network',
+                        collection2update = 'citation_network')
+            for idx in tqdm.tqdm(list(companion.papers_items)))
+        else:    
+            for idx in tqdm.tqdm(list(self.papers_items)):
+                disruptiveness.compute_scores(
+                    focal_paper_id = idx,
+                    focal_paper_refs = companion.papers_items[idx],
+                    tomongo = True,
+                    client_name = pars['client_name'], 
+                    db_name = 'novelty',
+                    collection_name = 'citation_network',
+                    collection2update = 'citation_network') 

@@ -254,13 +254,41 @@ In order to run the indicator you first need to embed articles using the functio
 Disruptiveness indicators
 ----------------
 
-Wu et al. [2019]
+Wu et al. [2019]/  Bornmann et al. 2019/ Bu et al. [2019]
 ~~~~~~~~~~~~~~~~~~~~~~
 
-:cite:p:`wu2019solo`
+:cite:p:`wu2019solo` & :cite:p:`bornmann1911disruption`
 
-Bu et al. [2019]
-~~~~~~~~~~~~~~~~~~~~~~
+:cite:p:`bu2019multi`
+
+All indicators at computed at the same time, one just need to run the following command and iterate over the citation database:
+
+.. py:function:: Disruptiveness(client_name = None, db_name = None, collection_name, focal_year, id_variable, refs_list_variable, year_variable)
+
+   Compute several indicators of disruptiveness studied in Bornmann and Tekles (2020) and in Bu et al. (2019)
+
+   :param str collection_name: Name of the collection or the json file containing the data   
+   :param str id_variable: Name of the key which value give the identity of the document.
+   :param str year_variable: Name of the key which value is the year of creation of the document.
+   :param str variable: Name of the key that holds the variable of interest used in combinations.
+   :param str sub_variable: Name of the key which holds the ID of the variable of interest.
+   :param int focal_year: Calculate the novelty score for every document which has a date of creation = focal_year.
+   :param str client_name: Mongo URI if your data is hosted on a MongoDB instead of a JSON file
+   :param str db_name: Name of the db
+
+
+.. code-block:: python
+
+   disruptiveness = novelpy.Disruptiveness(
+      client_name = pars['client_name'], 
+      db_name =  'novelty',
+      collection_name = 'citation_network',
+      focal_year = focal_year,
+      id_variable = 'PMID',
+      refs_list_variable ='refs_pmid_wos',
+      year_variable = 'year')
+
+   disruptiveness.get_indicators(parallel = True)
 
 
 .. bibliography::
