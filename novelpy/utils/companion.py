@@ -387,34 +387,3 @@ class correlation_indicators:
             sns.heatmap(cleaned_corr.corr())
 
             
-"""
-doc_infos = plot_dist(doc_id = 10564583,
-                      doc_year = 2000,
-                      variable = ["c04_referencelist","a06_meshheadinglist"],
-                      id_variable = "PMID",
-                      indicator = ["foster","commonness"],
-                      time_window_cooc = [3],
-                      n_reutilisation = [1]
-                      )
-doc_infos.get_plot_dist()
-df = doc_infos.df
-
-
-trend = novelty_trend(year_range = range(2000,2016,1),
-              variable = ["c04_referencelist","a06_meshheadinglist"],
-              indicator = ["foster","commonness"],
-              time_window_cooc = [3],
-              n_reutilisation = [1])
-
-trend.get_plot_trend()
-
-corr = correlation_indicators(year_range = range(2000,2016,1),
-              variable = ["c04_referencelist","a06_meshheadinglist"],
-              indicator = ["foster","commonness"],
-              time_window_cooc = [3],
-              n_reutilisation = [1])
-
-corr.correlation_heatmap()
-df = corr.corr
-sns.heatmap(df[2014].corr())
-"""
