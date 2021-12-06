@@ -44,5 +44,3 @@ def download_sample(client_name = None):
                 with open("Data/docs/{}".format(col) + "/{}".format(file), 'r') as infile:
                     docs = json.load(infile)
                 collection.insert_many(docs)
-            
-download_sample()
