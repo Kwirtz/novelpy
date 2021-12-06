@@ -44,20 +44,20 @@ In order to use the indicators of Shibayama et al (2021) and the one on authors,
     - Create embedded references profile for each article.
     - Compute an author profile of embedded articles per year and store it for each article.
 
-   :param str client_name : mongo client name.
-   :param str db_name : mongo db name.
-   :param str collection_articles : mongo collection name for articles.
-   :param str collection_authors : mongo collection name for authors.
-   :param str collection_keyword : mongo collection for articles keywords.
-   :param str collection_embedding : mongo collection for articles embedding.
-   :param str var_year : year variable name.
-   :param str var_id : identifier variable name.
-   :param str var_auth_id : authors identifer variable name.
-   :param str pretrain_path : path to the pretrain word2vec: 'your/path/to/en_core_sci_lg-0.4.0/en_core_sci_lg/en_core_sci_lg-0.4.0.
-   :param str var_title : title variable name.
-   :param str var_abstract : abstract variable name.
-   :param str var_keyword : keyword variable name.
-   :param str subvar_keyword : keyword subvariable name.
+   :param str client_name: mongo client name
+   :param str db_name: mongo db name
+   :param str collection_articles: mongo collection name for articles
+   :param str collection_authors: mongo collection name for authors
+   :param str collection_keyword: mongo collection for articles keywords
+   :param str collection_embedding: mongo collection for articles embedding
+   :param str var_year: year variable name
+   :param str var_id: identifier variable name
+   :param str var_auth_id: authors identifer variable name
+   :param str pretrain_path: path to the pretrain word2vec: 'your/path/to/en_core_sci_lg-0.4.0/en_core_sci_lg/en_core_sci_lg-0.4.0
+   :param str var_title: title variable name
+   :param str var_abstract: abstract variable name
+   :param str var_keyword: keyword variable name
+   :param str subvar_keyword: keyword subvariable name
 
    :return: 
    
