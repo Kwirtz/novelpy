@@ -38,24 +38,11 @@ embedding
 In order to use the indicators of Shibayama et al (2021) and the one on authors, it is necessary to embed the entities first. This function only works via mongo for the moment as it is impractical on large data sets. As these indicators are easily usable with small datasets, a version without mongo will be quickly developed.
 
 
-.. py:function:: Embedding(client_name,
-                 db_name,
-                 collection_articles,
-                 collection_authors,
-                 collection_keywords,
-                 collection_embedding,
-                 var_year,
-                 var_id,
-                 var_pmid_list,
-                 var_id_list,
-                 var_auth_id,
-                 pretrain_path,
-                 var_title,
-                 var_abstract,
-                 var_keyword,
-                 subvar_keyword)
+.. py:function:: Embedding(client_name, db_name, collection_articles, collection_authors, collection_keywords, collection_embedding,  var_year, var_id, var_pmid_list, var_id_list, var_auth_id, pretrain_path, var_title, var_abstract, var_keyword, subvar_keyword)
 
-   Create co-occurence matrix 
+    - Compute semantic centroid for each paper (abstract and title)
+    - Create embedded references profile for each article.
+    - Compute an author profile of embedded articles per year and store it for each article.
 
    :param str client_name : mongo client name.
    :param str db_name : mongo db name.
