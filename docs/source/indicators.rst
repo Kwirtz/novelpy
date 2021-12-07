@@ -232,8 +232,7 @@ Shibayama et al. [2021]
    :raises TypeError: 
 
 
-In order to run the indicator you first need to embed articles using the function "Embedding",
- read more in :ref:`Usage:tutorial` and :ref:`Utils:embedding`
+In order to run the indicator you first need to embed articles using the function "Embedding", read more in :ref:`Usage:tutorial` and :ref:`Utils:embedding`
 
 .. code-block:: python
 
@@ -291,4 +290,6 @@ All indicators at computed at the same time, one just need to run the following 
    disruptiveness.get_indicators(parallel = True)
 
 
+References
+----------------
 .. bibliography::
