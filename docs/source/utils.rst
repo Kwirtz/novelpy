@@ -102,20 +102,14 @@ To compute Shibayama et al. 2021 indicators, it is necessary to construct a prof
 
    embedding.get_references_embbeding(
       from_year = 2000,
-      to_year = 2010,
-      skip_ = skip_,
-      limit_ = limit_)
+      to_year = 2010)
 
 The author proximity works in a two step process, first it creates an profile for each authors in a separate database for all year were a given author has a publication. Then two construct the indicateur at the paper level, all authors profile a then import from the authors database. It select only authors representation before the given document publishing year.
 
 .. code-block:: python
 
-   embedding.feed_author_profile(
-      skip_,
-      limit_)
+   embedding.feed_author_profile()
 
-   embedding.author_profile2papers(
-      skip_,
-      limit_)
+   embedding.author_profile2papers()
 
 

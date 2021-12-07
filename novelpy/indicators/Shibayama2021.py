@@ -3,7 +3,55 @@ import itertools
 import numpy as np
 from novelpy.utils.run_indicator_tools import Dataset
 import pymongo
+import tqdm
+from sklearn.metrics.pairwise import cosine_similarity
 
+def cosine_similarity_dist(n,doc_mat):
+    """
+    Description
+    -----------
+    Compute a list of cosine similarity for all articles
+    Parameters
+    ----------
+    n : int
+        number of articles.
+    doc_mat : np.array
+        array of articles representation.
+    Returns
+    -------
+    dist_list : list
+        list of distances.
+    """
+
+    # Compute similarity
+    cos_sim = cosine_similarity(doc_mat)
+    dist_list = []
+    for i in range(n):
+        for j in range(i+1,n):
+            dist_list.append(1 - cos_sim[i][j])
+
+    return dist_list
+
+def get_percentiles(dist_list):
+    """
+    Description
+    -----------
+    Return percentiles of the novelty distribution
+    Parameters
+    ----------
+    dist_list : list
+        list of distances.
+    Returns
+    -------
+    nov_list : dict
+        dict of novelty percentiles.
+    """
+
+    nov_list = dict()
+    for q in [100, 99, 95, 90, 80, 50, 20, 10, 5, 1, 0]:
+        nov_list.update({str(q)+'%': np.percentile(dist_list, q)})
+
+    return nov_list
 
 class Shibayama2021(Dataset):
     
@@ -53,7 +101,7 @@ class Shibayama2021(Dataset):
     
     
     
-    def compute_score(self):
+    def compute_score(self,doc,entity):
         """
         
 
@@ -77,8 +125,8 @@ class Shibayama2021(Dataset):
                 item = doc[self.ref_variable][i][ent]
                 if item:
                     doc_mat[i, :] =  item
-            dist_list = self.cosine_similarity_dist(n,doc_mat)
-            nov_list = self.get_percentiles(dist_list)
+            dist_list = cosine_similarity_dist(n,doc_mat)
+            nov_list = get_percentiles(dist_list)
             
             references_novelty = {
                 'Shibayama_{}'.format(ent) :nov_list
@@ -90,7 +138,7 @@ class Shibayama2021(Dataset):
        
         if self.client_name:
             self.docs = self.collection.find({
-                self.variable:{'$exists':'true'},
+                self.ref_variable:{'$ne':None},
                 self.year_variable:self.focal_year
                 })
         else:
@@ -98,17 +146,26 @@ class Shibayama2021(Dataset):
 
         # Iterate over every docs 
         list_of_insertion = []
-        for doc in tqdm.tqdm(docs):
+        for doc in tqdm.tqdm(self.docs):
             self.infos = dict()
-            self.compute_score(doc, self.entity)
-            if self.client_name:
-                list_of_insertion.append(pymongo.UpdateOne({self.id_variable: doc[self.id_variable]},
-                                                           {'$set': {self.key: self.infos}},
-                                                           upsert = True))
-            else:
-                list_of_insertion.append({self.id_variable: doc[self.id_variable],self.key: self.infos})
+            if len(doc[self.ref_variable])>1: 
+                self.compute_score(doc, self.entity)
 
+                if self.client_name:
+                    list_of_insertion.append(pymongo.UpdateOne({self.id_variable: doc[self.id_variable]},
+                                                               {'$set': {'Shibayama': self.infos}},
+                                                               upsert = True))
+                else:
+                    list_of_insertion.append({self.id_variable: doc[self.id_variable],'Shibayama': self.infos})
+        
         if self.client_name:
+            if "output" not in self.db.list_collection_names():
+                print("Init output collection with index on id_variable ...")
+                self.collection_output = self.db["output"]
+                self.collection_output.create_index([ (self.id_variable,1) ])
+            else:
+                self.collection_output = self.db["output"]
+                
             self.db['output'].bulk_write(list_of_insertion)
         else:
             with open(self.path_output + "/{}.json".format(self.focal_year), 'w') as outfile:

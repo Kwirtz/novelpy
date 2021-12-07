@@ -162,7 +162,7 @@ class Embedding:
     
         
     
-    def feed_author_profile(self,skip_,limit_):
+    def feed_author_profile(self,skip_ = 1,limit_ = 0):
         """
         Description
         -----------
@@ -337,7 +337,7 @@ class Embedding:
                    
     
         
-    def author_profile2papers(self,skip_,limit_):
+    def author_profile2papers(self,skip_ = 1,limit_ = 0):
         """
         Description
         -----------
@@ -470,7 +470,7 @@ class Embedding:
             
         
         
-    def get_references_embbeding(self,from_year,to_year,skip_,limit_):
+    def get_references_embbeding(self,from_year,to_year, skip_ = 1,limit_ = 0):
         """
         Description
         -----------

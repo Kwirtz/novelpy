@@ -2,6 +2,7 @@ import pymongo
 import numpy as np 
 import pandas as pd
 from novelpy.utils.run_indicator_tools import create_output
+import tqdm
 # import dask.dataframe as dd
 
 class Disruptiveness(create_output):
@@ -42,14 +43,25 @@ class Disruptiveness(create_output):
         self.refs_list_variable = refs_list_variable
         self.year_variable = year_variable
 
-        create_output__init__(
-           client_name = client_name,
-           db_name = db_name,
-           collection_name = collection_name,
-           id_variable = id_variable,
-           year_variable = year_variable,
-           variable = refs_list_variable,
-           focal_year = focal_year)
+        if client_name:
+            self.tomongo = True
+        else:
+            self.tomongo = False
+
+        self.client_name = client_name,
+        self.db_name = db_name,
+        self.collection_name = collection_name
+        
+
+        create_output.__init__(
+            self,
+            client_name = client_name,
+            db_name = db_name,
+            collection_name = collection_name,
+            id_variable = id_variable,
+            year_variable = year_variable,
+            variable = refs_list_variable,
+            focal_year = focal_year)
 
     def get_citation_network(self,path2citnet):
         """
@@ -71,7 +83,7 @@ class Disruptiveness(create_output):
 
         """
         citation_network = pd.read_json(path2citnet,
-                                        dtype={self.var_id:'uint32',
+                                        dtype={self.id_variable:'uint32',
                                                self.refs_list_variable:'uint32',
                                                self.year_variable:'uint16'})
         # citation_network = dd.from_pandas(citation_network,npartitions = 8)                                                        
@@ -84,7 +96,7 @@ class Disruptiveness(create_output):
         citation_network = citation_network.explode(self.refs_list_variable)
         # citation_network = citation_network.compute()
         # citation_network =  dd.from_pandas(citation_network,npartitions = 8)
-        self.citation_network = citation_network.set_index([self.var_id,self.refs_list_variable])
+        self.citation_network = citation_network.set_index([self.id_variable,self.refs_list_variable])
         return self.citation_network
 
     def compute_scores(self,
@@ -127,19 +139,19 @@ class Disruptiveness(create_output):
             citing_focal_paper = pd.DataFrame(docs)
             
             docs =[doc for doc in collection.find({self.refs_list_variable:{'$in':focal_paper_refs},
-                                                   self.var_id:{'$ne':focal_paper_id},
+                                                   self.id_variable:{'$ne':focal_paper_id},
                                                    self.year_variable:{'$gt':(self.focal_year-1)}})]
             
             citing_ref_from_focal_paper = pd.DataFrame(docs)
     
         else:
             idx = self.citation_network.index.get_level_values(self.refs_list_variable) == focal_paper_id
-            citing_focal_paper_pmid = list(self.citation_network[idx].reset_index()[self.var_id])
+            citing_focal_paper_pmid = list(self.citation_network[idx].reset_index()[self.id_variable])
         
-            idx = self.citation_network.index.isin(citing_focal_paper_pmid, level=self.var_id)
+            idx = self.citation_network.index.isin(citing_focal_paper_pmid, level=self.id_variable)
             citing_focal_paper = self.citation_network[idx]\
                 .reset_index()\
-                .groupby(self.var_id)[self.refs_list_variable]\
+                .groupby(self.id_variable)[self.refs_list_variable]\
                 .apply(list)\
                 .reset_index()
             
@@ -150,17 +162,17 @@ class Disruptiveness(create_output):
             citing_ref_from_focal_paper = citing_ref_from_focal_paper[idx]
             citing_ref_from_focal_paper = citing_ref_from_focal_paper\
                 .reset_index()\
-                .groupby(self.var_id)[self.refs_list_variable]\
+                .groupby(self.id_variable)[self.refs_list_variable]\
                 .apply(list)\
                 .reset_index()
         
         
         citing_focal_paper = {
-            row[self.var_id]:row[self.refs_list_variable] for index, row in citing_focal_paper.iterrows()
+            row[self.id_variable]:row[self.refs_list_variable] for index, row in citing_focal_paper.iterrows()
             }
 
         citing_ref_from_focal_paper = {
-            row[self.var_id]:row[self.refs_list_variable] for index, row in citing_ref_from_focal_paper.iterrows()
+            row[self.id_variable]:row[self.refs_list_variable] for index, row in citing_ref_from_focal_paper.iterrows()
             }
         # papers that cite the focal paper that also cite reference from the focal paper
         J = set(citing_focal_paper.keys()).intersection(citing_ref_from_focal_paper.keys())
@@ -207,7 +219,7 @@ class Disruptiveness(create_output):
         
         if tomongo:
             try:
-                query = { self.var_id: focal_paper_id}
+                query = { self.id_variable: focal_paper_id}
                 newvalue =  { '$set': disruptiveness_indicators}
                 db[kwargs['collection2update']].update_one(query,newvalue)
             except Exception as e:
@@ -220,20 +232,20 @@ class Disruptiveness(create_output):
         if parallel:
             Parallel(n_jobs=30)(delayed(self.compute_scores)(
                         focal_paper_id = idx,
-                        focal_paper_refs = companion.papers_items[idx],
-                        tomongo = True,
-                        client_name = pars['client_name'], 
-                        db_name = 'novelty',
-                        collection_name = 'citation_network',
-                        collection2update = 'citation_network')
+                        focal_paper_refs = self.papers_items[idx],
+                        tomongo = self.tomongo,
+                        client_name = self.client_name, 
+                        db_name = self.db_name,
+                        collection_name = self.collection_name,
+                        collection2update = 'output')
             for idx in tqdm.tqdm(list(companion.papers_items)))
         else:    
             for idx in tqdm.tqdm(list(self.papers_items)):
-                disruptiveness.compute_scores(
+                self.compute_scores(
                     focal_paper_id = idx,
-                    focal_paper_refs = companion.papers_items[idx],
-                    tomongo = True,
-                    client_name = pars['client_name'], 
-                    db_name = 'novelty',
-                    collection_name = 'citation_network',
-                    collection2update = 'citation_network') 
+                    focal_paper_refs = self.papers_items[idx],
+                    tomongo = self.tomongo,
+                    client_name = self.client_name, 
+                    db_name = self.db_name,
+                    collection_name = self.collection_name,
+                    collection2update = 'output') 

@@ -3,7 +3,55 @@ import itertools
 import numpy as np
 from novelpy.utils.run_indicator_tools import Dataset
 import pymongo
+import tqdm
+from sklearn.metrics.pairwise import cosine_similarity
 
+def cosine_similarity_dist(n,doc_mat):
+    """
+    Description
+    -----------
+    Compute a list of cosine similarity for all articles
+    Parameters
+    ----------
+    n : int
+        number of articles.
+    doc_mat : np.array
+        array of articles representation.
+    Returns
+    -------
+    dist_list : list
+        list of distances.
+    """
+
+    # Compute similarity
+    cos_sim = cosine_similarity(doc_mat)
+    dist_list = []
+    for i in range(n):
+        for j in range(i+1,n):
+            dist_list.append(1 - cos_sim[i][j])
+
+    return dist_list
+
+def get_percentiles(dist_list):
+    """
+    Description
+    -----------
+    Return percentiles of the novelty distribution
+    Parameters
+    ----------
+    dist_list : list
+        list of distances.
+    Returns
+    -------
+    nov_list : dict
+        dict of novelty percentiles.
+    """
+
+    nov_list = dict()
+    for q in [100, 99, 95, 90, 80, 50, 20, 10, 5, 1, 0]:
+        nov_list.update({str(q)+'%': np.percentile(dist_list, q)})
+
+    return nov_list
 
 class Author_proximity(Dataset):
     
@@ -58,7 +106,7 @@ class Author_proximity(Dataset):
             focal_year = focal_year)
     
 
-    def compute_score(self):
+    def compute_score(self,doc,entity):
         """
         
 
@@ -96,10 +144,10 @@ class Author_proximity(Dataset):
                     for i in range(n):
                         aut_mat[i, :] = aut_item[i]
                                 
-                    aut_dist = self.cosine_similarity_dist(n,aut_mat)
+                    aut_dist = cosine_similarity_dist(n,aut_mat)
                     intra_authors_dist += aut_dist
                     
-            intra_nov_list = self.get_percentiles(intra_authors_dist)
+            intra_nov_list = get_percentiles(intra_authors_dist)
                         
             inter_authors_dist = []
             nb_cap = len(authors_infos)
@@ -115,7 +163,7 @@ class Author_proximity(Dataset):
                             inter_paper_dist = cosine_similarity(comb)[0,1]
                             inter_authors_dist.append(inter_paper_dist)
                     
-            inter_nov_list = self.get_percentiles(inter_authors_dist)
+            inter_nov_list = get_percentiles(inter_authors_dist)
                 
             authors_novelty = {
                 'authors_novelty_{}_{}'.format(ent, str(self.windows_size)) :{
@@ -126,42 +174,41 @@ class Author_proximity(Dataset):
 
 
     def get_indicator(self):
-        """        
-
-        Parameters
-        ----------
-        None.
-
-        Returns
-        -------
-        None.
-
-        """
+       
         if self.client_name:
             self.docs = self.collection.find({
-                self.variable:{'$exists':'true'},
+                self.aut_profile_variable:{'$ne':None},
                 self.year_variable:self.focal_year
                 })
         else:
-            self.docs = json.load(open("Data/docs/{}/{}.json".format(self.collection_name,self.focal_year)) )
+            self.docs = json.load(open("Data/docs/{}/{}.json".format(self.collection_name,self.focal_year)))
 
         # Iterate over every docs 
         list_of_insertion = []
-        for doc in tqdm.tqdm(docs):
+        for doc in tqdm.tqdm(self.docs):
             self.infos = dict()
-            self.compute_score(doc, self.entity)
-            if self.client_name:
-                list_of_insertion.append(pymongo.UpdateOne({self.id_variable: doc[self.id_variable]},
-                                                           {'$set': {self.key: self.infos}},
-                                                           upsert = True))
-            else:
-                list_of_insertion.append({self.id_variable: doc[self.id_variable],self.key: self.infos})
+            if len(doc[self.aut_profile_variable])>1: 
+                self.compute_score(doc, self.entity)
+
+                if self.client_name:
+                    list_of_insertion.append(pymongo.UpdateOne({self.id_variable: doc[self.id_variable]},
+                                                               {'$set': {'Author_proximity': self.infos}},
+                                                               upsert = True))
+                else:
+                    list_of_insertion.append({self.id_variable: doc[self.id_variable],'Author_proximity': self.infos})
         
         if self.client_name:
+            if "output" not in self.db.list_collection_names():
+                print("Init output collection with index on id_variable ...")
+                self.collection_output = self.db["output"]
+                self.collection_output.create_index([ (self.id_variable,1) ])
+            else:
+                self.collection_output = self.db["output"]
+                
             self.db['output'].bulk_write(list_of_insertion)
         else:
             with open(self.path_output + "/{}.json".format(self.focal_year), 'w') as outfile:
-                json.dump(list_of_insertion, outfile)        
+                json.dump(list_of_insertion, outfile)              
     
 
 
