@@ -11,7 +11,7 @@ def download_sample(client_name = None):
     collection_list =["Citation_net","Meshterms", "Ref_Journals", "Title_abs", "authors"]
     for col in collection_list:
         col = col+ "_sample"
-        url = 'https://github.com/Kwirtz/data_sample/blob/main/novelpy/{}.zip?raw=true'.format(col)
+        url = 'https://zenodo.org/record/5768348/files/{}.zip?download=1'.format(col)
         resp = requests.get(url, stream=True)
         total = int(resp.headers.get('content-length', 0))
         with open("{}.zip".format(col), 'wb') as file, tqdm(
