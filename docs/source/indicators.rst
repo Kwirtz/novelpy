@@ -61,6 +61,11 @@ In order to run Atypicality you first need to create a co-occurence matrix with 
    Uzzi.get_indicator()
 
 
+
+
+
+
+
 Foster et al. [2015]
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -107,6 +112,11 @@ In order to run this novelty indicator you first need to create a co-occurence m
 
 
 
+
+
+
+
+
 Lee et al. [2015]
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -150,6 +160,13 @@ In order to run "commonness" you first need to create a co-occurence matrix with
                                           sub_variable = "item",
                                           focal_year = focal_year)
    Lee.get_indicator()
+
+
+
+
+
+
+
 
 Wang et al. [2017]
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -201,6 +218,11 @@ In order to run the indicator you first need to create a co-occurence matrix wit
     
 
 
+
+
+
+
+
 Shibayama et al. [2021]
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -232,8 +254,7 @@ Shibayama et al. [2021]
    :raises TypeError: 
 
 
-In order to run the indicator you first need to embed articles using the function "Embedding",
- read more in :ref:`Usage:tutorial` and :ref:`Utils:embedding`
+In order to run the indicator you first need to embed articles using the function "Embedding", read more in :ref:`Usage:tutorial` and :ref:`Utils:embedding`
 
 .. code-block:: python
 
@@ -250,6 +271,16 @@ In order to run the indicator you first need to embed articles using the functio
   	focal_year = focal_year)
 
    shibayama.get_indicator()
+
+
+
+
+
+
+
+
+
+
 
 Disruptiveness indicators
 ----------------
@@ -291,4 +322,6 @@ All indicators at computed at the same time, one just need to run the following 
    disruptiveness.get_indicators(parallel = True)
 
 
+References
+----------------
 .. bibliography::
