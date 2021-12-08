@@ -244,7 +244,7 @@ class create_output(Dataset):
         else:
             combis = [(i,j) for i,j in combinations(self.current_items,2)]
         
-        scores_array = []
+        scores_list = []
         for combi in combis:
             combi = sorted( (self.name2index[combi[0]], self.name2index[combi[1]]) )
             """
@@ -252,12 +252,9 @@ class create_output(Dataset):
                           "item2" : combi[1],
                           "score" : float(self.comb_scores[combi[0], combi[1]]) })
             """
-            scores_array.append(float(self.comb_scores[combi[0], combi[1]]))
-        self.scores_array = np.array(scores_array)
+            scores_list.append(float(self.comb_scores[combi[0], combi[1]]))
+        self.scores_array = np.array(scores_list)
         
-        doc_infos = {"scores_array": scores_array,
-                     "year":self.focal_year}
-
         key = self.variable + '_' + self.indicator
         if self.n_reutilisation and self.time_window_cooc:
             key = key +'_'+str(self.time_window_cooc)+'_'+str(self.n_reutilisation)
@@ -275,8 +272,11 @@ class create_output(Dataset):
             score = {'novelty': -np.log(np.quantile(self.scores_array,0.1))}
         
         elif self.indicator == 'foster':
-            self.scores_array = [1-i for i in self.scores_array]
-            score = {'novelty': float(np.mean(self.scores_array))}
+            scores_list = [1-i for i in self.scores_array]
+            score = {'novelty': float(np.mean(scores_list))}
+
+        doc_infos = {"scores_array": scores_list,
+                     "year":self.focal_year}
         
         doc_infos.update({'score':score })
         self.key = key
