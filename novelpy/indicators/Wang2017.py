@@ -41,6 +41,7 @@ class Wang2017(create_output):
                  focal_year,
                  time_window_cooc,
                  n_reutilisation,
+                 starting_year,
                  client_name = None,
                  db_name = None,):
         """
@@ -78,7 +79,8 @@ class Wang2017(create_output):
                                sub_variable = sub_variable,
                                focal_year = focal_year,
                                time_window_cooc = time_window_cooc,
-                               n_reutilisation = n_reutilisation)        
+                               n_reutilisation = n_reutilisation,
+                               starting_year = starting_year)        
 
         self.path_score = "Data/score/wang/{}/".format(self.variable + "_" + str(self.time_window_cooc) + "_" + str(self.n_reutilisation) )
         if not os.path.exists(self.path_score):

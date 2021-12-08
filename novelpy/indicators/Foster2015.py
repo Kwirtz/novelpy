@@ -16,15 +16,16 @@ class Foster2015(create_output):
     
     
     def __init__(self,
+             collection_name,
+             id_variable,
+             year_variable,
+             variable,
+             sub_variable,
+             focal_year,
+             starting_year,
+             community_algorithm = "Louvain",
              client_name = None,
-             db_name = None,
-             collection_name = None,
-             id_variable = None,
-             year_variable = None,
-             variable = None,
-             sub_variable = None,
-             focal_year = None,
-             community_algorithm = "Louvain"):
+             db_name = None):
         
         '''
         Description
@@ -54,7 +55,8 @@ class Foster2015(create_output):
                                year_variable = year_variable,
                                variable = variable,
                                sub_variable = sub_variable,
-                               focal_year = focal_year)
+                               focal_year = focal_year,
+                               starting_year = starting_year)
 
         self.path_score = "Data/score/foster/{}".format(self.variable)
         
