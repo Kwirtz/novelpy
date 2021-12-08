@@ -124,6 +124,7 @@ class Author_proximity(Dataset):
         """
 
         for ent in self.entity:
+
             self.focal_paper_id = doc[self.id_variable]
             nb_aut = len(doc[self.aut_profile_variable])
             authors_mat = np.zeros((nb_aut, 200))
@@ -132,11 +133,11 @@ class Author_proximity(Dataset):
             
             for i in range(nb_aut):
                 items = doc[self.aut_profile_variable][i][ent]
-                if items:
+                if items or len(items) > 1:
+
                     aut_item = [items[key] for key in items if int(key) > (doc[self.year_variable]-self.windows_size) ]
                     aut_item = list(itertools.chain.from_iterable(aut_item))
                     aut_item = [item for item in aut_item if item]
-                    
                     authors_infos.append(aut_item)
                     
                     n = len(aut_item)
@@ -146,31 +147,32 @@ class Author_proximity(Dataset):
                                 
                     aut_dist = cosine_similarity_dist(n,aut_mat)
                     intra_authors_dist += aut_dist
-                    
-            intra_nov_list = get_percentiles(intra_authors_dist)
-                        
-            inter_authors_dist = []
-            nb_cap = len(authors_infos)
-            # for all author
-            for i in range(nb_cap):
-                # take each paper
-                for item in authors_infos[i]:
-                    # for all other authors
-                    for j in range(i,nb_cap):
-                        # compare it with all papers
-                        for j_item in authors_infos[j]:
-                            comb = np.array([item,j_item])
-                            inter_paper_dist = cosine_similarity(comb)[0,1]
-                            inter_authors_dist.append(inter_paper_dist)
-                    
-            inter_nov_list = get_percentiles(inter_authors_dist)
+
+            if len(intra_authors_dist) > 0:
+                intra_nov_list = get_percentiles(intra_authors_dist)    
+                inter_authors_dist = []
+                nb_cap = len(authors_infos)
                 
-            authors_novelty = {
-                'authors_novelty_{}_{}'.format(ent, str(self.windows_size)) :{
-                    'intra':intra_nov_list,
-                    'inter':inter_nov_list}
-                }
-            self.infos.update(authors_novelty)
+                # for all author
+                for i in range(nb_cap):
+                    # take each paper
+                    for item in authors_infos[i]:
+                        # for all other authors
+                        for j in range(i,nb_cap):
+                            # compare it with all papers
+                            for j_item in authors_infos[j]:
+                                comb = np.array([item,j_item])
+                                inter_paper_dist = cosine_similarity(comb)[0,1]
+                                inter_authors_dist.append(inter_paper_dist)
+                        
+                inter_nov_list = get_percentiles(inter_authors_dist)
+                    
+                authors_novelty = {
+                    'authors_novelty_{}_{}'.format(ent, str(self.windows_size)) :{
+                        'intra':intra_nov_list,
+                        'inter':inter_nov_list}
+                    }
+                self.infos.update(authors_novelty)
 
 
     def get_indicator(self):
