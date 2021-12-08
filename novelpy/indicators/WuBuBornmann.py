@@ -42,14 +42,8 @@ class Disruptiveness(create_output):
         self.id_variable = id_variable 
         self.refs_list_variable = refs_list_variable
         self.year_variable = year_variable
-
-        if client_name:
-            self.tomongo = True
-        else:
-            self.tomongo = False
-
-        self.client_name = client_name,
-        self.db_name = db_name,
+        self.client_name = client_name
+        self.db_name = db_name
         self.collection_name = collection_name
         
 
@@ -62,6 +56,16 @@ class Disruptiveness(create_output):
             year_variable = year_variable,
             variable = refs_list_variable,
             focal_year = focal_year)
+
+        if client_name:
+            self.tomongo = True
+            if "output" not in self.db.list_collection_names():
+                print("Init output collection with index on id_variable ...")
+                self.collection_output = self.db["output"]
+                self.collection_output.create_index([ (self.id_variable,1) ])
+        else:
+            self.tomongo = False
+
 
     def get_citation_network(self,path2citnet):
         """
@@ -221,7 +225,7 @@ class Disruptiveness(create_output):
             try:
                 query = { self.id_variable: focal_paper_id}
                 newvalue =  { '$set': disruptiveness_indicators}
-                db[kwargs['collection2update']].update_one(query,newvalue)
+                db[kwargs['collection2update']].update_one(query,newvalue,upsert = True)
             except Exception as e:
                 print(e)
         else:
