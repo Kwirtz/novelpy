@@ -19,6 +19,7 @@ class Dataset:
              focal_year = None,
              time_window_cooc = None,
              n_reutilisation = None,
+             starting_year = None,
              new_infos = None):
         """
         Description
@@ -64,6 +65,7 @@ class Dataset:
         self.focal_year = focal_year
         self.time_window_cooc = time_window_cooc
         self.n_reutilisation = n_reutilisation
+        self.starting_year = starting_year
         self.new_infos = new_infos
         self.item_name = self.variable.split('_')[0] if self.variable else None
         
@@ -187,11 +189,11 @@ class Dataset:
         self.name2index = pickle.load(open(self.path_input + "/name2index.p", "rb" ))
         
         if self.indicator == "foster":
-            self.current_adj = self.sum_cooc_matrix( window = range(1980, self.focal_year))
+            self.current_adj = self.sum_cooc_matrix( window = range(self.starting_year, self.focal_year))
         
         elif self.indicator == "wang":
             print("Calculate past matrix ")
-            self.past_adj = self.sum_cooc_matrix( window = range(1980, self.focal_year))
+            self.past_adj = self.sum_cooc_matrix( window = range(self.starting_year, self.focal_year))
 
             print('Calculate futur matrix')
             self.futur_adj = self.sum_cooc_matrix(window = range(self.focal_year+1, self.focal_year+self.time_window_cooc+1))
