@@ -5,9 +5,9 @@ import pymongo
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from collections import defaultdict
 import matplotlib
 import matplotlib.pyplot as plt
+from collections import defaultdict
 
 class plot_dist:
     
@@ -58,13 +58,14 @@ class plot_dist:
         self.doc_id = doc_id
         self.doc_year = doc_year
         self.variable = variable
+        self.id_variable = id_variable
         self.indicator = indicator
         self.time_window_cooc = time_window_cooc
         self.n_reutilisation = n_reutilisation
         
         if not isinstance(variable, list) or not isinstance(indicator, list):
             raise ValueError('indicator and variable should be a list')
-        if "novelty" in self.indicator:
+        if "wang" in self.indicator:
             if not isinstance(time_window_cooc, list) or not isinstance(n_reutilisation, list):
                 raise ValueError('time_window_cooc and n_reutilisation should be a list')
                 
@@ -78,14 +79,14 @@ class plot_dist:
         self.client = pymongo.MongoClient(client_name)
         self.db = self.client[db_name]
         self.collection = self.db["output"]
-        self.doc = self.collection.find_one({"PMID":self.doc_id,"year":self.doc_year})
+        self.doc = self.collection.find_one({self.id_variable:self.doc_id,"year":self.doc_year})
         for x in self.indicator:
             for y in self.variable:
-                if x == 'novelty':
+                if x == 'wang':
                     for time,reu in zip(self.time_window_cooc,self.n_reutilisation):
-                        key_name = y + "_" + x + "_" + str(self.time_window_cooc) + "y_" + str(self.n_reutilisation) + "reu"
+                        key_name = y + "_" + x + "_" + str(self.time_window_cooc) + "_" + str(self.n_reutilisation)
                         df_temp = pd.DataFrame(self.doc[key_name]["scores_array"], columns=["Scores"])
-                        df_temp['Variable'], df_temp['Indicator'] = [y + "_" + str(self.time_window_cooc) + "y_" + str(self.n_reutilisation) + "reu", x]
+                        df_temp['Variable'], df_temp['Indicator'] = [y + "_" + str(self.time_window_cooc) + "_" + str(self.n_reutilisation), x]
                         self.df = pd.concat([self.df,df_temp], ignore_index=True)                           
                 else:
                     key_name = y + "_" + x
@@ -97,23 +98,29 @@ class plot_dist:
         self.line_position = []
         for x in self.indicator:
             for y in self.variable:
-                if x == 'novelty':
+                if x == 'wang':
                     for time,reu in zip(self.time_window_cooc,self.n_reutilisation):
-                        key_name = y + "_" + x + "_" + str(time) + "y_" + str(reu) + "reu"
-                        self.path_doc= "Result/{}/{}/{}".format(x, y + "_" + str(time) + "y_" + str(reu) + "reu" ,self.doc_year)
+                        key_name = y + "_" + x + "_" + str(time) + "_" + str(reu)
+                        self.path_doc= "Result/{}/{}/{}".format(x, y + "_" + str(time) + "_" + str(reu) ,self.doc_year)
                         with open(self.path_doc + ".json", "r") as read_file:
                             self.docs = json.load(read_file)
-                        self.doc = [x for x in self.docs if x['PMID'] == self.doc_id][0]
+                        try:
+                            self.doc = [doc for doc in self.docs if doc[self.id_variable] == self.doc_id][0]
+                        except:
+                            raise Exception("No object with the ID {} or not enough combinations to have a score on entity {} and indicator {}".format(self.doc_id,y,x))
                         self.line_position.append(self.doc[key_name]["score"]["novelty"])
                         df_temp = pd.DataFrame(self.doc[key_name]["scores_array"], columns=["Scores"])
-                        df_temp['Variable'], df_temp['Indicator'] = [y + "_" + str(time) + "y_" + str(reu) + "reu", x]
+                        df_temp['Variable'], df_temp['Indicator'] = [y + "_" + str(time) + "_" + str(reu), x]
                         self.df = pd.concat([self.df,df_temp], ignore_index=True)                           
                 else:                        
                     key_name = y + "_" + x
                     self.path_doc= "Result/{}/{}/{}".format(x, y,self.doc_year)
                     with open(self.path_doc + ".json", "r") as read_file:
                         self.docs = json.load(read_file)
-                    self.doc = [x for x in self.docs if x['PMID'] == self.doc_id][0]
+                    try:
+                        self.doc = [x for x in self.docs if x[self.id_variable] == self.doc_id][0]
+                    except:
+                            raise Exception("No object with the ID {} or not enough combinations to have a score on entity {} and indicator {}".format(self.doc_id,y,x))
                     self.line_position.append(self.doc[key_name]["score"]["novelty"])
                     df_temp = pd.DataFrame(self.doc[key_name]["scores_array"], columns=["Scores"])
                     df_temp['Variable'], df_temp['Indicator'] = [y, x]
@@ -141,8 +148,22 @@ class plot_dist:
         g.set_titles('{col_name}')
         g.fig.suptitle('Doc id: {}'.format(self.doc_id))
         g.map(sns.kdeplot, "Scores")
+        n = 0
+        z = 0
+        for (i,j,k), data in g.facet_data():
+            if data.empty:
+                ax = g.facet_axis(i, j)
+                ax.set_axis_off()
+                z += 1
+            else:
+                ax = g.axes.flat[z]
+                ax.axvline(x=self.line_position[n], color='r', linestyle='--', linewidth = 1)
+                z += 1
+                n += 1
+        """
         for ax, pos in zip(g.axes.flat, self.line_position):
             ax.axvline(x=pos, color='r', linestyle='--', linewidth = 1)
+        """
         for i in range(len(self.variable)):
             g.axes[-1,i].set_xlabel('Combination scores')
         plt.legend(handles=[plt.Line2D([], [], color="red", linestyle="--", linewidth = 1, label="Novelty score")])
@@ -153,6 +174,7 @@ class novelty_trend:
                  year_range,
                  variable,
                  indicator,
+                 id_variable,
                  time_window_cooc = None,
                  n_reutilisation = None,
                  client_name = None,
@@ -190,6 +212,7 @@ class novelty_trend:
         self.client_name = client_name
         self.db_name = db_name
         self.year_range = year_range
+        self.id_variable = id_variable
         self.variable = variable
         self.indicator = indicator
         self.time_window_cooc = time_window_cooc
@@ -197,7 +220,7 @@ class novelty_trend:
         
         if not isinstance(variable, list) or not isinstance(indicator, list):
             raise ValueError('indicator and variable should be a list')
-        if "novelty" in self.indicator:
+        if "wang" in self.indicator:
             if not isinstance(time_window_cooc, list) or not isinstance(n_reutilisation, list):
                 raise ValueError('time_window_cooc and n_reutilisation should be a list')
                 
@@ -212,15 +235,15 @@ class novelty_trend:
         self.client = pymongo.MongoClient(client_name)
         self.db = self.client[db_name]
         self.collection = self.db["output"]
-        self.doc = self.collection.find_one({"PMID":self.doc_id,"year":self.doc_year})
+        self.doc = self.collection.find_one({id_variable:self.doc_id,"year":self.doc_year})
         
         for x in self.indicator:
             for y in self.variable:
-                if x == 'novelty':
+                if x == 'wang':
                     for time,reu in zip(self.time_window_cooc,self.n_reutilisation):
-                        key_name = y + "_" + x + "_" + str(self.time_window_cooc) + "y_" + str(self.n_reutilisation) + "reu"
+                        key_name = y + "_" + x + "_" + str(self.time_window_cooc) + "_" + str(self.n_reutilisation)
                         df_temp = pd.DataFrame(self.doc[key_name]["scores_array"], columns=["Scores"])
-                        df_temp['Variable'], df_temp['Indicator'] = [y + "_" + str(self.time_window_cooc) + "y_" + str(self.n_reutilisation) + "reu", x]
+                        df_temp['Variable'], df_temp['Indicator'] = [y + "_" + str(self.time_window_cooc) + "_" + str(self.n_reutilisation), x]
                         self.df = pd.concat([self.df,df_temp], ignore_index=True)                           
                 else:
                     key_name = y + "_" + x
@@ -231,18 +254,18 @@ class novelty_trend:
     def get_info_json(self):
         for x in self.indicator:
             for y in self.variable:
-                if x == 'novelty':
+                if x == 'wang':
                     for time,reu in zip(self.time_window_cooc,self.n_reutilisation):
-                        key_name = y + "_" + x + "_" + str(time) + "y_" + str(reu) + "reu"
+                        key_name = y + "_" + x + "_" + str(time) + "_" + str(reu)
                         for year in self.year_range:
-                            self.path_doc= "Result/{}/{}/{}".format(x, y + "_" + str(time) + "y_" + str(reu) + "reu" , year)
+                            self.path_doc= "Result/{}/{}/{}".format(x, y + "_" + str(time) + "_" + str(reu) , year)
                             with open(self.path_doc + ".json", "r") as read_file:
                                 self.docs = json.load(read_file)
                             score_list = []
                             for doc in self.docs:
                                 score_list.append(doc[key_name]["score"]["novelty"])
                             df_temp = pd.DataFrame([np.mean(score_list)], columns=["Score_mean"])
-                            df_temp['Variable'], df_temp['Indicator'], df_temp['Year'] = [y + "_" + str(time) + "y_" + str(reu) + "reu", x,year]
+                            df_temp['Variable'], df_temp['Indicator'], df_temp['Year'] = [y + "_" + str(time) + "_" + str(reu), x,year]
                             self.df = pd.concat([self.df,df_temp], ignore_index=True)                           
                 else:                        
                     key_name = y + "_" + x
@@ -323,13 +346,14 @@ class correlation_indicators:
         self.db_name = db_name
         self.year_range = year_range
         self.variable = variable
+        self.id_variable = id_variable
         self.indicator = indicator
         self.time_window_cooc = time_window_cooc
         self.n_reutilisation = n_reutilisation
         
         if not isinstance(variable, list) or not isinstance(indicator, list):
             raise ValueError('indicator and variable should be a list')
-        if "novelty" in self.indicator:
+        if "wang" in self.indicator:
             if not isinstance(time_window_cooc, list) or not isinstance(n_reutilisation, list):
                 raise ValueError('time_window_cooc and n_reutilisation should be a list')
         
@@ -342,11 +366,11 @@ class correlation_indicators:
     def get_info_json(self):
         for x in self.indicator:
             for y in self.variable:
-                if x == 'novelty':
+                if x == 'wang':
                     for time,reu in zip(self.time_window_cooc,self.n_reutilisation):
-                        key_name = y + "_" + x + "_" + str(time) + "y_" + str(reu) + "reu"
+                        key_name = y + "_" + x + "_" + str(time) + "_" + str(reu)
                         for year in self.year_range:
-                            self.path_doc= "Result/{}/{}/{}".format(x, y + "_" + str(time) + "y_" + str(reu) + "reu" , year)
+                            self.path_doc= "Result/{}/{}/{}".format(x, y + "_" + str(time) + "_" + str(reu) , year)
                             with open(self.path_doc + ".json", "r") as read_file:
                                 self.docs = json.load(read_file)
                             score_list = []

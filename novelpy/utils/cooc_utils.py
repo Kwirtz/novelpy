@@ -15,12 +15,13 @@ class create_cooc:
                  var,
                  sub_var,
                  year_var,
-                 client_name = None,
-                 db_name = None,
-                 collection_name = None,
-                 time_window = range(1980,2021),
+                 collection_name,
+                 time_window,
+                 dtype = np.uint16,
                  weighted_network = False,
-                 self_loop = False):
+                 self_loop = False,
+                 client_name = None,
+                 db_name = None,):
         '''
         Description
         -----------
@@ -29,38 +30,38 @@ class create_cooc:
         
         Parameters
         ----------
-        client_name : str
-            name of the mongdb client
-        db_name : str
-            name of the db where your data is ("pkg" for us)
-        collection_name : str
-            name of the collection where the items yo data is ("pkg" for us)
-        indicator : str
-            indicator used the year is
-        year_var : str
-            field where the year is
-        time_window: range
-            range of year you will work on
         var : str
             field where the variable of interest is
         sub_var : str
             subfield where the variable of interest is
+        year_var : str        
+            field where the year is
+        collection_name : str
+            name of the collection where your data is ("pkg" for us)
+        time_window: range
+            range of year you will work on
+        dtype:
+            Type of coocurence matrix, basis is int16 but you migh thing about it
         weighted_network : bool
             allow a given document to make multiple time the same coocurrence
         self_loop : bool
             keep the diagonal on the coocurrence matrix
-            
+        client_name : str
+            name of the mongdb client
+        db_name : str
+            name of the db where your data is ("pkg" for us)            
         '''
 
         self.var = var
         self.sub_var = sub_var
         self.year_var = year_var
+        self.collection_name = collection_name
         self.time_window = time_window
+        self.dtype = dtype
         self.weighted_network = weighted_network
         self.self_loop = self_loop
         self.client_name = client_name
         self.db_name = db_name
-        self.collection_name = collection_name
         
         type1 = 'weighted_network' if self.weighted_network else 'unweighted_network'
         type2 = 'self_loop' if self.self_loop else 'no_self_loop'
@@ -134,7 +135,7 @@ class create_cooc:
         sparse matrix
 
         ''' 
-        self.x = lil_matrix((len(self.item_list), len(self.item_list)), dtype = np.int16)
+        self.x = lil_matrix((len(self.item_list), len(self.item_list)), dtype = self.dtype)
     
 
     def get_item_list(self, docs):

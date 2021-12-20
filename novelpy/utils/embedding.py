@@ -19,19 +19,19 @@ class Embedding:
                  client_name,
                  db_name,
                  collection_articles,
-                 collection_authors,
                  collection_keywords,
                  collection_embedding,
                  var_year,
                  var_id,
                  var_pmid_list,
                  var_id_list,
-                 var_auth_id,
                  pretrain_path,
                  var_title,
                  var_abstract,
                  var_keyword,
-                 subvar_keyword):
+                 subvar_keyword,
+                 collection_authors = None,
+                 var_auth_id = None):
         """
         
         Description
@@ -157,8 +157,9 @@ class Embedding:
                                                'abstract_embedding':article_abs_centroid}}, upsert = False))    
                 except Exception as e:
                     print(e)
-            collection.bulk_write(list_of_insertion)
-            list_of_insertion = []
+            if list_of_insertion:
+                collection.bulk_write(list_of_insertion)
+                list_of_insertion = []
     
         
     

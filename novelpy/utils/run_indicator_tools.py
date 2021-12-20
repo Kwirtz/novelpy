@@ -278,9 +278,9 @@ class create_output(Dataset):
             score = {'novelty': float(np.mean(scores_list))}
 
         doc_infos = {"scores_array": scores_list,
-                     "year":self.focal_year}
+                     "year":self.focal_year,
+                     'score':score}
         
-        doc_infos.update({'score':score })
         self.key = key
         self.doc_infos = doc_infos
         return {key:doc_infos}
