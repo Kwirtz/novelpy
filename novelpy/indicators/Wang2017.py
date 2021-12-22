@@ -3,13 +3,12 @@ import tqdm
 import pickle 
 import numpy as np
 from scipy.linalg import norm
-from scipy.sparse import csr_matrix, lil_matrix, triu
+from scipy.sparse import csr_matrix, lil_matrix, triu, tril
 from novelpy.utils.run_indicator_tools import create_output
    
 def get_difficulty_cos_sim(difficulty_adj):
-     """
-    
 
+    """
     Parameters
     ----------
     difficulty_adj : scipy.sparse.csr.csr_matrix
@@ -21,13 +20,15 @@ def get_difficulty_cos_sim(difficulty_adj):
         cosine similarity matrix for each combination.
 
     """
-     difficulty_norms = np.apply_along_axis(norm, 0, difficulty_adj.A)[np.newaxis]
-     difficulty_norms = difficulty_norms.T.dot(difficulty_norms)
-     cos_sim = difficulty_adj.dot(difficulty_adj)/difficulty_norms
-     cos_sim = csr_matrix(triu(np.nan_to_num(cos_sim)))
-     cos_sim.setdiag(0)
-     cos_sim.eliminate_zeros()
-     return cos_sim
+    
+    difficulty_adj = triu(difficulty_adj,1) + tril(difficulty_adj.T)
+    difficulty_norms = np.apply_along_axis(norm, 0, difficulty_adj.A)[np.newaxis]
+    difficulty_norms = difficulty_norms.T.dot(difficulty_norms)
+    cos_sim = difficulty_adj.dot(difficulty_adj)/difficulty_norms
+    cos_sim = csr_matrix(triu(np.nan_to_num(cos_sim)))
+    cos_sim.setdiag(0)
+    cos_sim.eliminate_zeros()
+    return cos_sim
 
 class Wang2017(create_output):
 
