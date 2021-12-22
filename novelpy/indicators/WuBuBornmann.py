@@ -14,7 +14,7 @@ class Disruptiveness(create_output):
                 refs_list_variable,
                 year_variable,
                 client_name = None,
-                db_name = None,):
+                db_name = None):
         """
         
         Description
