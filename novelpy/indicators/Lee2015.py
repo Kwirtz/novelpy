@@ -9,14 +9,15 @@ from novelpy.utils.run_indicator_tools import create_output
 
 class Lee2015(create_output):
 
-    def __init__(self, client_name = None,
-             db_name = None,
-             collection_name = None,
-             id_variable = None,
-             year_variable = None,
-             variable = None,
-             sub_variable = None,
-             focal_year = None):
+    def __init__(self,
+             collection_name,
+             id_variable,
+             year_variable,
+             variable,
+             sub_variable,
+             focal_year,
+             client_name = None,
+             db_name = None):
         """
         Description
         -----------
@@ -74,19 +75,11 @@ class Lee2015(create_output):
         ij_products = ij_sums.T.dot(ij_sums)
         self.ij_sums = ij_sums
         self.ij_products = ij_products
-        if np.any(ij_sums< 0):
-            print("STOP ij_sums is negative")
-        
-        if np.any(ij_products< 0):
-            print("STOP ij_products is negative")
             
         comb_scores = (csr_matrix(self.current_adj,dtype=float)*int(Nt))/ij_products
         comb_scores[np.isinf(comb_scores)] =  0
         comb_scores[np.isnan(comb_scores)] =  0
         comb_scores = triu(comb_scores,format='csr')
-        e = comb_scores.todense()
-        if np.any(e<0):
-            print("STOPPPPP")
 
         pickle.dump(comb_scores, open(self.path_score + "/{}.p".format(self.focal_year), "wb" ) )
         
