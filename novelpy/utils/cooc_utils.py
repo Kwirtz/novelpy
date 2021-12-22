@@ -41,7 +41,7 @@ class create_cooc:
         time_window: range
             range of year you will work on
         dtype:
-            Type of coocurence matrix, basis is int16 but you migh thing about it
+            Type of coocurence matrix, basis is uint16 but can be changed if numbers are to high
         weighted_network : bool
             allow a given document to make multiple time the same coocurrence
         self_loop : bool
@@ -116,8 +116,8 @@ class create_cooc:
                 combi = sorted( (self.name2index[combi[0]] , self.name2index[combi[1]]) )
                 ind_1 = combi[0]
                 ind_2 = combi[1]
-                self.x[ind_1,ind_2] += 1
-                    
+                self.x[ind_1,ind_2] += 1              
+        
         if self.self_loop == False:
             self.x.setdiag(0)
 
