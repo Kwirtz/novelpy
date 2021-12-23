@@ -342,7 +342,7 @@ class create_output(Dataset):
             if self.client_name:
                 list_of_insertion.append(pymongo.UpdateOne({self.id_variable: int(idx)},
                                                            {'$set': {self.key: self.doc_infos,
-                                                                     self.year_variable:self.focal_year}}
+                                                                     self.year_variable:self.focal_year}},
                                                            upsert = True))
             else:
                 list_of_insertion.append({self.id_variable: int(idx),self.key: self.doc_infos})
