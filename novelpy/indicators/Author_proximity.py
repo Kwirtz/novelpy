@@ -170,7 +170,10 @@ class Author_proximity(Dataset):
                 authors_novelty = {
                     'authors_novelty_{}_{}'.format(ent, str(self.windows_size)) :{
                         'intra':intra_nov_list,
-                        'inter':inter_nov_list}
+                        'inter':inter_nov_list},
+		    'authors_novelty_{}_{}'.format(ent, str(self.windows_size)) :{
+                        'scores_array_intra':intra_authors_dist,
+                        'scores_array_inter':inter_authors_dist}
                     }
                 self.infos.update(authors_novelty)
 

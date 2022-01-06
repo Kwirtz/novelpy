@@ -68,32 +68,30 @@ In order to use the indicators of Shibayama et al (2021) and the one on authors,
 
 .. code-block:: python
 
-   embedding = Embedding(
-       client_name = 'mongodb://localhost:27017',
-       db_name = 'novelty',
-       collection_articles = 'references_embedding',
-       collection_authors = 'authors_embedding',
-       collection_keywords = 'meshterms',
-       collection_embedding = 'articles_embedding',
-       var_year = 'year',
-       var_id = 'PMID',
-       var_id_list = 'pmid_list',
-       var_pmid_list = 'refs_pmid_wos',
-       var_auth_id = 'AND_ID',
-       pretrain_path = 'path/to/pre/train',
-       var_title = 'ArticleTitle',
-       var_abstract = 'a04_abstract',
-       var_keyword = 'Mesh_year_category',
-       subvar_keyword = 'DescUI')
+	embedding = Embedding(
+		client_name = 'mongodb://localhost:27017',
+		db_name = 'novelpy',
+		year_variable = 'year',
+		id_variable = 'PMID',
+		references_variable = 'refs_pmid_wos',
+		auth_pubs_variable = 'pmid_list',
+		id_auth_variable = 'AND_ID',
+		pretrain_path = '/home/peltouz/Downloads/en_core_sci_lg-0.4.0/en_core_sci_lg/en_core_sci_lg-0.4.0',
+		title_variable = 'ArticleTitle',
+		abstract_variable = 'a04_abstract',
+		keywords_variable = 'Mesh_year_category',
+		keywords_subvariable = 'DescUI',
+		abstract_subvariable = 'AbstractText')
 
 In order to build the profile of references and authors, it is first necessary to give a semantic representation to each article. The first function to use is ``get_articles_centroid``.
 
-
 .. code-block:: python
 
-   embedding.get_articles_centroid(pmid_start = pmid_start,
-                          pmid_end = pmid_end,
-                          chunk_size=1000)
+   embedding.get_articles_centroid(
+      collection_articles = 'articles',
+      collection_embedding = 'articles_embedding',
+      year_start = 2000,
+      year_end = 2002)
 
 To compute Shibayama et al. 2021 indicators, it is necessary to construct a profile of references for each item. One can also select the time window to consider.
 
@@ -102,14 +100,27 @@ To compute Shibayama et al. 2021 indicators, it is necessary to construct a prof
 
    embedding.get_references_embbeding(
       from_year = 2000,
-      to_year = 2010)
+      to_year = 2010,
+      collection_articles = 'articles',
+      collection_embedding = 'articles_embedding',
+      collection_ref_embedding = 'references_embedding',
+      skip_ = 1,
+      limit_ = 0)
 
 The author proximity works in a two step process, first it creates an profile for each authors in a separate database for all year were a given author has a publication. Then two construct the indicateur at the paper level, all authors profile a then import from the authors database. It select only authors representation before the given document publishing year.
 
 .. code-block:: python
 
-   embedding.feed_author_profile()
+   embedding.feed_author_profile(
+	collection_authors = 'authors',
+        collection_embedding = 'articles_embedding',
+        skip_ = 1,
+        limit_ = 0)
 
-   embedding.author_profile2papers()
+   embedding.author_profile2papers(
+	collection_authors = 'authors',
+        collection_articles = 'articles',
+        skip_ = 1,
+        limit_ = 0)
 
 

@@ -1,0 +1,72 @@
+[{
+  "PMID": 5,
+  "year": 2002,
+  "ArticleTitle": "titre pas mal pour package ok",
+  "a04_abstract": [
+    {
+      "AbstractText": "grand exemple pour un grand package"
+    }
+  ],
+  "a02_authorlist": [
+    {
+      "AID": 1
+    },
+    {
+      "AID": 2
+    },
+    {
+      "AID": 3
+    }
+  ],
+  "refs_pmid_wos": [
+    1,
+    2,
+    3,
+    4
+  ]
+},{
+  "PMID": 6,
+  "year": 2002,
+  "ArticleTitle": "super titre pour super package",
+  "a04_abstract": [
+    {
+      "AbstractText": "super exemple pour un super package"
+    }
+  ],
+  "a02_authorlist": [
+    {
+      "AID": 4
+    },
+    {
+      "AID": 5
+    }
+  ],
+  "refs_pmid_wos": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ]
+},{
+  "PMID": 7,
+  "year": 2002,
+  "ArticleTitle": "titre tiptop pour package toptip",
+  "a04_abstract": [
+    {
+      "AbstractText": "exemple à chier pour un package bof"
+    }
+  ],
+  "a02_authorlist": [
+    {
+      "AID": 4
+    }
+  ],
+  "refs_pmid_wos": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ]
+}]

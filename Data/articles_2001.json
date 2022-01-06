@@ -1,0 +1,45 @@
+[{
+  "PMID": 3,
+  "year": 2001,
+  "ArticleTitle": "titre a chier pour package extra",
+  "a04_abstract": [
+    {
+      "AbstractText": ""
+    }
+  ],
+  "a02_authorlist": [
+    {
+      "AID": 3
+    },
+    {
+      "AID": 4
+    },
+    {
+      "AID": 5
+    }
+  ],
+  "refs_pmid_wos": [
+    1,
+    2
+  ]
+},{
+  "PMID": 4,
+  "year": 2001,
+  "ArticleTitle": "titre ok pour module useless",
+  "a02_authorlist": [
+    {
+      "AID": 5
+    },
+    {
+      "AID": 6
+    },
+    {
+      "AID": 7
+    }
+  ],
+  "refs_pmid_wos": [
+    1,
+    2,
+    3
+  ],
+}]

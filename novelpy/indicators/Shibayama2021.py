@@ -130,6 +130,7 @@ class Shibayama2021(Dataset):
             
             references_novelty = {
                 'Shibayama_{}'.format(ent) :nov_list
+                'scores_array_{}'.format(ent) :dist_list
                 }
 
             self.infos.update(references_novelty)
@@ -144,6 +145,7 @@ class Shibayama2021(Dataset):
         else:
             self.docs = json.load(open("Data/docs/{}/{}.json".format(self.collection_name,self.focal_year)))
 
+        print('Getting score per paper ...')     
         # Iterate over every docs 
         list_of_insertion = []
         for doc in tqdm.tqdm(self.docs):

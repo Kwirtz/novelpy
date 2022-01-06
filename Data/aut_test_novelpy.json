@@ -1,0 +1,48 @@
+[{
+  "AND_ID": 1,
+  "pmid_list": [
+    1,
+    5
+  ]
+},{
+  "AND_ID": 2,
+  "pmid_list": [
+    1,
+    2,
+    5
+  ]
+},{
+  "AND_ID": 3,
+  "pmid_list": [
+    1,
+    2,
+    3,
+    5
+  ]
+},{
+  "AND_ID": 4,
+  "pmid_list": [
+    2,
+    3,
+    6,
+    7
+  ]
+},{
+  "AND_ID": 5,
+  "pmid_list": [
+    3,
+    4,
+    6
+  ]
+},{
+  "AND_ID": 6,
+  "pmid_list": [
+    4
+  ]
+},{
+  "AND_ID": 7,
+  "pmid_list": [
+    4,
+    5
+  ]
+}]
