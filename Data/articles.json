@@ -1,0 +1,184 @@
+[{
+  "_id": {
+    "$oid": "61d602a2cff6b336c8cbd2c1"
+  },
+  "PMID": 1,
+  "year": 2000,
+  "ArticleTitle": "package voila",
+  "a04_abstract": [
+    {
+      "AbstractText": "exemple pour un package"
+    }
+  ],
+  "a02_authorlist": [
+    {
+      "AID": 1
+    },
+    {
+      "AID": 2
+    },
+    {
+      "AID": 3
+    }
+  ],
+  "refs_pmid_wos": [
+    0
+  ]
+},{
+  "_id": {
+    "$oid": "61d602a2cff6b336c8cbd2c2"
+  },
+  "PMID": 2,
+  "year": 2000,
+  "ArticleTitle": "titre quoi pour package voila",
+  "a04_abstract": [
+    {
+      "AbstractText": "grand exemple pour un grand package"
+    }
+  ],
+  "a02_authorlist": [
+    {
+      "AID": 2
+    },
+    {
+      "AID": 3
+    },
+    {
+      "AID": 4
+    }
+  ],
+  "refs_pmid_wos": [
+    0,
+    1
+  ]
+},{
+  "_id": {
+    "$oid": "61d602a2cff6b336c8cbd2c3"
+  },
+  "PMID": 3,
+  "year": 2001,
+  "ArticleTitle": "titre a chier pour package extra",
+  "a04_abstract": [
+    {
+      "AbstractText": ""
+    }
+  ],
+  "a02_authorlist": [
+    {
+      "AID": 3
+    },
+    {
+      "AID": 4
+    },
+    {
+      "AID": 5
+    }
+  ],
+  "refs_pmid_wos": [
+    1,
+    2
+  ]
+},{
+  "_id": {
+    "$oid": "61d602a2cff6b336c8cbd2c4"
+  },
+  "PMID": 4,
+  "year": 2001,
+  "ArticleTitle": "titre ok pour module useless",
+  "a02_authorlist": [
+    {
+      "AID": 5
+    },
+    {
+      "AID": 6
+    },
+    {
+      "AID": 7
+    }
+  ],
+  "refs_pmid_wos": [
+    1,
+    2,
+    3
+  ]
+},{
+  "_id": {
+    "$oid": "61d602a2cff6b336c8cbd2c5"
+  },
+  "PMID": 5,
+  "year": 2002,
+  "ArticleTitle": "titre pas mal pour package ok",
+  "a04_abstract": [
+    {
+      "AbstractText": "grand exemple pour un grand package"
+    }
+  ],
+  "a02_authorlist": [
+    {
+      "AID": 1
+    },
+    {
+      "AID": 2
+    },
+    {
+      "AID": 3
+    }
+  ],
+  "refs_pmid_wos": [
+    1,
+    2,
+    3,
+    4
+  ]
+},{
+  "_id": {
+    "$oid": "61d602a2cff6b336c8cbd2c6"
+  },
+  "PMID": 6,
+  "year": 2002,
+  "ArticleTitle": "super titre pour super package",
+  "a04_abstract": [
+    {
+      "AbstractText": "super exemple pour un super package"
+    }
+  ],
+  "a02_authorlist": [
+    {
+      "AID": 4
+    },
+    {
+      "AID": 5
+    }
+  ],
+  "refs_pmid_wos": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ]
+},{
+  "_id": {
+    "$oid": "61d602a2cff6b336c8cbd2c7"
+  },
+  "PMID": 7,
+  "year": 2002,
+  "ArticleTitle": "titre tiptop pour package toptip",
+  "a04_abstract": [
+    {
+      "AbstractText": "exemple à chier pour un package bof"
+    }
+  ],
+  "a02_authorlist": [
+    {
+      "AID": 4
+    }
+  ],
+  "refs_pmid_wos": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ]
+}]

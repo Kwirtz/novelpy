@@ -129,7 +129,7 @@ class Shibayama2021(Dataset):
             nov_list = get_percentiles(dist_list)
             
             references_novelty = {
-                'Shibayama_{}'.format(ent) :nov_list
+                'Shibayama_{}'.format(ent) :nov_list,
                 'scores_array_{}'.format(ent) :dist_list
                 }
 
