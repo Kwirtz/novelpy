@@ -5,6 +5,8 @@ from novelpy.utils.run_indicator_tools import Dataset
 import pymongo
 import tqdm
 from sklearn.metrics.pairwise import cosine_similarity
+import json
+import os
 
 def cosine_similarity_dist(n,doc_mat):
     """
@@ -63,7 +65,8 @@ class Shibayama2021(Dataset):
                  year_variable = None,
                  ref_variable = None,
                  entity = None,
-                 focal_year = None):
+                 focal_year = None,
+                 embedding_dim = 200):
         """
         Description
         -----------
@@ -89,6 +92,7 @@ class Shibayama2021(Dataset):
         self.ref_variable = ref_variable
         self.year_variable = year_variable
         self.entity = entity
+        self.embedding_dim = embedding_dim
 
         Dataset.__init__(
             self,
@@ -99,6 +103,9 @@ class Shibayama2021(Dataset):
             year_variable = year_variable,
             focal_year = focal_year)
     
+        self.path_score = "Data/score/shibayama/"
+        if not os.path.exists(self.path_score):
+            os.makedirs(self.path_score)
     
     
     def compute_score(self,doc,entity):
@@ -118,22 +125,22 @@ class Shibayama2021(Dataset):
 
         """
         for ent in entity:
-            self.focal_paper_id = doc[self.id_variable]
-            n = len(doc[self.ref_variable])
-            doc_mat = np.zeros((n, 200))
-            for i in range(n):
-                item = doc[self.ref_variable][i][ent]
-                if item:
-                    doc_mat[i, :] =  item
-            dist_list = cosine_similarity_dist(n,doc_mat)
-            nov_list = get_percentiles(dist_list)
-            
-            references_novelty = {
-                'Shibayama_{}'.format(ent) :nov_list,
-                'scores_array_{}'.format(ent) :dist_list
-                }
-
-            self.infos.update(references_novelty)
+            clean_refs = [ref for ref in doc[self.ref_variable] if ref[ent] and isinstance(ref[ent],list)]
+            n = len(clean_refs)
+            if n > 1:
+                doc_mat = np.zeros((n, self.embedding_dim))
+                for i in range(n):
+                    item = clean_refs[i][ent]
+                    if item:
+                        doc_mat[i, :] =  item
+                dist_list = cosine_similarity_dist(n,doc_mat)
+                nov_list = get_percentiles(dist_list)
+                
+                references_novelty = {
+                    'Shibayama_{}'.format(ent) :nov_list,
+                    'scores_array_{}'.format(ent) :dist_list
+                    }
+                self.infos.update(references_novelty)
 
     def get_indicator(self):
        
@@ -144,22 +151,21 @@ class Shibayama2021(Dataset):
                 })
         else:
             self.docs = json.load(open("Data/docs/{}/{}.json".format(self.collection_name,self.focal_year)))
-
         print('Getting score per paper ...')     
         # Iterate over every docs 
         list_of_insertion = []
         for doc in tqdm.tqdm(self.docs):
             self.infos = dict()
-            if len(doc[self.ref_variable])>1: 
+            if doc[self.ref_variable] and len(doc[self.ref_variable])>1: 
                 self.compute_score(doc, self.entity)
+                if self.infos:
+                    if self.client_name:
+                        list_of_insertion.append(pymongo.UpdateOne({self.id_variable: doc[self.id_variable]},
+                                                                   {'$set': {'Shibayama': self.infos}},
+                                                                   upsert = True))
+                    else:
+                        list_of_insertion.append({self.id_variable: doc[self.id_variable],'Shibayama': self.infos})
 
-                if self.client_name:
-                    list_of_insertion.append(pymongo.UpdateOne({self.id_variable: doc[self.id_variable]},
-                                                               {'$set': {'Shibayama': self.infos}},
-                                                               upsert = True))
-                else:
-                    list_of_insertion.append({self.id_variable: doc[self.id_variable],'Shibayama': self.infos})
-        
         if self.client_name:
             if "output" not in self.db.list_collection_names():
                 print("Init output collection with index on id_variable ...")
@@ -167,11 +173,12 @@ class Shibayama2021(Dataset):
                 self.collection_output.create_index([ (self.id_variable,1) ])
             else:
                 self.collection_output = self.db["output"]
-                
-            self.db['output'].bulk_write(list_of_insertion)
+            if list_of_insertion:
+                self.db['output'].bulk_write(list_of_insertion)
         else:
-            with open(self.path_output + "/{}.json".format(self.focal_year), 'w') as outfile:
-                json.dump(list_of_insertion, outfile)        
+            if list_of_insertion:
+                with open(self.path_score + "/{}.json".format(self.focal_year), 'w') as outfile:
+                    json.dump(list_of_insertion, outfile)        
     
 
 

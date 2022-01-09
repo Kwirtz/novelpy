@@ -10,7 +10,7 @@ import pandas as pd
 from itertools import chain
 import json
 from pymongo import UpdateOne
-
+import os
 
 
 
@@ -18,13 +18,13 @@ class Embedding:
     
     def __init__(self,
                  year_variable,
+                 time_window,
                  id_variable,
                  references_variable,
                  auth_pubs_variable,
                  pretrain_path,
                  title_variable,
                  abstract_variable,
-                 data_path = None,
                  client_name = None,
                  db_name = None,
                  keywords_variable = None,
@@ -74,8 +74,8 @@ class Embedding:
         
         self.client_name = client_name
         self.db_name = db_name
-        self.data_path = data_path
         self.year_variable = year_variable
+        self.time_window = time_window
         self.id_variable = id_variable
         self.references_variable = references_variable
         self.auth_pubs_variable = auth_pubs_variable
@@ -122,10 +122,10 @@ class Embedding:
 
 
         if self.client_name:
-                collection = db[collection_articles]
+                collection = self.db[collection_articles]
                 docs = collection.find(no_cursor_timeout = True)
         else:
-            docs = json.load(open("{}/{}.json".format(self.data_path,collection_articles))) 
+            docs = json.load(open("Data/docs/{}.json".format(collection_articles))) 
 
         list_of_insertion = []
         for doc in tqdm.tqdm(docs):
@@ -138,7 +138,7 @@ class Embedding:
             else:
                 article_title_centroid = None
             ## Abstracts
-            if self.abstract_variable in doc.keys() and doc[self.abstract_variable] != "" :
+            if self.abstract_variable in doc.keys() and doc[self.abstract_variable][0][self.abstract_subvariable] != "" :
                 # abstract = ast.literal_eval(doc[self.abstract_variable])[0]['AbstractText']
                 if self.abstract_subvariable:
                     abstract = doc[self.abstract_variable][0][self.abstract_subvariable]
@@ -179,7 +179,7 @@ class Embedding:
         if self.client_name:
             collection_embedding.bulk_write(list_of_insertion)
         else:
-            with open("{}/{}.json".format(self.data_path,collection_embedding), 'w') as outfile:
+            with open("Data/docs/{}.json".format(collection_embedding), 'w') as outfile:
                 json.dump(list_of_insertion, outfile)
         
         
@@ -217,7 +217,7 @@ class Embedding:
                               keywords_subvariable,
                               collection_embedding,
                               collection_authors,
-                              emdebbing,
+                              embedding,
                               client_name,
                               collection_keywords):
             """
@@ -318,9 +318,10 @@ class Embedding:
             collection_embedding = self.db[collection_embedding]
             #collection_keywords = db[self.collection_keywords]
             authors = collection_authors.find({}).skip(skip_-1).limit(limit_)
+            embedding = None
         else:
-            authors = json.load(open("{}/{}.json".format(self.data_path,collection_authors))) 
-            embedding = pd.read_json("{}/{}.json".format(self.data_path,collection_embedding))
+            authors = json.load(open("Data/docs/{}.json".format(collection_authors))) 
+            embedding = pd.read_json("Data/docs/{}.json".format(collection_embedding))
 
         # client = pymongo.MongoClient( client_name)
         # db = client[db_name]
@@ -342,7 +343,7 @@ class Embedding:
                 keywords_subvariable = self.keywords_subvariable,
                 collection_embedding = collection_embedding,
                 collection_authors = collection_authors,
-                emdebbing = embedding,
+                embedding = embedding,
                 client_name = self.client_name,
                 collection_keywords = None)
 
@@ -365,7 +366,7 @@ class Embedding:
             if self.client_name:
                 collection_authors.bulk_write(list_of_insertion)
             else:
-                with open("{}/authors_profiles.json".format(self.data_path), 'w') as outfile:
+                with open("Data/docs/authors_profiles.json", 'w') as outfile:
                     json.dump(list_of_insertion, outfile)
         
 
@@ -453,8 +454,7 @@ class Embedding:
                     if client_name:
                         profile = collection_authors.find_one({id_auth_variable:auth['AID']})
                     else:
-                        profile = collection_authors[collection_authors[id_auth_variable] == auth['AID']].to_dict()
-
+                        profile = collection_authors[collection_authors[id_auth_variable] == auth['AID']].to_dict('records')[0]
                     try:
                         abs_profile = profile['embedded_abs']
                         abs_profile = drop_year_before_pub(abs_profile,
@@ -484,60 +484,69 @@ class Embedding:
             infos = {'authors_profiles':authors_profiles} if authors_profiles else {'authors_profiles': None}
             return infos
             
-                
+
+        out_path = 'Data/docs/{}'.format(collection_articles_author_profile)
+        if not os.path.exists(out_path):
+            os.makedirs(out_path)
+
         if self.client_name:
             collection_articles = self.db[collection_articles]
             collection_authors = self.db[collection_authors]
             collection_articles_author_profile = self.db[collection_articles_author_profile]
-            docs = collection_articles.find({}).skip(skip_-1).limit(limit_)
         else:
-            docs = json.load(open("{}/{}.json".format(self.data_path,collection_articles))) 
-            collection_authors = pd.read_json("{}/authors_profiles.json".format(self.data_path))
-     
-                
-        # Parallel(n_jobs=n_jobs)(
-        #     delayed(get_author_profile)(
-        #         doc,
-        #         self.id_variable,
-        #         self.id_auth_variable, 
-        #         self.year_variable,
-        #         self.client_name,
-        #         self.db_name,
-        #         self.collection_articles,
-        #         self.collection_authors)
-        #     for doc in tqdm.tqdm(docs))
-        
-        list_of_insertion = []
-        for doc in tqdm.tqdm(docs):
-            infos = get_author_profile(
-                doc= doc,
-                id_variable = self.id_variable,
-                id_auth_variable = self.id_auth_variable, 
-                year_variable = self.year_variable,
-                collection_articles = collection_articles,
-                collection_authors = collection_authors,
-                client_name = self.client_name)
+            collection_authors = pd.read_json("Data/docs/authors_profiles.json")
+
+        for year in range(self.time_window[0],self.time_window[1]+1):
+            if self.client_name:
+                docs = collection_articles.find({self.year_variable:year}).skip(skip_-1).limit(limit_)
+            else:
+                docs = json.load(open("Data/docs/{}/{}.json".format(collection_articles,year))) 
+         
+                    
+            # Parallel(n_jobs=n_jobs)(
+            #     delayed(get_author_profile)(
+            #         doc,
+            #         self.id_variable,
+            #         self.id_auth_variable, 
+            #         self.year_variable,
+            #         self.client_name,
+            #         self.db_name,
+            #         self.collection_articles,
+            #         self.collection_authors)
+            #     for doc in tqdm.tqdm(docs))
+            
+            list_of_insertion = []
+            for doc in tqdm.tqdm(docs):
+                infos = get_author_profile(
+                    doc= doc,
+                    id_variable = self.id_variable,
+                    id_auth_variable = self.id_auth_variable, 
+                    year_variable = self.year_variable,
+                    collection_articles = collection_articles,
+                    collection_authors = collection_authors,
+                    client_name = self.client_name)
+                if self.client_name:
+                    try:
+                        infos.update({self.year_variable:doc[self.year_variable]})
+                        list_of_insertion.append(UpdateOne({self.id_variable: doc[self.id_variable]}, {'$set': infos}, upsert = True))    
+                    except Exception as e:
+                        print(e)
+                    if len(list_of_insertion) % 1000 == 0:
+                        collection_articles_author_profile.bulk_write(list_of_insertion)
+                        list_of_insertion = []
+                else:
+                    try:
+                        infos.update({self.id_variable: doc[self.id_variable],
+                                    self.year_variable:doc[self.year_variable]})
+                        list_of_insertion.append(infos)    
+                    except Exception as e:
+                        print(e)
 
             if self.client_name:
-                try:
-                    list_of_insertion.append(UpdateOne({self.id_variable: doc[self.id_variable]}, {'$set': infos}, upsert = True))    
-                except Exception as e:
-                    print(e)
-                if len(list_of_insertion) % 1000 == 0:
-                    collection_articles_author_profile.bulk_write(list_of_insertion)
-                    list_of_insertion = []
+                collection_articles_author_profile.bulk_write(list_of_insertion)
             else:
-                try:
-                    infos.update({self.id_variable: doc[self.id_variable]})
-                    list_of_insertion.append(infos)    
-                except Exception as e:
-                    print(e)
-
-        if self.client_name:
-            collection_articles_author_profile.bulk_write(list_of_insertion)
-        else:
-            with open("{}/articles_authors_profiles.json".format(self.data_path), 'w') as outfile:
-                json.dump(list_of_insertion, outfile)
+                with open("{}/{}.json".format(out_path,year), 'w') as outfile:
+                    json.dump(list_of_insertion, outfile)
             
         
         
@@ -583,7 +592,9 @@ class Embedding:
                                      'title_embedding': ref['title_embedding'] if 'title_embedding' in ref.keys() else None})
             infos = {'refs_embedding':refs_emb} if refs_emb else  {'refs_embedding': None}
             return infos
-            
+
+
+
         if self.client_name:
             if collection_ref_embedding not in self.db.list_collection_names():
                     print("Init references embedding collection with index on id_variable ...")
@@ -594,40 +605,52 @@ class Embedding:
 
             collection_articles = self.db[collection_articles]
             collection_embedding = self.db[collection_embedding]
-             
-            docs = collection_articles.find().skip(skip_-1).limit(limit_)
         else:
-            docs = json.load(open("{}/{}.json".format(self.data_path,collection_articles)))
-            collection_embedding = pd.read_json("{}/{}.json".format(self.data_path,collection_embedding))
+            collection_embedding_name = collection_embedding[:]
+            collection_embedding = pd.read_json("Data/docs/{}.json".format(collection_embedding_name))
 
-        list_of_insertion = []
-        for doc in tqdm.tqdm(docs, total = limit_):
-            infos = get_embedding_list(
-                doc = doc,
-                collection_embedding = collection_embedding,
-                id_variable = self.id_variable,
-                references_variable = self.references_variable,
-                client_name = self.client_name)
+        out_path = 'Data/docs/{}'.format(collection_ref_embedding)
+        if not os.path.exists(out_path):
+            os.makedirs(out_path)
+
+
+        for year in range(self.time_window[0],self.time_window[1]+1):
+
             if self.client_name:
-                try:
-                    list_of_insertion.append(UpdateOne({self.id_variable:doc[self.id_variable]}, {'$set': infos}, upsert = True))    
-                except Exception as e:
-                    print(e)
-                if len(list_of_insertion) % 1000 == 0:
-                    collection_ref_embedding.bulk_write(list_of_insertion)
-                    list_of_insertion = []
+                docs = collection_articles.find().skip(skip_-1).limit(limit_)
             else:
-                try:
-                    infos.update({self.id_variable:doc[self.id_variable]})
-                    list_of_insertion.append(infos)    
-                except Exception as e:
-                    print(e)
+                docs = json.load(open("Data/docs/{}/{}.json".format(collection_articles,year)))
 
-        if self.client_name:
-            collection_ref_embedding.bulk_write(list_of_insertion)
-        else:
-            with open("{}/{}.json".format(self.data_path,collection_ref_embedding), 'w') as outfile:
-                json.dump(list_of_insertion, outfile)
+            list_of_insertion = []
+            for doc in tqdm.tqdm(docs, total = limit_):
+                infos = get_embedding_list(
+                    doc = doc,
+                    collection_embedding = collection_embedding,
+                    id_variable = self.id_variable,
+                    references_variable = self.references_variable,
+                    client_name = self.client_name)
+                if self.client_name:
+                    try:
+                        infos.update({self.year_variable:doc[self.year_variable]})
+                        list_of_insertion.append(UpdateOne({self.id_variable:doc[self.id_variable]}, {'$set': infos}, upsert = True))    
+                    except Exception as e:
+                        print(e)
+                    if len(list_of_insertion) % 1000 == 0:
+                        collection_ref_embedding.bulk_write(list_of_insertion)
+                        list_of_insertion = []
+                else:
+                    try:
+                        infos.update({self.id_variable:doc[self.id_variable],
+                                    self.year_variable:doc[self.year_variable]})
+                        list_of_insertion.append(infos)    
+                    except Exception as e:
+                        print(e)
+
+            if self.client_name:
+                collection_ref_embedding.bulk_write(list_of_insertion)
+            else:
+                with open("{}/{}.json".format(out_path,year), 'w') as outfile:
+                    json.dump(list_of_insertion, outfile)
         # Parallel(n_jobs=n_jobs)(
         #     delayed(get_embedding_list)(
         #         doc,

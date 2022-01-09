@@ -389,5 +389,5 @@ class create_output(Dataset):
         if self.indicator in ['uzzi','lee','wang','foster']:
             self.populate_list()
         else:
-            print('''indicator must be in 'uzzi', 'lee', 'wang' ''')
+            print('''indicator must be in 'uzzi', 'foster', 'lee', 'wang' ''')
         print('saved')

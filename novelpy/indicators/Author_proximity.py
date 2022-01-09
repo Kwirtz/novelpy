@@ -5,6 +5,8 @@ from novelpy.utils.run_indicator_tools import Dataset
 import pymongo
 import tqdm
 from sklearn.metrics.pairwise import cosine_similarity
+import json 
+import os
 
 def cosine_similarity_dist(n,doc_mat):
     """
@@ -106,6 +108,10 @@ class Author_proximity(Dataset):
             focal_year = focal_year)
     
 
+        self.path_score = "Data/score/Author_proximity/"
+        if not os.path.exists(self.path_score):
+            os.makedirs(self.path_score)
+
     def compute_score(self,doc,entity):
         """
         
@@ -141,13 +147,13 @@ class Author_proximity(Dataset):
                     authors_infos.append(aut_item)
                     
                     n = len(aut_item)
-                    aut_mat = np.zeros((n, 200))
-                    for i in range(n):
-                        aut_mat[i, :] = aut_item[i]
-                                
-                    aut_dist = cosine_similarity_dist(n,aut_mat)
-                    intra_authors_dist += aut_dist
-
+                    if n >1:
+                        aut_mat = np.zeros((n, 200))
+                        for i in range(n):
+                            aut_mat[i, :] = aut_item[i]
+                                    
+                        aut_dist = cosine_similarity_dist(n,aut_mat)
+                        intra_authors_dist += aut_dist
             if len(intra_authors_dist) > 0:
                 intra_nov_list = get_percentiles(intra_authors_dist)    
                 inter_authors_dist = []
@@ -170,8 +176,7 @@ class Author_proximity(Dataset):
                 authors_novelty = {
                     'authors_novelty_{}_{}'.format(ent, str(self.windows_size)) :{
                         'intra':intra_nov_list,
-                        'inter':inter_nov_list},
-		    'authors_novelty_{}_{}'.format(ent, str(self.windows_size)) :{
+                        'inter':inter_nov_list,
                         'scores_array_intra':intra_authors_dist,
                         'scores_array_inter':inter_authors_dist}
                     }
@@ -187,21 +192,20 @@ class Author_proximity(Dataset):
                 })
         else:
             self.docs = json.load(open("Data/docs/{}/{}.json".format(self.collection_name,self.focal_year)))
-
         # Iterate over every docs 
         list_of_insertion = []
         for doc in tqdm.tqdm(self.docs):
             self.infos = dict()
-            if len(doc[self.aut_profile_variable])>1: 
+            if doc[self.aut_profile_variable] and len(doc[self.aut_profile_variable])>1: 
                 self.compute_score(doc, self.entity)
-
-                if self.client_name:
-                    list_of_insertion.append(pymongo.UpdateOne({self.id_variable: doc[self.id_variable]},
-                                                               {'$set': {'Author_proximity': self.infos}},
-                                                               upsert = True))
-                else:
-                    list_of_insertion.append({self.id_variable: doc[self.id_variable],'Author_proximity': self.infos})
-        
+                if self.infos:
+                    if self.client_name:
+                        list_of_insertion.append(pymongo.UpdateOne({self.id_variable: doc[self.id_variable]},
+                                                                   {'$set': {'Author_proximity': self.infos}},
+                                                                   upsert = True))
+                    else:
+                        list_of_insertion.append({self.id_variable: doc[self.id_variable],'Author_proximity': self.infos})
+            
         if self.client_name:
             if "output" not in self.db.list_collection_names():
                 print("Init output collection with index on id_variable ...")
@@ -209,11 +213,12 @@ class Author_proximity(Dataset):
                 self.collection_output.create_index([ (self.id_variable,1) ])
             else:
                 self.collection_output = self.db["output"]
-                
-            self.db['output'].bulk_write(list_of_insertion)
+            if list_of_insertion: 
+                self.db['output'].bulk_write(list_of_insertion)
         else:
-            with open(self.path_output + "/{}.json".format(self.focal_year), 'w') as outfile:
-                json.dump(list_of_insertion, outfile)              
-    
+            if list_of_insertion:
+                with open(self.path_score + "/{}.json".format(self.focal_year), 'w') as outfile:
+                    json.dump(list_of_insertion, outfile)              
+            
 
 
