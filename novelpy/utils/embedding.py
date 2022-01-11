@@ -127,75 +127,70 @@ class Embedding:
             if not os.path.exists("Data/docs/{}".format(collection_embedding)):
                 os.makedirs("Data/docs/{}".format(collection_embedding))
 
+        for year in tqdm.tqdm(self.time_range):
+            if self.client_name:
+                    collection = self.db[collection_articles]
+                    docs = collection.find({self.year_variable:year},no_cursor_timeout = True)
+            else:
+                docs = json.load(open("Data/docs/{}/{}.json".format(collection_articles,year)))
+            
 
-        if self.client_name:
-                collection = self.db[collection_articles]
-                docs = collection.find(no_cursor_timeout = True)
-        else:
-            docs = []
-            for year in self.time_range:
-                docs += json.load(open("Data/docs/{}/{}.json".format(collection_articles,year)))
-            self.docs = docs
-        
-        if self.client_name:
             list_of_insertion = []
-        else:
-            list_of_insertion = defaultdict(dict)
-        for doc in tqdm.tqdm(docs):
-            # try:
-            ## Titles
-            if self.title_variable in doc.keys() and doc[self.title_variable] != "" :
-                tokens = self.nlp(doc[self.title_variable])
-                article_title_centroid = np.sum([t.vector for t in tokens], axis=0) / len(tokens)
-                article_title_centroid = article_title_centroid.tolist()
-            else:
-                article_title_centroid = None
-            ## Abstracts
-            if self.abstract_variable in doc.keys() and doc[self.abstract_variable][0][self.abstract_subvariable] != "" :
-                # abstract = ast.literal_eval(doc[self.abstract_variable])[0]['AbstractText']
-                if self.abstract_subvariable:
-                    abstract = doc[self.abstract_variable][0][self.abstract_subvariable]
+            
+            for doc in tqdm.tqdm(docs):
+                # try:
+                ## Titles
+                if self.title_variable in doc.keys() and doc[self.title_variable] != "" :
+                    tokens = self.nlp(doc[self.title_variable])
+                    article_title_centroid = np.sum([t.vector for t in tokens], axis=0) / len(tokens)
+                    article_title_centroid = article_title_centroid.tolist()
                 else:
-                    abstract = doc[self.abstract_variable]
-                tokens = self.nlp(abstract)
-                article_abs_centroid = np.sum([t.vector for t in tokens], axis=0) / len(tokens)
-                article_abs_centroid = article_abs_centroid.tolist()
-            else:
-                article_abs_centroid = None
-            ## Feed the dict
-            try:
+                    article_title_centroid = None
+                ## Abstracts
+                if self.abstract_variable in doc.keys() and doc[self.abstract_variable][0][self.abstract_subvariable] != "" :
+                    # abstract = ast.literal_eval(doc[self.abstract_variable])[0]['AbstractText']
+                    if self.abstract_subvariable:
+                        abstract = doc[self.abstract_variable][0][self.abstract_subvariable]
+                    else:
+                        abstract = doc[self.abstract_variable]
+                    tokens = self.nlp(abstract)
+                    article_abs_centroid = np.sum([t.vector for t in tokens], axis=0) / len(tokens)
+                    article_abs_centroid = article_abs_centroid.tolist()
+                else:
+                    article_abs_centroid = None
+                ## Feed the dict
+                try:
+                    if self.client_name:
+                        list_of_insertion.append(UpdateOne(
+                            {
+                            self.id_variable: doc[self.id_variable]}, 
+                            {'$set':{
+                                    'year':doc[self.year_variable],
+                                    'title_embedding':article_title_centroid,
+                                    'abstract_embedding':article_abs_centroid
+                                    }}, upsert = True))    
+                    else: 
+                        list_of_insertion.append(
+                            {
+                            self.id_variable: doc[self.id_variable],
+                            'year':doc[self.year_variable],
+                            'title_embedding':article_title_centroid,
+                            'abstract_embedding':article_abs_centroid
+                            })
+                except Exception as e:
+                    print(e)
+                ## Feed the db
                 if self.client_name:
-                    list_of_insertion.append(UpdateOne(
-                        {
-                        self.id_variable: doc[self.id_variable]}, 
-                        {'$set':{
-                                'year':doc[self.year_variable],
-                                'title_embedding':article_title_centroid,
-                                'abstract_embedding':article_abs_centroid
-                                }}, upsert = True))    
-                else: 
-                    list_of_insertion[doc[self.year_variable]].update(
-                        {
-                        self.id_variable: doc[self.id_variable],
-                        'year':doc[self.year_variable],
-                        'title_embedding':article_title_centroid,
-                        'abstract_embedding':article_abs_centroid
-                        })
-            except Exception as e:
-                print(e)
-            ## Feed the db
-            if len(list_of_insertion) % 1000 == 0:
-                if self.client_name:
-                    collection_embedding.bulk_write(list_of_insertion)
-                    list_of_insertion = []
-
-        if self.client_name:
-            collection_embedding.bulk_write(list_of_insertion)
-        else:
-            for year in list_of_insertion:   
+                    if len(list_of_insertion) % 1000 == 0:
+                      collection_embedding.bulk_write(list_of_insertion)
+                      list_of_insertion = []
+    
+            if self.client_name:
+                collection_embedding.bulk_write(list_of_insertion)
+            else: 
                 with open("Data/docs/{}/{}.json".format(collection_embedding,year), 'w') as outfile:
-                    json.dump(list_of_insertion[year], outfile)
-        
+                    json.dump(list_of_insertion, outfile)
+            
         
     
     def feed_author_profile(self,
