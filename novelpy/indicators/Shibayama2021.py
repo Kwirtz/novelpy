@@ -58,15 +58,15 @@ def get_percentiles(dist_list):
 class Shibayama2021(Dataset):
     
     def __init__(self,
+                 id_variable,
+                 year_variable,
+                 ref_variable, 
+                 entity,
+                 focal_year,
+                 embedding_dim = 200,
                  client_name = None, 
                  db_name =  None,
-                 collection_name = None,
-                 id_variable = None,
-                 year_variable = None,
-                 ref_variable = None,
-                 entity = None,
-                 focal_year = None,
-                 embedding_dim = 200):
+                 collection_name = None):
         """
         Description
         -----------

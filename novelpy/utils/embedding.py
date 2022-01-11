@@ -1,16 +1,20 @@
-import pymongo
-import yaml
-import spacy
-import scispacy
-import tqdm
-import numpy as np
+import os
 #import ast
-from joblib import Parallel, delayed
+import yaml
+import tqdm
+import json
+import spacy
+import pymongo
+import scispacy
+import numpy as np
 import pandas as pd
 from itertools import chain
-import json
 from pymongo import UpdateOne
-import os
+from collections import defaultdict
+from joblib import Parallel, delayed
+
+
+
 
 
 
@@ -18,10 +22,9 @@ class Embedding:
     
     def __init__(self,
                  year_variable,
-                 time_window,
+                 time_range,
                  id_variable,
                  references_variable,
-                 auth_pubs_variable,
                  pretrain_path,
                  title_variable,
                  abstract_variable,
@@ -30,7 +33,8 @@ class Embedding:
                  keywords_variable = None,
                  keywords_subvariable = None,
                  abstract_subvariable = None,
-                 id_auth_variable = None):
+                 id_auth_variable = None,
+                 auth_pubs_variable = None):
         """
         
         Description
@@ -75,7 +79,7 @@ class Embedding:
         self.client_name = client_name
         self.db_name = db_name
         self.year_variable = year_variable
-        self.time_window = time_window
+        self.time_range = time_range
         self.id_variable = id_variable
         self.references_variable = references_variable
         self.auth_pubs_variable = auth_pubs_variable
@@ -119,15 +123,24 @@ class Embedding:
                     collection_embedding.create_index([ (self.id_variable,1) ])
             else:
                 collection_embedding = self.db[collection_embedding]
+        else:
+            if not os.path.exists("Data/docs/{}".format(collection_embedding)):
+                os.makedirs("Data/docs/{}".format(collection_embedding))
 
 
         if self.client_name:
                 collection = self.db[collection_articles]
                 docs = collection.find(no_cursor_timeout = True)
         else:
-            docs = json.load(open("Data/docs/{}.json".format(collection_articles))) 
-
-        list_of_insertion = []
+            docs = []
+            for year in self.time_range:
+                docs += json.load(open("Data/docs/{}/{}.json".format(collection_articles,year)))
+            self.docs = docs
+        
+        if self.client_name:
+            list_of_insertion = []
+        else:
+            list_of_insertion = defaultdict(dict)
         for doc in tqdm.tqdm(docs):
             # try:
             ## Titles
@@ -161,7 +174,7 @@ class Embedding:
                                 'abstract_embedding':article_abs_centroid
                                 }}, upsert = True))    
                 else: 
-                    list_of_insertion.append(
+                    list_of_insertion[doc[self.year_variable]].update(
                         {
                         self.id_variable: doc[self.id_variable],
                         'year':doc[self.year_variable],
@@ -179,8 +192,9 @@ class Embedding:
         if self.client_name:
             collection_embedding.bulk_write(list_of_insertion)
         else:
-            with open("Data/docs/{}.json".format(collection_embedding), 'w') as outfile:
-                json.dump(list_of_insertion, outfile)
+            for year in list_of_insertion:   
+                with open("Data/docs/{}/{}.json".format(collection_embedding,year), 'w') as outfile:
+                    json.dump(list_of_insertion[year], outfile)
         
         
     
@@ -496,7 +510,7 @@ class Embedding:
         else:
             collection_authors = pd.read_json("Data/docs/authors_profiles.json")
 
-        for year in range(self.time_window[0],self.time_window[1]+1):
+        for year in self.time_range:
             if self.client_name:
                 docs = collection_articles.find({self.year_variable:year}).skip(skip_-1).limit(limit_)
             else:
@@ -606,15 +620,16 @@ class Embedding:
             collection_articles = self.db[collection_articles]
             collection_embedding = self.db[collection_embedding]
         else:
-            collection_embedding_name = collection_embedding[:]
-            collection_embedding = pd.read_json("Data/docs/{}.json".format(collection_embedding_name))
+            collection_embedding = []
+            for year in self.time_range:
+                collection_embedding += json.load(open("Data/docs/{}/{}.json".format(collection_articles,year)))
 
         out_path = 'Data/docs/{}'.format(collection_ref_embedding)
         if not os.path.exists(out_path):
             os.makedirs(out_path)
 
 
-        for year in range(self.time_window[0],self.time_window[1]+1):
+        for year in self.time_range:
 
             if self.client_name:
                 docs = collection_articles.find().skip(skip_-1).limit(limit_)

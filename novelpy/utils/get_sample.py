@@ -30,7 +30,7 @@ def download_sample(client_name = None):
             buf = f.read()
             z = zipfile.ZipFile(io.BytesIO(buf))
             z.extractall()
-       """
+        """
         os.remove("{}.zip".format(col))
         
         
@@ -38,8 +38,10 @@ def download_sample(client_name = None):
         if client_name:
             print("Loading to mongo...")
             Client = pymongo.MongoClient(client_name)
-            db = Client["novelty_sample_test"]
+            db = Client["novelty_sample"]
             collection = db[col]
+            collection.create_index([ ("PMID",1) ])
+            collection.create_index([ ("year",1) ])
             for file in os.listdir("Data/docs/{}".format(col)):
                 with open("Data/docs/{}".format(col) + "/{}".format(file), 'r') as infile:
                     docs = json.load(infile)

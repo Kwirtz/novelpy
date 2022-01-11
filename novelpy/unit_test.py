@@ -22,4 +22,34 @@ if cos_man == cos_sim[0,1]:
 
 
 
+import pymongo
 
+Client = pymongo.MongoClient("mongodb://localhost:27017")
+db = Client["novelty_sample"]
+collection = db["Citation_net"]
+
+docs = collection.find({})
+
+pmid_list = []
+for doc in tqdm.tqdm(docs):
+    pmid_list.append(doc["PMID"])
+    
+
+
+docs = collection.find({})
+
+n = 0
+for doc in tqdm.tqdm(docs):
+    if len(set(pmid_list).intersection(doc["refs_pmid_wos"]))>0:
+        n += 1
+    
+    
+
+Client = pymongo.MongoClient("mongodb://localhost:27017")
+db = Client["novelty_sample"]
+collection = db["Title_abs"]
+
+docs = collection.find({"PMID":11327866})
+doc = next(docs)
+#{PMID:11327866}
+#{PMID:8566773, PMID:10089522}
