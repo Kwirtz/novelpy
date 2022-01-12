@@ -118,9 +118,9 @@ class Embedding:
 
         if self.client_name:
             if collection_embedding not in self.db.list_collection_names():
-                    print("Init embedding collection with index on id_variable ...")
-                    collection_embedding = self.db[collection_embedding]
-                    collection_embedding.create_index([ (self.id_variable,1) ])
+                print("Init embedding collection with index on id_variable ...")
+                collection_embedding = self.db[collection_embedding]
+                collection_embedding.create_index([ (self.id_variable,1) ])
             else:
                 collection_embedding = self.db[collection_embedding]
         else:
