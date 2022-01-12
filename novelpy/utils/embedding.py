@@ -129,8 +129,8 @@ class Embedding:
 
         for year in tqdm.tqdm(self.time_range):
             if self.client_name:
-                    collection = self.db[collection_articles]
-                    docs = collection.find({self.year_variable:year},no_cursor_timeout = True)
+                collection = self.db[collection_articles]
+                docs = collection.find({self.year_variable:year},no_cursor_timeout = True)
             else:
                 docs = json.load(open("Data/docs/{}/{}.json".format(collection_articles,year)))
             
