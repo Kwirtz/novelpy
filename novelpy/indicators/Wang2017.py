@@ -3,8 +3,11 @@ import tqdm
 import pickle 
 import numpy as np
 from scipy.linalg import norm
+from sklearn.metrics.pairwise import cosine_similarity
 from scipy.sparse import csr_matrix, lil_matrix, triu, tril
 from novelpy.utils.run_indicator_tools import create_output
+   
+
    
 def get_difficulty_cos_sim(difficulty_adj):
 
@@ -22,9 +25,7 @@ def get_difficulty_cos_sim(difficulty_adj):
     """
     
     difficulty_adj = triu(difficulty_adj,1) + tril(difficulty_adj.T)
-    difficulty_norms = np.apply_along_axis(norm, 0, difficulty_adj.A)[np.newaxis]
-    difficulty_norms = difficulty_norms.T.dot(difficulty_norms)
-    cos_sim = difficulty_adj.dot(difficulty_adj)/difficulty_norms
+    cos_sim = cosine_similarity(difficulty_adj,dense_output=False)
     cos_sim = csr_matrix(triu(np.nan_to_num(cos_sim)))
     cos_sim.setdiag(0)
     cos_sim.eliminate_zeros()
@@ -100,7 +101,7 @@ class Wang2017(create_output):
 
         """
         # Never been done
-        nbd_adj = lil_matrix(self.past_adj.shape)
+        nbd_adj = lil_matrix(self.past_adj.shape, dtype="int8")
         mask = np.ones(self.past_adj.shape, dtype=bool)
         mask[self.past_adj.nonzero()] = False
         nbd_adj[mask] = 1
@@ -112,7 +113,9 @@ class Wang2017(create_output):
         self.futur_adj.eliminate_zeros()
         # Create a matrix with the cosine similarity
         # for each combinaison never made before but reused in the futur
+        print("doing cosim")
         cos_sim = get_difficulty_cos_sim(self.difficulty_adj)
+        print("cosim done")
         comb_scores = self.futur_adj.multiply(nbd_adj).multiply(cos_sim)
         comb_scores[comb_scores.nonzero()] = 1 - comb_scores[comb_scores.nonzero()]        
                     
