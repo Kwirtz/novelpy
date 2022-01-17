@@ -593,16 +593,20 @@ class Embedding:
                 if client_name:
                     refs = collection_embedding.find({id_variable:{'$in':doc[references_variable]}})
                 else:
-                    refs = collection_embedding[collection_embedding[id_variable].isin(doc[references_variable])].to_dict('records')
-
+                    #refs = []
+                    #refs = collection_embedding[collection_embedding[id_variable].isin(doc[references_variable])].to_dict('records')
+                    refs = [collection_embedding[id_] for id_ in doc["refs_pmid_wos"] if id_ in collection_embedding]
                 for ref in refs:
-                    refs_emb.append({'id':ref[id_variable],
+                    refs_emb.append({'id':ref[self.id_variable],
                                      'abstract_embedding': ref['abstract_embedding'] if 'abstract_embedding' in ref.keys() else None,
                                      'title_embedding': ref['title_embedding'] if 'title_embedding' in ref.keys() else None})
             infos = {'refs_embedding':refs_emb} if refs_emb else  {'refs_embedding': None}
             return infos
 
 
+        out_path = 'Data/docs/{}'.format(collection_ref_embedding)
+        if not os.path.exists(out_path):
+            os.makedirs(out_path)
 
         if self.client_name:
             if collection_ref_embedding not in self.db.list_collection_names():
@@ -615,14 +619,12 @@ class Embedding:
             collection_articles = self.db[collection_articles]
             collection_embedding = self.db[collection_embedding]
         else:
-            collection_embedding = []
+            collection_embedding_acc = []
             for year in self.time_range:
-                collection_embedding += json.load(open("Data/docs/{}/{}.json".format(collection_articles,year)))
-
-        out_path = 'Data/docs/{}'.format(collection_ref_embedding)
-        if not os.path.exists(out_path):
-            os.makedirs(out_path)
-
+                collection_embedding_acc += json.load(open("Data/docs/{}/{}.json".format(collection_embedding,year)))
+            collection_embedding = {doc[self.id_variable]:{self.id_variable:doc[self.id_variable],
+                                                           "title_embedding":doc["title_embedding"],
+                                                           "abstract_embedding":doc["abstract_embedding"]} for doc in collection_embedding_acc}  
 
         for year in self.time_range:
 
