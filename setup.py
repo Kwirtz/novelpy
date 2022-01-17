@@ -21,6 +21,6 @@ setup(
   keywords='Novelty, scientometrics', 
   packages=find_packages(),
   install_requires=['pymongo','joblib','sklearn','glob2','tqdm','networkx','python-louvain',
-  'numpy','pickle-mixin','scipy','pandas','tqdm','multiprocess','pyyaml','spacy','scispacy','cycler',
+  'numpy','pickle-mixin','scipy','pandas','tqdm','multiprocess','pyyaml','spacy','scispacy','cycler','thinc',
   'wosfile','seaborn'] 
 )
