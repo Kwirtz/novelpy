@@ -103,7 +103,7 @@ class Shibayama2021(Dataset):
             year_variable = year_variable,
             focal_year = focal_year)
     
-        self.path_score = "Data/score/shibayama/"
+        self.path_score = "Result/shibayama/"
         if not os.path.exists(self.path_score):
             os.makedirs(self.path_score)
     
@@ -137,7 +137,7 @@ class Shibayama2021(Dataset):
                 nov_list = get_percentiles(dist_list)
                 
                 references_novelty = {
-                    'Shibayama_{}'.format(ent) :nov_list,
+                    'shibayama_{}'.format(ent) :nov_list,
                     'scores_array_{}'.format(ent) :dist_list
                     }
                 self.infos.update(references_novelty)
@@ -161,10 +161,10 @@ class Shibayama2021(Dataset):
                 if self.infos:
                     if self.client_name:
                         list_of_insertion.append(pymongo.UpdateOne({self.id_variable: doc[self.id_variable]},
-                                                                   {'$set': {'Shibayama': self.infos}},
+                                                                   {'$set': {'shibayama': self.infos}},
                                                                    upsert = True))
                     else:
-                        list_of_insertion.append({self.id_variable: doc[self.id_variable],'Shibayama': self.infos})
+                        list_of_insertion.append({self.id_variable: doc[self.id_variable],'shibayama': self.infos})
 
         if self.client_name:
             if "output" not in self.db.list_collection_names():
