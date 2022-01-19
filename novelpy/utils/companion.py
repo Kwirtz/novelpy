@@ -213,7 +213,7 @@ class novelty_trend:
                  time_window_cooc = None,
                  n_reutilisation = None,
                  embedding_entities = None,
-                 shibayma_per = 10,
+                 shibayama_per = 10,
                  client_name = None,
                  db_name = None):
         """
@@ -255,7 +255,7 @@ class novelty_trend:
         self.time_window_cooc = time_window_cooc
         self.n_reutilisation = n_reutilisation
         self.embedding_entities = embedding_entities
-        self.shibayma_per =  shibayma_per
+        self.shibayama_per =  shibayama_per
         
         if not isinstance(variables, list) or not isinstance(indicators, list):
             raise ValueError('indicator and variable should be a list')
@@ -346,8 +346,8 @@ class novelty_trend:
                                 try:
                                     score_list.append(float(np.percentile(a = doc[key_name]["scores_array_" + embedding_entity + "_embedding"],
                                                                       q = self.shibayama_per)))
-                                except:
-                                    continue
+                                except Exception as e:
+                                    pass
                             df_temp = pd.DataFrame([np.mean(np.ma.masked_invalid(score_list))], columns=["Score_mean"])
                             df_temp['Variable'], df_temp['Indicator'], df_temp["Year"] = [embedding_entity, indicator, year]
                             self.df = pd.concat([self.df,df_temp], ignore_index=True)   
