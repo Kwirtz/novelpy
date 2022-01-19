@@ -37,7 +37,7 @@ The package currently supports JSON files which should be located in Data/docs o
               └ 2002.json
 
 
-| Depending on what kind of indicator you are running, you will need different kind of input (For example for Uzzi et al.[2013] :cite:p:`uzzi2013atypical` you only need the journal of the references for the focal articles). 
+| Depending on what kind of indicator you are running, you will need different kind of input (For example for Uzzi et al. [2013] :cite:p:`uzzi2013atypical` you only need the journal name of the references for the focal articles). 
 |
 | We intend to automatize the process with well known Databases (Web of science, ArXiv, Pubmed Knowlede graph, ...). Look into the :ref:`roadmap` section to learn
 | more about future implementation.
@@ -53,7 +53,7 @@ We made available a small sample of data so you can get familiar using the packa
 >>> from novelpy.utils.get_sample import download_sample
 >>> download_sample()
 
-| This will give you files as seen in :ref:`Usage:format`. Read more about this sample structure `here <https://zenodo.org/record/5768348#.YdMGWlnjImA>`_.
+| This will give you files as seen above. Read more about this sample structure `here <https://zenodo.org/record/5768348#.YdMGWlnjImA>`_.
 | If you want to test the package with MongoDB you can run the following which will create a database "novelty_sample" with everything needed:
 
 >>> download_sample(client_name="mongodb://localhost:27017")
@@ -64,11 +64,12 @@ Note that you will have the json files in both case, please delete the files if 
 Tutorial
 ----------------
 
-This tutorial suppose you use the sample made available above in the json format. The extension to MongoDB is straightforward and requires you to add the "client_name" and "db_name" arguments in each function. Make sure you run the code in the "project" folder (demo.py in :ref:`Usage:format`)
+This tutorial is build upon the sample made available above in the json format. The extension to MongoDB is straightforward and requires you to add the "client_name" and "db_name" arguments in each function. Make sure you run the code in the "project" folder (demo.py in :ref:`Usage:format`)
 
-Here's a short implementation to run Foster et al.[2015] :cite:p:`foster2015tradition` novelty indicator. Currently all available indicators are based on the idea that new knowledge is created by combining already existing pieces of knowledge. Because of this you will require co-occurrence matrices. The element ij of the co-occurence matrix is the number of times the combination of item i and j appearead for a given year. We made it so the co-occurrence matrices are saved in the pickle format in order to save times when running different indicators :
+Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tradition` novelty indicator. Currently all available indicators are based on the idea that new knowledge is created by combining already existing pieces of knowledge. Because of this you will require co-occurrence matrices. The element ij of the co-occurence matrix is the number of times the combination of item i and j appeared for a given year. We made it so the co-occurrence matrices are saved in the pickle format in order to save time when running different indicators :
 
 .. code-block:: python
+   
    # demo.py
    import novelpy
 
@@ -115,10 +116,10 @@ Here's a short implementation to run Foster et al.[2015] :cite:p:`foster2015trad
                  ├ index2name.p
                  └ name2index.p
 
-| Since we use sparse matrix index2name.p and name2index.p are required to convert the name of items to index in our matrix.
-| Now you can run the Foster et al.[2015] :cite:p:`foster2015tradition` novelty indicator.
+| Since we use sparse matrix, index2name.p and name2index.p are required to convert the name of items to index in our matrix. Now you can run the Foster et al.[2015] :cite:p:`foster2015tradition` novelty indicator.
 
 .. code-block:: python
+
    # demo.py
 
    import novelpy
@@ -160,15 +161,19 @@ Here's a short implementation to run Foster et al.[2015] :cite:p:`foster2015trad
    │  └── cooc
    │     └── c04_referencelist
    │         └── weighted_network_self_loop
-   │             ├ 1995.p
-   │             ├ 1996.p
-   │             ├ ...
-   │             ├ 2015.p
-   │             ├ index2name.p
-   │             └ name2index.p
+   │            ├ 1995.p
+   │            ├ 1996.p
+   │            ├ ...
+   │            ├ 2015.p
+   │            ├ index2name.p
+   │            └ name2index.p
    └── Results
       └── foster
          └── c04_referencelist
+            ├ 2000.json
+            ├ ...
+            └ 2010.json
+
 
 
 | Some pre-build functions can help you perform your analysis by getting the novelty score of a document, plotting the distribution and look at the trend of the novelty score over the years.
@@ -191,7 +196,7 @@ Here's a short implementation to run Foster et al.[2015] :cite:p:`foster2015trad
    # The data used for the plot can be found in dist.df
 
 .. image:: img/dist.png
-   :width: 600
+   :width: 300
 
 .. code-block:: python
    
@@ -207,12 +212,13 @@ Here's a short implementation to run Foster et al.[2015] :cite:p:`foster2015trad
    trend.get_plot_trend()
 
 .. image:: img/trend.png
-   :width: 600
+   :width: 300
 
 
 | Here's a script to run all the indicators in the package that depends on the co-occurence matrix, on all the variables available in the sample.
 
 .. code-block:: python
+
    # demo.py
    import novelpy
    import tqdm
@@ -330,10 +336,7 @@ Here's a short implementation to run Foster et al.[2015] :cite:p:`foster2015trad
        Wang.get_indicator()
 
 
-| The last novelty indicator available in novelpy is Shibayama et al.[2021]:cite:p:`shibayama2021measuring`. For this indicator you will not need co-occurence matrices.
-| You need to have the title or abstract (in our case we have both) for articles cited by focal papers and therefore the id of for each paper cited.
-| In the sample you can find these information in two different db: Title_abs_sample and Citation_net_sample. You then embbed the articles using spacy and do a cosine similarity between embeddings for focal papers.
-| Let's start with the embedding:
+| The last novelty indicator available in novelpy is Shibayama et al. [2021] :cite:p:`shibayama2021measuring`. For this indicator you won't need co-occurence matrices. You need to have the title or abstract (in our case we have both) for articles cited by focal papers and therefore the id of for each paper cited. In the sample you can find these information in two different db: Title_abs_sample and Citation_net_sample. You then embbed the articles using spacy and do a cosine similarity between embeddings for focal papers. Let's start with the embedding:
 
 .. code-block:: python
 
@@ -361,8 +364,7 @@ Here's a short implementation to run Foster et al.[2015] :cite:p:`foster2015trad
          skip_ = 1,
          limit_ = 0)
 
-| 2 new DBs will be create, one with the id of the articles and it's embedding called "embedding" and one with the id of the focal articles and the embeddings of its references called "references_embedding".
-| Using this you can run the indicator:
+| 2 new DBs will be create, one with the id of the articles and it's embedding called "embedding" and one with the id of the focal articles and the embeddings of its references called "references_embedding". Using this you can run the indicator:
 
 .. code-block:: python
 
@@ -382,7 +384,7 @@ Here's a short implementation to run Foster et al.[2015] :cite:p:`foster2015trad
 
 
 
-| Now using companion you can create more advanced plot
+| Now using companion you can create more advanced plot:
 
 .. code-block:: python
 
@@ -399,7 +401,7 @@ Here's a short implementation to run Foster et al.[2015] :cite:p:`foster2015trad
    dist.get_plot_dist()
 
 .. image:: img/dist_complex.png
-   :width: 600
+   :width: 900
 
 .. code-block:: python
 
@@ -413,9 +415,10 @@ Here's a short implementation to run Foster et al.[2015] :cite:p:`foster2015trad
    trend.get_plot_trend()
 
 .. image:: img/trend_complex.png
-   :width: 600
+   :width: 900
 
 .. code-block:: python
+
    correlation = novelpy.utils.correlation_indicators(year_range = range(2000,2011,1),
                  variables = ["c04_referencelist","Mesh_year_category"],
                  indicators = ["foster","lee","wang","shibayama"],
@@ -427,4 +430,4 @@ Here's a short implementation to run Foster et al.[2015] :cite:p:`foster2015trad
    correlation.correlation_heatmap(per_year = False)
 
 .. image:: img/heatmap.png
-   :width: 600
+   :width: 300
