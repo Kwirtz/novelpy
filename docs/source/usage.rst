@@ -27,57 +27,64 @@ The package currently supports JSON files which should be located in Data/docs o
    project
    ├── demo.py
    └── Data   
-      └── docs
-          ├── authors.json       
-          ├── references.json
-          └── meshterms.json
+      └── docs      
+          ├── Ref_Journals
+          │   ├ 2001.json
+          │   └ 2002.json
+          │ 
+          └── Meshterms
+              ├ 2001.json
+              └ 2002.json
 
-| Depending on what kind of indicator you are running, you will need different kind of input (For example for Uzzi et al.(2013) you only need references.json). 
+
+| Depending on what kind of indicator you are running, you will need different kind of input (For example for Uzzi et al.[2013] :cite:p:`uzzi2013atypical` you only need the journal of the references for the focal articles). 
 |
 | We intend to automatize the process with well known Databases (Web of science, ArXiv, Pubmed Knowlede graph, ...). Look into the :ref:`roadmap` section to learn
 | more about future implementation.
 |
-| If you want to use your own data, please look into the Sample section below.
+| To use your own data, please look into the :ref:`Usage:Sample` section below to learn more about the expected data structure and :ref:`Usage:tutorial` to learn the basic usages of the package.
 
 .. _sample:
 Sample
 ----------------
 
-We made available a small sample of data so you can get familiar with the package with well formated data. To get this sample run the following code in your project folder:
+We made available a small sample of data so you can get familiar using the package with well formated data. To get this sample run the following code in your "project" folder:
 
 >>> from novelpy.utils.get_sample import download_sample
 >>> download_sample()
 
-| This will give you the file as seen in :ref:`Usage:format`. Read more about this sample structure `here <https://zenodo.org/record/5768348#.YdMGWlnjImA>`_.
-| Or if you want to test the package with MongoDB you can run the following which will create a database "novelty_sample" with everything needed:
+| This will give you files as seen in :ref:`Usage:format`. Read more about this sample structure `here <https://zenodo.org/record/5768348#.YdMGWlnjImA>`_.
+| If you want to test the package with MongoDB you can run the following which will create a database "novelty_sample" with everything needed:
 
 >>> download_sample(client_name="mongodb://localhost:27017")
 
+Note that you will have the json files in both case, please delete the files if you use MongoDB and do not want any duplicates (saving memory is always good).
 
 .. _tutorial:
 Tutorial
 ----------------
 
-This tutorial suppose you use the sample made available above. Make sure you run the code in the "project" folder
+This tutorial suppose you use the sample made available above in the json format. The extension to MongoDB is straightforward and requires you to add the "client_name" and "db_name" arguments in each function. Make sure you run the code in the "project" folder (demo.py in :ref:`Usage:format`)
 
-Here's a short implementation to run Foster et al.(2015) novelty indicator. Some indicators available are based on the idea that new knowledge is created by combining already existing pieces of knowledge. Because of this you will require co-occurrence matrices (Refer to our paper novelpy to learn more about the methodology used). We made it so the co-occurrence matrices are saved, so you just have to run the following once:
+Here's a short implementation to run Foster et al.[2015] :cite:p:`foster2015tradition` novelty indicator. Currently all available indicators are based on the idea that new knowledge is created by combining already existing pieces of knowledge. Because of this you will require co-occurrence matrices. The element ij of the co-occurence matrix is the number of times the combination of item i and j appearead for a given year. We made it so the co-occurrence matrices are saved in the pickle format in order to save times when running different indicators :
 
 .. code-block:: python
-   
+   # demo.py
    import novelpy
 
    ref_cooc = novelpy.utils.cooc_utils.create_cooc(
-                    collection_name = "references_sample", 
+                    collection_name = "Ref_Journals_sample",
                     year_var="year",
                     var = "c04_referencelist",
                     sub_var = "item",
+                    time_window = range(1995,2016),
                     weighted_network = True, self_loop = True)
 
    ref_cooc.main()
 
 
-| If you use MongoDB backend make sure to use the client_name and db_name arguments (:ref:`Utils`).
-| Once the co-occurrence matrices are done you should have a new folder "cooc". Depending on which co-occurrence matrices you runned you will have different folder. In the tutorial case we wanted the co-occurrence matrix of journals cited per paper.
+| This will create the co-occurence matrix for each year between 1995 and 2015 included. Read more on it in :ref:`Utils`.
+| Now you should have a new folder "cooc". Depending on your arguments you will have different folder. In the tutorial case we wanted the co-occurrence matrix of journals cited per paper.
 
 ::
 
@@ -86,72 +93,99 @@ Here's a short implementation to run Foster et al.(2015) novelty indicator. Some
    ├── demo.py
    └── Data   
       ├── docs
-      │   ├── authors_sample.json       
-      │   ├── references_sample.json
-      │   └── meshterms_sample.json
+      │   ├── Ref_Journals
+      │   │   ├ 1995.json
+      │   │   ├ 1996.json
+      │   │   ├ ...                  
+      │   │   └ 2015.json
+      │   │ 
+      │   └── Meshterms
+      │       ├ 1995.json
+      │       ├ 1996.json
+      │       ├ ...                  
+      │       └ 2015.json
       │ 
       └── cooc
          └── c04_referencelist
-             └── weighted_network_self_loop.p
-        
+             └── weighted_network_self_loop
+                 ├ 1995.p
+                 ├ 1996.p
+                 ├ ...
+                 ├ 2015.p
+                 ├ index2name.p
+                 └ name2index.p
 
-
-| Read more on the create_cooc function here :ref:`Utils`. Now you can run the Foster et al. (2015) novelty indicator.
+| Since we use sparse matrix index2name.p and name2index.p are required to convert the name of items to index in our matrix.
+| Now you can run the Foster et al.[2015] :cite:p:`foster2015tradition` novelty indicator.
 
 .. code-block:: python
+   # demo.py
 
    import novelpy
+   import tqdm
 
-   # Most (if not all) indicator works for a given year, here we want novelty for papers published in 2000
-   focal_year = 2000
-
-
-   Foster = novelpy.indicators.Foster2015(collection_name = 'references_sample',
-                                          id_variable = 'PMID',
-                                          year_variable = 'year',
-                                          variable = "c04_referencelist",
-                                          sub_variable = "item",
-                                          focal_year = focal_year,
-                                          community_algorithm = "Louvain")
-   Foster.get_indicator()
+   for focal_year in tqdm.tqdm(range(2000,2011), desc = "Computing indicator for window of time"):
+       Foster = novelpy.indicators.Foster2015(collection_name = "Ref_Journals_sample",
+                                              id_variable = 'PMID',
+                                              year_variable = 'year',
+                                              variable = "c04_referencelist",
+                                              sub_variable = "item",
+                                              focal_year = focal_year,
+                                              starting_year = 1995,
+                                              community_algorithm = "Louvain")
+       Foster.get_indicator()
     
 
-Now you should have one more folder "Results" with a json for the focal year with the results. 
+| Here the indicator is calculated using the co-occurence matrix done before. You can change the periode depending of your data, read more here :ref:`Indicators:foster`.
+| Now you should have one more folder "Results" with a json for the focal year with the results. 
 
 ::
-
 
    project
    ├── demo.py
    ├── Data   
    │  ├── docs
-   │  │   ├── authors_sample.json       
-   │  │   ├── references_sample.json
-   │  │   └── meshterms_sample.json
+   │  │   ├── Ref_Journals
+   │  │   │   ├ 1995.json
+   │  │   │   ├ 1996.json
+   │  │   │   ├ ...                  
+   │  │   │   └ 2015.json
+   │  │   │ 
+   │  │   └── Meshterms
+   │  │       ├ 1995.json
+   │  │       ├ 1996.json
+   │  │       ├ ...                  
+   │  │       └ 2015.json
    │  │ 
    │  └── cooc
    │     └── c04_referencelist
-   │         └── weighted_network_self_loop.p
-   │    
+   │         └── weighted_network_self_loop
+   │             ├ 1995.p
+   │             ├ 1996.p
+   │             ├ ...
+   │             ├ 2015.p
+   │             ├ index2name.p
+   │             └ name2index.p
    └── Results
       └── foster
          └── c04_referencelist
 
-| You can iterate through multiple years just by replacing the focal year by a range and a for loop
-| More info and demonstration are given in the section :ref:`Indicators`.
 
-| Some pre-build functions can help you perform your analysis by getting the novelty score of a document, plotting the distribution or do a correlation analysis between multiple indicator/variable.
+| Some pre-build functions can help you perform your analysis by getting the novelty score of a document, plotting the distribution and look at the trend of the novelty score over the years.
 
 .. code-block:: python
    
-   # Get distribution for paper with id 10564583
    import novelpy
 
-   dist = novelpy.utils.plot_dist(doc_id = 10564583,
-                         doc_year = 2000,
-                         variable = ["c04_referencelist"],
-                         indicator = ["foster"]
-                         )
+   # Easy plot
+
+   dist = novelpy.utils.plot_dist(client_name="mongodb://localhost:27017",
+                                  db_name = "novelty_sample",
+                                  doc_id = 20100198,
+                                  doc_year = 2010,
+                                  id_variable = "PMID",
+                                  variables = ["c04_referencelist"],
+                                  indicators = ["foster"])
    dist.get_plot_dist()
    
    # The data used for the plot can be found in dist.df
@@ -164,11 +198,204 @@ Now you should have one more folder "Results" with a json for the focal year wit
    # A more complex example
    import novelpy
 
-   dist = novelpy.utils.plot_dist(doc_id = 10564583,
-                         doc_year = 2000,
-                         variable = ["c04_referencelist","a06_meshheadinglist"],
-                         indicator = ["foster","commonness"],
-                         )
+   # Trend
+   trend = novelpy.utils.novelty_trend(year_range = range(2000,2011,1),
+                 variables = ["c04_referencelist"],
+                 id_variable = "PMID",
+                 indicators = ["foster"])
+
+   trend.get_plot_trend()
+
+.. image:: img/trend.png
+   :width: 600
+
+
+| Here's a script to run all the indicators in the package that depends on the co-occurence matrix, on all the variables available in the sample.
+
+.. code-block:: python
+   # demo.py
+   import novelpy
+   import tqdm
+
+   # all the cooc possible
+
+   ref_cooc = novelpy.utils.cooc_utils.create_cooc(
+                    collection_name = "Ref_Journals_sample",
+                    year_var="year",
+                    var = "c04_referencelist",
+                    sub_var = "item",
+                    time_window = range(1995,2016),
+                    weighted_network = False, self_loop = False)
+
+   ref_cooc.main()
+
+   ref_cooc = novelpy.utils.cooc_utils.create_cooc(
+                    collection_name = "Meshterms_sample",
+                    year_var="year",
+                    var = "Mesh_year_category",
+                    sub_var = "descUI",
+                    time_window = range(1995,2016),
+                    weighted_network = True, self_loop = True)
+
+   ref_cooc.main()
+
+   ref_cooc = novelpy.utils.cooc_utils.create_cooc(
+                    collection_name = "Meshterms_sample",
+                    year_var="year",
+                    var = "Mesh_year_category",
+                    sub_var = "descUI",
+                    time_window = range(1995,2016),
+                    weighted_network = False, self_loop = False)
+
+   ref_cooc.main()
+
+
+   # Uzzi et al.(2013) meshterms
+   for focal_year in tqdm.tqdm(range(2000,2011), desc = "Computing indicator for window of time"):
+       Uzzi = novelpy.indicators.Uzzi2013(collection_name = "Meshterms_sample",
+                                              id_variable = 'PMID',
+                                              year_variable = 'year',
+                                              variable = "Mesh_year_category",
+                                              sub_variable = "descUI",
+                                              focal_year = focal_year)
+       Uzzi.get_indicator()
+
+   # Uzzi et al.(2013) Ref_Journals
+   for focal_year in tqdm.tqdm(range(2000,2011), desc = "Computing indicator for window of time"):
+       Uzzi = novelpy.indicators.Uzzi2013(collection_name = "Ref_Journals_sample",
+                                              id_variable = 'PMID',
+                                              year_variable = 'year',
+                                              variable = "c04_referencelist",
+                                              sub_variable = "item",
+                                              focal_year = focal_year)
+       Uzzi.get_indicator()
+
+   # Foster et al.(2015) meshterms
+   for focal_year in tqdm.tqdm(range(2000,2011), desc = "Computing indicator for window of time"):
+       Foster = novelpy.indicators.Foster2015(collection_name = "Meshterms_sample",
+                                              id_variable = 'PMID',
+                                              year_variable = 'year',
+                                              variable = "Mesh_year_category",
+                                              sub_variable = "descUI",
+                                              focal_year = focal_year,
+                                              starting_year = 1995,
+                                              community_algorithm = "Louvain")
+       Foster.get_indicator()
+
+   # Lee et al.(2015) meshterms
+   for focal_year in tqdm.tqdm(range(2000,2011), desc = "Computing indicator for window of time"):
+       Lee = novelpy.indicators.Lee2015(collection_name = "Meshterms_sample",
+                                              id_variable = 'PMID',
+                                              year_variable = 'year',
+                                              variable = "Mesh_year_category",
+                                              sub_variable = "descUI",
+                                              focal_year = focal_year)
+       Lee.get_indicator()
+
+   # Lee et al.(2015) Ref_Journals
+   for focal_year in tqdm.tqdm(range(2000,2011), desc = "Computing indicator for window of time"):
+       Lee = novelpy.indicators.Lee2015(collection_name = "Ref_Journals_sample",
+                                              id_variable = 'PMID',
+                                              year_variable = 'year',
+                                              variable = "c04_referencelist",
+                                              sub_variable = "item",
+                                              focal_year = focal_year)
+       Lee.get_indicator()
+
+   # Wang et al.(2017) meshterms
+   for focal_year in tqdm.tqdm(range(2000,2011)):
+       Wang = novelpy.indicators.Wang2017(collection_name = "Meshterms_sample",
+                                              id_variable = 'PMID',
+                                              year_variable = 'year',
+                                              variable = "Mesh_year_category",
+                                              sub_variable = "descUI",
+                                              focal_year = focal_year,
+                                              time_window_cooc = 3,
+                                              n_reutilisation = 1,
+                                              starting_year = 1995)
+       Wang.get_indicator()
+
+
+   # Wang et al.(2017) Ref_Journals
+   for focal_year in tqdm.tqdm(range(2000,2011)):
+       Wang = novelpy.indicators.Wang2017(collection_name = "Ref_Journals_sample",
+                                              id_variable = 'PMID',
+                                              year_variable = 'year',
+                                              variable = "c04_referencelist",
+                                              sub_variable = "item",
+                                              focal_year = focal_year,
+                                              time_window_cooc = 3,
+                                              n_reutilisation = 1,
+                                              starting_year = 1995)
+       Wang.get_indicator()
+
+
+| The last novelty indicator available in novelpy is Shibayama et al.[2021]:cite:p:`shibayama2021measuring`. For this indicator you will not need co-occurence matrices.
+| You need to have the title or abstract (in our case we have both) for articles cited by focal papers and therefore the id of for each paper cited.
+| In the sample you can find these information in two different db: Title_abs_sample and Citation_net_sample. You then embbed the articles using spacy and do a cosine similarity between embeddings for focal papers.
+| Let's start with the embedding:
+
+.. code-block:: python
+
+   from novelpy.utils.embedding import Embedding
+   import time
+
+   embedding = Embedding(
+         year_variable = 'year',
+         time_range = range(2000,2011),
+         id_variable = 'PMID',
+         references_variable = 'refs_pmid_wos',
+         pretrain_path = 'en_core_sci_lg-0.4.0/en_core_sci_lg/en_core_sci_lg-0.4.0',
+         title_variable = 'ArticleTitle',
+         abstract_variable = 'a04_abstract',
+         abstract_subvariable = 'AbstractText')
+
+   embedding.get_articles_centroid(
+         collection_articles = 'Title_abs_sample',
+         collection_embedding = 'embedding')
+
+   embedding.get_references_embbeding(
+         collection_articles = 'Citation_net_sample',
+         collection_embedding = 'embedding',
+         collection_ref_embedding = 'references_embedding',
+         skip_ = 1,
+         limit_ = 0)
+
+| 2 new DBs will be create, one with the id of the articles and it's embedding called "embedding" and one with the id of the focal articles and the embeddings of its references called "references_embedding".
+| Using this you can run the indicator:
+
+.. code-block:: python
+
+   import novelpy
+   import tqdm
+
+   for focal_year in tqdm.tqdm(range(2000,2011), desc = "Computing indicator for window of time"):
+       shibayama = novelpy.indicators.Shibayama2021(
+            collection_name = 'references_embedding',
+            id_variable = 'PMID',
+            year_variable = 'year',
+            ref_variable = 'refs_embedding',
+            entity = ['title_embedding','abstract_embedding'],
+            focal_year = focal_year)
+       
+       shibayama.get_indicator()
+
+
+
+| Now using companion you can create more advanced plot
+
+.. code-block:: python
+
+   dist = novelpy.utils.plot_dist(
+                                  doc_id = 20100198,
+                                  doc_year = 2010,
+                                  id_variable = "PMID",
+                                  variables = ["c04_referencelist","Mesh_year_category"],
+                                  indicators = ["foster","lee","uzzi","wang","shibayama"],
+                                  time_window_cooc = [3],
+                                  n_reutilisation = [1],
+                                  embedding_entities = ["title","abstract"])
+
    dist.get_plot_dist()
 
 .. image:: img/dist_complex.png
@@ -185,17 +412,19 @@ Now you should have one more folder "Results" with a json for the focal year wit
 
    trend.get_plot_trend()
 
-.. image:: img/trend.png
+.. image:: img/trend_complex.png
    :width: 600
 
 .. code-block:: python
-   corr = correlation_indicators(year_range = range(2000,2015,1),
-                 variable = ["c04_referencelist","a06_meshheadinglist"],
-                 indicator = ["foster","commonness"],
+   correlation = novelpy.utils.correlation_indicators(year_range = range(2000,2011,1),
+                 variables = ["c04_referencelist","Mesh_year_category"],
+                 indicators = ["foster","lee","wang","shibayama"],
                  time_window_cooc = [3],
-                 n_reutilisation = [1])
+                 n_reutilisation = [1],
+                 embedding_entities = ["title","abstract"])
 
-   corr.correlation_heatmap()
+
+   correlation.correlation_heatmap(per_year = False)
 
 .. image:: img/heatmap.png
    :width: 600

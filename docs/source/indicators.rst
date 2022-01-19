@@ -65,7 +65,7 @@ In order to run Atypicality you first need to create a co-occurence matrix with 
 
 
 
-
+.. _foster:
 Foster et al. [2015]
 ~~~~~~~~~~~~~~~~~~~~~~
 
