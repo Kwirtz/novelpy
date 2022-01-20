@@ -8,22 +8,22 @@ Utils
 cooc_utils
 ------------
 
-Most of the indicators consider that new ideas are created by combining already existing ones. In that end they look at the combination of items (Journals cited, keywords used, ...). cooc_utils creates an adjacency matrix that retraces the historic of these combination done in a given year.
+Most of the indicators make use of the hypothesis that new ideas are created by combining already existing ones. In that end they look at the combination of items (Journals cited, keywords used, ...). cooc_utils creates an adjacency matrix that retraces the historic of these combination done in a given year.
 
 
 .. py:function:: create_cooc(var, sub_var, year_var, collection_name, client_name = None, db_name = None, time_window = range(1980,2021), weighted_network = False, self_loop = False)
 
    Create co-occurence matrix 
 
-   :param str var: The key of interest in the dict
-   :param str sub_var: The key where the name of the variable is
-   :param str year_var: The key that gives the year of the paper
+   :param str var: The key of interest in the dict.
+   :param str sub_var: Name of the key which holds the ID of the variable of interest.
+   :param str year_var: Name of the key which value is the year of creation of the document.
    :param str collection_name: Name of the collection (either Mongo or Json) where the data is
-   :param str client_name: name of the mongdb client
-   :param str db_name: name of the mongdb Database
+   :param str client_name: Name of the MongoDB client
+   :param str db_name: Name of the MongoDB
    :param range time_window: Compute the cooc for the years in range
    :param str weighted_network: False if you want a combinaisons that appears multiple time in a single paper to be accounted as 1
-   :param str self_loop: True if you want the diagonal in the cooc-matrix
+   :param str self_loop: True if you want the diagonal in the coocurence matrix
 
    :return: 
    
@@ -38,18 +38,12 @@ embedding
 In order to use the indicators of Shibayama et al (2021) and the one on authors, it is necessary to embed the entities first. This function only works via mongo for the moment as it is impractical on large data sets. As these indicators are easily usable with small datasets, a version without mongo will be quickly developed.
 
 
-.. py:function:: Embedding(client_name, db_name, collection_articles, collection_authors, collection_keywords, collection_embedding,  var_year, var_id, var_pmid_list, var_id_list, var_auth_id, pretrain_path, var_title, var_abstract, var_keyword, subvar_keyword)
+.. py:function:: Embedding(year_variable, time_range, id_variable, references_variable, pretrain_path, title_variable, abstract_variable, client_name = None, db_name = None, keywords_variable = None, keywords_subvariable = None, abstract_subvariable = None, id_auth_variable = None, auth_pubs_variable = None)
 
     - Compute semantic centroid for each paper (abstract and title)
     - Create embedded references profile for each article.
     - Compute an author profile of embedded articles per year and store it for each article.
 
-   :param str client_name: mongo client name
-   :param str db_name: mongo db name
-   :param str collection_articles: mongo collection name for articles
-   :param str collection_authors: mongo collection name for authors
-   :param str collection_keyword: mongo collection for articles keywords
-   :param str collection_embedding: mongo collection for articles embedding
    :param str var_year: year variable name
    :param str var_id: identifier variable name
    :param str var_auth_id: authors identifer variable name
@@ -58,6 +52,8 @@ In order to use the indicators of Shibayama et al (2021) and the one on authors,
    :param str var_abstract: abstract variable name
    :param str var_keyword: keyword variable name
    :param str subvar_keyword: keyword subvariable name
+   :param str client_name: Name of the MongoDB client
+   :param str db_name: Name of the MongoDB
 
    :return: 
    

@@ -384,7 +384,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
 
 
 
-| Now using companion you can create more advanced plot:
+| Now you can create more advanced plot:
 
 .. code-block:: python
 
@@ -430,4 +430,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
    correlation.correlation_heatmap(per_year = False)
 
 .. image:: img/heatmap.png
-   :width: 300
+   :width: 400
+
+
+| Of course the plots are here just to guide you in your analysis and if you want to make some pretty plots yourself you can use the data inside the class instance or from the files.

@@ -14,7 +14,7 @@ Here are the novelty indicators we currently support:
 Uzzi et al. [2013]
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The goal of the measure proposed by Uzzi et al. [2013] :cite:p:`uzzi2013atypical` is to compare an observed network (hear co-occurrence matrix) with a random network where edges are rearranged randomly at a year level.  They call it "Atypicality".
+The goal of the measure proposed by Uzzi et al. [2013] :cite:p:`uzzi2013atypical` is to compare an observed network (hear co-occurrence matrix) with a random network where edges are rearranged randomly at a year level.
 
 .. image:: img/uzzi.png
    :width: 450
@@ -28,14 +28,14 @@ The goal of the measure proposed by Uzzi et al. [2013] :cite:p:`uzzi2013atypical
 
    Compute novelty score for every paper for the focal_year based on Uzzi et al. 2013 
 
-   :param str collection_name: Name of the collection or the json file containing the data   
+   :param str collection_name: Name of the collection or the json file containing the variable.  
    :param str id_variable: Name of the key which value give the identity of the document.
    :param str year_variable: Name of the key which value is the year of creation of the document.
    :param str variable: Name of the key that holds the variable of interest used in combinations.
-   :param str sub_variable: Name of the key which holds the ID of the variable of interest.
-   :param int focal_year: Calculate the novelty score for every document which has a date of creation = focal_year.
-   :param str client_name: Mongo URI if your data is hosted on a MongoDB instead of a JSON file
-   :param str db_name: Name of the db
+   :param str sub_variable: Name of the key which holds the ID of the variable of interest (nested dict in variable).
+   :param int focal_year: Calculate the novelty score for every document which has a year_variable = focal_year.
+   :param str client_name: Mongo URI if your data is hosted on a MongoDB instead of a JSON file.
+   :param str db_name: Name of the MongoDB.
    :param int nb_sample: Number of resample of the co-occurence matrix.
 
    :return: 
@@ -69,24 +69,25 @@ In order to run Atypicality you first need to create a co-occurence matrix with 
 Foster et al. [2015]
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Foster et al. [2015] :cite:p:`foster2015tradition` define novelty as an inter-community combination. A combination has a novelty score of 1 if the two items are not in the same community. The original paper was using the infomap community detection algorithm. Most recently Foster et al [2021] :cite:p:`foster2021surprise` used the louvain algorithm. Currently only Louvain is supported see the :ref:`roadmap` section. The score for a given entity is the proportion of novel combination on the total number of combination.
+Foster et al. [2015] :cite:p:`foster2015tradition` define novelty as an inter-community combination. A combination has a novelty score of 1 if the two items are not in the same community. The original paper was using the infomap community detection algorithm. Most recently Foster et al [2021] :cite:p:`foster2021surprise` used the Louvain algorithm. Currently only Louvain is supported see the :ref:`roadmap` section. The score for a given entity is the proportion of novel combination on the total number of combination.
 
 .. image:: img/foster.png
    :width: 300
    :align: center
 
-.. py:function:: Foster2015(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, client_name = None, db_name = None, community_algorithm = "Louvain")
+.. py:function:: Foster2015(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, starting_year, client_name = None, db_name = None, community_algorithm = "Louvain")
 
    Compute novelty score for every paper for the focal_year based on Foster et al. 2015 
 
-   :param str collection_name: Name of the collection or the json file containing the data   
+   :param str collection_name: Name of the collection or the json file containing the variable.  
    :param str id_variable: Name of the key which value give the identity of the document.
    :param str year_variable: Name of the key which value is the year of creation of the document.
    :param str variable: Name of the key that holds the variable of interest used in combinations.
    :param str sub_variable: Name of the key which holds the ID of the variable of interest.
-   :param int focal_year: Calculate the novelty score for every document which has a date of creation = focal_year.
+   :param int focal_year: The year to start the accumulation of co-occurence matrices.
+   :param int starting_year: The accumulation of co-occurence starting at year.
    :param str client_name: Mongo URI if your data is hosted on a MongoDB instead of a JSON file
-   :param str db_name: Name of the db
+   :param str db_name: Name of the MongoDB.
    :param str community_algorithm: The name of the community algorithm to be used.
 
    :return: 
@@ -107,6 +108,7 @@ In order to run this novelty indicator you first need to create a co-occurence m
                                           variable = "c04_referencelist",
                                           sub_variable = "item",
                                           focal_year = focal_year,
+                                          starting_year = 1995,
                                           community_algorithm = "Louvain")
    Foster.get_indicator()
 
@@ -130,14 +132,14 @@ Lee et al. [2015] :cite:p:`lee2015creativity` compare the observed number of com
 
    Compute novelty score for every paper for the focal_year based on Foster et al. 2015 
 
-   :param str collection_name: Name of the collection or the json file containing the data   
+   :param str collection_name: Name of the collection or the json file containing the variable.   
    :param str id_variable: Name of the key which value give the identity of the document.
    :param str year_variable: Name of the key which value is the year of creation of the document.
    :param str variable: Name of the key that holds the variable of interest used in combinations.
    :param str sub_variable: Name of the key which holds the ID of the variable of interest.
    :param int focal_year: Calculate the novelty score for every document which has a date of creation = focal_year.
    :param str client_name: Mongo URI if your data is hosted on a MongoDB instead of a JSON file
-   :param str db_name: Name of the db
+   :param str db_name: Name of the MongoDB.
 
    :return: 
 
@@ -177,20 +179,21 @@ Wang et al. [2017] :cite:p:`wang2017bias` proposed a measure of difficulty on pa
    :width: 600
    :align: center
 
-.. py:function:: Wang2017(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, time_window_cooc, n_reutilisation,client_name = None, db_name = None)
+.. py:function:: Wang2017(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, starting_year, time_window_cooc, n_reutilisation,client_name = None, db_name = None)
 
-   Compute novelty score for every paper for the focal_year based on Uzzi et al. 2013 
+   Compute novelty score for every paper for the focal_year based on Wang et al.. 2013 
 
-   :param str collection_name: Name of the collection or the json file containing the data   
+   :param str collection_name: Name of the collection or the json file containing the variable. 
    :param str id_variable: Name of the key which value give the identity of the document.
    :param str year_variable: Name of the key which value is the year of creation of the document.
    :param str variable: Name of the key that holds the variable of interest used in combinations.
    :param str sub_variable: Name of the key which holds the ID of the variable of interest.
    :param int focal_year: Calculate the novelty score for every document which has a date of creation = focal_year.
+   :param int starting_year: The year to start the accumulation of co-occurence matrices.
    :param int time_window_cooc: Calculate the novelty score using the accumulation of the co-occurence matrix between focal_year-time_window_cooc and focal_year.
    :param int n_reutilisation: Check if the combination is reused n_reutilisation year after the focal_year
-   :param str client_name: Mongo URI if your data is hosted on a MongoDB instead of a JSON file
-   :param str db_name: Name of the db
+   :param str client_name: Mongo URI if your data is hosted on a MongoDB instead of a JSON file.
+   :param str db_name: Name of the MongoDB.
 
 
    :return: 
@@ -234,18 +237,19 @@ Shibayama et al. [2021]
    :width: 300
    :align: center
 
-.. py:function:: Shibayama2021(collection_name, id_variable, year_variable, ref_variable, entity, focal_year, client_name = None, db_name = None)
+.. py:function:: Shibayama2021(collection_name, id_variable, year_variable, ref_variable, entity, focal_year, embedding_dim = 200, client_name = None, db_name = None)
 
    Compute novelty score for every paper for the focal_year based on Uzzi et al. 2013 
 
-   :param str collection_name: Name of the collection or the json file containing the data   
+   :param str collection_name: Name of the collection or the json file containing the variable. 
    :param str id_variable: Name of the key which value give the identity of the document.
    :param str year_variable: Name of the key which value is the year of creation of the document.
    :param str ref_variable: variable name for embedded representation of references.
    :param list entity: list of variables to use, 'title_embedding' or 'abstract_embedding' or both.
    :param int focal_year: Calculate the novelty score for every document which has a date of creation = focal_year.
+   :param int embedding_dim: The dimension of your embedding.
    :param str client_name: Mongo URI if your data is hosted on a MongoDB instead of a JSON file
-   :param str db_name: Name of the db
+   :param str db_name: Name of the MongoDB.
 
 
    :return: 
@@ -292,21 +296,20 @@ Wu et al. [2019]/  Bornmann et al. 2019/ Bu et al. [2019]
 
 :cite:p:`bu2019multi`
 
-All indicators at computed at the same time, one just need to run the following command and iterate over the citation database:
+All indicators are computed at the same time, one just need to run the following command and iterate over the citation database:
 
 .. py:function:: Disruptiveness(client_name = None, db_name = None, collection_name, focal_year, id_variable, refs_list_variable, year_variable)
 
    Compute several indicators of disruptiveness studied in Bornmann and Tekles (2020) and in Bu et al. (2019)
 
-   :param str collection_name: Name of the collection or the json file containing the data   
+   :param str collection_name: Name of the collection or the json file containing the variable.  
    :param str id_variable: Name of the key which value give the identity of the document.
    :param str year_variable: Name of the key which value is the year of creation of the document.
    :param str variable: Name of the key that holds the variable of interest used in combinations.
    :param str sub_variable: Name of the key which holds the ID of the variable of interest.
    :param int focal_year: Calculate the novelty score for every document which has a date of creation = focal_year.
    :param str client_name: Mongo URI if your data is hosted on a MongoDB instead of a JSON file
-   :param str db_name: Name of the db
-
+   :param str db_name: Name of the MongoDB.
 
 .. code-block:: python
 
