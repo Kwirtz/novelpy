@@ -6,7 +6,7 @@ project = 'novelpy'
 copyright = '2021, Pelletier, Wirtz'
 author = 'Pelletier, Wirtz'
 
-release = '0.1'
+release = '1.0'
 version = '0.1.4'
 
 # -- General configuration

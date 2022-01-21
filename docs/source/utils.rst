@@ -64,32 +64,28 @@ In order to use the indicators of Shibayama et al (2021) and the one on authors,
 
 .. code-block:: python
 
-	embedding = Embedding(
-		client_name = 'mongodb://localhost:27017',
-		db_name = 'novelpy',
-		year_variable = 'year',
-		id_variable = 'PMID',
-		references_variable = 'refs_pmid_wos',
-		auth_pubs_variable = 'pmid_list',
-		id_auth_variable = 'AND_ID',
-		pretrain_path = '/home/peltouz/Downloads/en_core_sci_lg-0.4.0/en_core_sci_lg/en_core_sci_lg-0.4.0',
-		title_variable = 'ArticleTitle',
-		abstract_variable = 'a04_abstract',
-		keywords_variable = 'Mesh_year_category',
-		keywords_subvariable = 'DescUI',
-		abstract_subvariable = 'AbstractText')
+   from novelpy.utils.embedding import Embedding
 
-In order to build the profile of references and authors, it is first necessary to give a semantic representation to each article. The first function to use is ``get_articles_centroid``.
+   embedding = Embedding(
+         year_variable = 'year',
+         time_range = range(2000,2011),
+         id_variable = 'PMID',
+         references_variable = 'refs_pmid_wos',
+         pretrain_path = 'en_core_sci_lg-0.4.0/en_core_sci_lg/en_core_sci_lg-0.4.0',
+         title_variable = 'ArticleTitle',
+         abstract_variable = 'a04_abstract',
+         abstract_subvariable = 'AbstractText')
+
+The first step is to embed every paper's abstract/title by using ``get_articles_centroid``.
 
 .. code-block:: python
 
    embedding.get_articles_centroid(
-      collection_articles = 'articles',
-      collection_embedding = 'articles_embedding',
-      year_start = 2000,
-      year_end = 2002)
+         collection_articles = 'Title_abs_sample',
+         collection_embedding = 'embedding')
 
-To compute Shibayama et al. 2021 indicators, it is necessary to construct a profile of references for each item. One can also select the time window to consider.
+
+The second step is to create a list for each articles that contains the embedding of each cited articles.
 
 
 .. code-block:: python
@@ -103,20 +99,92 @@ To compute Shibayama et al. 2021 indicators, it is necessary to construct a prof
       skip_ = 1,
       limit_ = 0)
 
-The author proximity works in a two step process, first it creates an profile for each authors in a separate database for all year were a given author has a publication. Then two construct the indicateur at the paper level, all authors profile a then import from the authors database. It select only authors representation before the given document publishing year.
-
-.. code-block:: python
-
-   embedding.feed_author_profile(
-	collection_authors = 'authors',
-        collection_embedding = 'articles_embedding',
-        skip_ = 1,
-        limit_ = 0)
-
-   embedding.author_profile2papers(
-	collection_authors = 'authors',
-        collection_articles = 'articles',
-        skip_ = 1,
-        limit_ = 0)
+Once this is done you can run the Shibayama et al. [2021] :cite:p:`shibayama2021measuring` indicator.
 
 
+.. _plot_dist:
+
+plot_dist
+------------
+
+Once you have computed multiple indicators you can plot the distribution for a document of the novelty score for combinations of items in a document.
+
+
+.. py:function:: plot_dist(doc_id, doc_year,  id_variable, variables, indicators, time_window_cooc = None, n_reutilisation = None, embedding_entities = None, shibayma_per = 10, client_name = None, db_name = None)
+
+   Plot the distribution of novelty score for combinations of items in a document
+
+   :param str/int doc_id: The id of the document you want the distribution.
+   :param int doc_year: Year of creation of the document.
+   :param str id_variable: Name of the key that contains the ID of the doc   
+   :param list variables: List of variable you want the distribution of (e.g ["references", "meshterms"])
+   :param list indicators: List of indicators name you want the distribution of(e.g ["foster","wang"])
+   :param list of int time_window_cooc: List of parameters you want the distribution of, parameter used in wang (e.g [3,5])
+   :param list n_reutilisation: List of parameters you want the distribution of, parameter used in wang (e.g [1,2])
+   :param list embedding_entities: List of entites you want the distribution of, parameter used in shibayama (e.g ["title","abstract"])
+   :param int shibayma_per: In shibayama they compared diffenrent percentil for the novelty score of each combination (int between 0 and 100)
+   :param str client_name: Name of the MongoDB client
+   :param str db_name: Name of the MongoDB
+
+   :return: 
+   
+   :raises ValueError: 
+   :raises TypeError: 
+
+
+.. _novelty_trend:
+
+novelty_trend
+------------
+
+Once you have computed multiple indicators you can plot the trend of the mean novelty score per year for each indicator given the variables and hyper-parameters.
+
+
+.. py:function:: novelty_trend(year_range, variables, indicators, id_variable, time_window_cooc = None, n_reutilisation = None, embedding_entities = None, shibayama_per = 10, client_name = None, db_name = None)
+
+   Plot the novelty trend (mean per year) for an indicator given the variable
+
+   :param range year_range: Get the trend for each years in year_range.
+   :param list variables: List of variable you want the novelty trend of (e.g ["references", "meshterms"]).
+   :param list indicators: List of indicators name you want the novelty of(e.g ["foster","wang"]).
+   :param str id_variable: Name of the key that contains the ID of the doc.   
+   :param list of int time_window_cooc: List of parameters you want the distribution of, parameter used in wang (e.g [3,5]).
+   :param list n_reutilisation: List of parameters you want the distribution of, parameter used in wang (e.g [1,2]).
+   :param list embedding_entities: List of entites you want the distribution of, parameter used in shibayama (e.g ["title","abstract"]).
+   :param int shibayma_per: In shibayama they compared diffenrent percentil for the novelty score of each combination (int between 0 and 100).
+   :param str client_name: Name of the MongoDB client.
+   :param str db_name: Name of the MongoDB.
+
+   :return: 
+   
+   :raises ValueError: 
+   :raises TypeError: 
+
+
+
+.. _correlation_indicators:
+
+correlation_indicators
+------------
+
+Once you have computed multiple indicators you can plot the correlation heatmap of the novelty score, either per year or during the whole period, for each indicator given the variables and hyper-parameters.
+
+
+.. py:function:: correlation_indicators(year_range, variables, indicators, time_window_cooc = None, n_reutilisation = None, embedding_entities = None, shibayama_per = 10, client_name = None, db_name = None)
+
+   Plot the novelty trend (mean per year) for an indicator given the variable
+
+   :param range year_range: Get the trend for each years in year_range.
+   :param list variables: List of variable you want the novelty trend of (e.g ["references", "meshterms"]).
+   :param list indicators: List of indicators name you want the novelty of(e.g ["foster","wang"]).
+   :param list of int time_window_cooc: List of parameters you want the distribution of, parameter used in wang (e.g [3,5]).
+   :param list n_reutilisation: List of parameters you want the distribution of, parameter used in wang (e.g [1,2]).
+   :param list embedding_entities: List of entites you want the distribution of, parameter used in shibayama (e.g ["title","abstract"]).
+   :param int shibayma_per: In shibayama they compared diffenrent percentil for the novelty score of each combination (int between 0 and 100).
+   :param str client_name: Name of the MongoDB client.
+   :param str db_name: Name of the MongoDB.
+
+   :return: 
+   
+   :raises ValueError: 
+   :raises TypeError: 
