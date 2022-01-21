@@ -116,7 +116,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
                  ├ index2name.p
                  └ name2index.p
 
-| Since we use sparse matrix, index2name.p and name2index.p are required to convert the name of items to index in our matrix. Now you can run the Foster et al.[2015] :cite:p:`foster2015tradition` novelty indicator.
+| Since we use sparse matrix, index2name.p and name2index.p are required to convert the name of items to index in our matrix. Now you can run the Foster et al. [2015] :cite:p:`foster2015tradition` novelty indicator.
 
 .. code-block:: python
 
@@ -137,7 +137,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
        Foster.get_indicator()
     
 
-| Here the indicator is calculated using the co-occurence matrix done before. You can change the periode depending of your data, read more here :ref:`Indicators:foster`.
+| Here the indicator is calculated using the co-occurence matrix done before. You can change the period depending on your data, read more here :ref:`indicators:foster`.
 | Now you should have one more folder "Results" with a json for the focal year with the results. 
 
 ::
@@ -200,7 +200,6 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
 
 .. code-block:: python
    
-   # A more complex example
    import novelpy
 
    # Trend
@@ -336,7 +335,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
        Wang.get_indicator()
 
 
-| The last novelty indicator available in novelpy is Shibayama et al. [2021] :cite:p:`shibayama2021measuring`. For this indicator you won't need co-occurence matrices. You need to have the title or abstract (in our case we have both) for articles cited by focal papers and therefore the id of for each paper cited. In the sample you can find these information in two different db: Title_abs_sample and Citation_net_sample. You then embbed the articles using spacy and do a cosine similarity between embeddings for focal papers. Let's start with the embedding:
+| The last novelty indicator available in novelpy is Shibayama et al. [2021] :cite:p:`shibayama2021measuring`. For this indicator you won't need co-occurence matrices. You need to have the title or abstract (in our case we have both) for articles cited by focal papers and therefore the id of for each paper cited. In the sample you can find these information in two different DBs: "Title_abs_sample" and "Citation_net_sample". You then embbed the articles using spacy and do a cosine similarity between the embeddings of cited papers for focal papers. Let's start with the embedding:
 
 .. code-block:: python
 
@@ -364,7 +363,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
          skip_ = 1,
          limit_ = 0)
 
-| 2 new DBs will be create, one with the id of the articles and it's embedding called "embedding" and one with the id of the focal articles and the embeddings of its references called "references_embedding". Using this you can run the indicator:
+| 2 new DBs will be created, one with the id of the articles and it's embedding called "embedding" and one with the id of the focal articles and the embeddings of its references called "references_embedding". Using this you can run the indicator:
 
 .. code-block:: python
 
