@@ -94,13 +94,13 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
    ├── demo.py
    └── Data   
       ├── docs
-      │   ├── Ref_Journals
+      │   ├── Ref_Journals_sample
       │   │   ├ 1995.json
       │   │   ├ 1996.json
       │   │   ├ ...                  
       │   │   └ 2015.json
       │   │ 
-      │   └── Meshterms
+      │   └── Meshterms_sample
       │       ├ 1995.json
       │       ├ 1996.json
       │       ├ ...                  
@@ -146,13 +146,13 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
    ├── demo.py
    ├── Data   
    │  ├── docs
-   │  │   ├── Ref_Journals
+   │  │   ├── Ref_Journals_sample
    │  │   │   ├ 1995.json
    │  │   │   ├ 1996.json
    │  │   │   ├ ...                  
    │  │   │   └ 2015.json
    │  │   │ 
-   │  │   └── Meshterms
+   │  │   └── Meshterms_sample
    │  │       ├ 1995.json
    │  │       ├ 1996.json
    │  │       ├ ...                  
