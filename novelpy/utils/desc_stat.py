@@ -65,7 +65,7 @@ class Desc_stat:
             for doc in tqdm.tqdm(docs):
                 pub_list = [pub[id_entity_variable] for pub in doc[entity_variable]]
                 pub_entity_list.append({self.id_variable:doc[self.id_variable],
-                                        '{}_list'.format(self.id_variable):pub_list})
+                                        '{}_list'.format(id_entity_variable):pub_list})
         else:
             pub_entity_list = []
             files = os.listdir('Data/docs/{}'.format(collection_articles))
@@ -74,16 +74,20 @@ class Desc_stat:
                 for doc in tqdm.tqdm(docs):
                     pub_list = [pub[id_entity_variable] for pub in doc[entity_variable]]
                     pub_entity_list.append({self.id_variable:doc[self.id_variable],
-                                            '{}_list'.format(self.id_variable):pub_list})
+                                            '{}_list'.format(id_entity_variable):pub_list})
         
-        print('Get {} publication list...'.format(id_entity_variable))
+        print("Get {}'s publication list...".format(id_entity_variable))
         df = pd.DataFrame(pub_entity_list)
         edge_df = df.explode('{}_list'.format(self.id_variable))
-        entity_pub_df = edge_df.groupby('{}_list'.format(self.id_variable))[self.id_variable].apply(list)
+        entity_pub_df = edge_df.groupby('{}_list'.format(id_entity_variable))[self.id_variable].apply(list)
         entity_pub_df = entity_pub_df.reset_index()
         # for pkg : AID 0 is for authors without AID or Corporate author without identifier 
         if id_entity_variable == 'AID':
-            entity_pub_df = entity_pub_df[entity_pub_df['{}_list'.format(self.id_variable)] != 0]
+            entity_pub_df = entity_pub_df[entity_pub_df['{}_list'.format(id_entity_variable)] != 0]
+        
+        entity_pub_df = entity_pub_df.rename(columns={'{}_list'.format(id_entity_variable): id_entity_variable, 
+                                                      self.id_variable: "{}_list".format(self.id_variable)})
+        
         
         if self.client_name:
             
