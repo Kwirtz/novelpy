@@ -78,7 +78,7 @@ class Desc_stat:
         
         print("Get {}'s publication list...".format(id_entity_variable))
         df = pd.DataFrame(pub_entity_list)
-        edge_df = df.explode('{}_list'.format(self.id_variable))
+        edge_df = df.explode('{}_list'.format(id_entity_variable))
         entity_pub_df = edge_df.groupby('{}_list'.format(id_entity_variable))[self.id_variable].apply(list)
         entity_pub_df = entity_pub_df.reset_index()
         # for pkg : AID 0 is for authors without AID or Corporate author without identifier 
