@@ -3,12 +3,15 @@ import pymongo
 import tqdm
 import os
 import json
-
-class Desc_stat:
+from collections import defaultdict
+class create_author_db():
         
     
     def __init__(self,
                  id_variable,
+                 entity_variable,
+                 id_entity_variable,
+                 collection_authors,
                  client_name = None,
                  db_name = None):
         """
@@ -17,6 +20,12 @@ class Desc_stat:
         Parameters
         ----------
         id_variable : TYPE
+            DESCRIPTION.
+        entity_variable : TYPE
+            DESCRIPTION.
+        id_entity_variable : TYPE
+            DESCRIPTION.
+        collection_authors : TYPE
             DESCRIPTION.
         client_name : TYPE, optional
             DESCRIPTION. The default is None.
@@ -31,24 +40,31 @@ class Desc_stat:
         
         
         self.id_variable = id_variable
+        self.entity_variable = entity_variable
+        self.id_entity_variable = id_entity_variable
+        self.collection_authors = collection_authors
         self.client_name = client_name
         self.db_name = db_name
+        self.id2paper_list = defaultdict(list)
+
+        self.create_entity_pub_list()
+
+    def process_docs(self,docs):
+        for doc in tqdm.tqdm(docs):
+            pmid = doc[self.id_variable]
+            authors = [author[self.id_entity_variable] for author in doc[self.entity_variable]]
+            if self.id_entity_variable == 'AID':
+                # for pkg : AID 0 is for authors without AID or Corporate author without identifier 
+                [self.id2paper_list[id_].append(pmid) for id_ in authors if id_ != 0]
+            else:
+                [self.id2paper_list[id_].append(pmid) for id_ in authors]
     
-    def create_entity_pub_list(self,
-                               collection_articles,
-                               entity_variable,
-                               id_entity_variable):
+    def create_entity_pub_list(self):
         """
         
-
         Parameters
         ----------
-        collection_articles : TYPE
-            DESCRIPTION.
-        entity_variable : TYPE
-            DESCRIPTION.
-        id_entity_variable : TYPE
-            DESCRIPTION.
+
 
         Returns
         -------
@@ -59,53 +75,32 @@ class Desc_stat:
         if self.client_name:
             self.client = pymongo.MongoClient(self.client_name)
             self.db = self.client[self.db_name]
-            collection = self.db[collection_articles]
+            collection = self.db[self.collection_authors]
             docs = collection.find()
-            pub_entity_list = []
-            for doc in tqdm.tqdm(docs):
-                pub_list = [pub[id_entity_variable] for pub in doc[entity_variable]]
-                pub_entity_list.append({self.id_variable:doc[self.id_variable],
-                                        '{}_list'.format(id_entity_variable):pub_list})
+            self.process_docs(docs)
+
         else:
-            pub_entity_list = []
-            files = os.listdir('Data/docs/{}'.format(collection_articles))
+            files = os.listdir('Data/docs/{}'.format(self.collection_authors))
             for file in files:
-                docs = json.load(open("Data/docs/{}/{}".format(collection_articles,file)))
-                for doc in tqdm.tqdm(docs):
-                    pub_list = [pub[id_entity_variable] for pub in doc[entity_variable]]
-                    pub_entity_list.append({self.id_variable:doc[self.id_variable],
-                                            '{}_list'.format(id_entity_variable):pub_list})
+                docs = json.load(open("Data/docs/{}/{}".format(self.collection_authors,file)))
+                self.process_docs(docs)
         
-        print("Get {}'s publication list...".format(id_entity_variable))
-        df = pd.DataFrame(pub_entity_list)
-        edge_df = df.explode('{}_list'.format(id_entity_variable))
-        entity_pub_df = edge_df.groupby('{}_list'.format(id_entity_variable))[self.id_variable].apply(list)
-        entity_pub_df = entity_pub_df.reset_index()
-        # for pkg : AID 0 is for authors without AID or Corporate author without identifier 
-        if id_entity_variable == 'AID':
-            entity_pub_df = entity_pub_df[entity_pub_df['{}_list'.format(id_entity_variable)] != 0]
-        
-        entity_pub_df = entity_pub_df.rename(columns={'{}_list'.format(id_entity_variable): id_entity_variable, 
-                                                      self.id_variable: "{}_list".format(self.id_variable)})
+        list_of_insertion = [{self.id_entity_variable:author,"{}_list".format(self.id_variable):self.id2paper_list[author]} for author in self.id2paper_list]
+
         
         
         if self.client_name:
             
             print('Export to mongo... ')
-            entity_pub_df = entity_pub_df.to_dict('records')
-            collection_entity = self.db["{}_{}".format(entity_variable,id_entity_variable)]
-            collection_entity.create_index([ (id_entity_variable,1) ])
-            
-            collection_entity.insert_many(entity_pub_df)
+            collection_entity = self.db["{}_{}".format(self.entity_variable,self.id_entity_variable)]
+            collection_entity.create_index([ (self.id_entity_variable,1) ])
+            collection_entity.insert_many(list_of_insertion)
         else:
-            
             print('Export to json... ')
-            entity_pub_df.to_json("Data/docs/{}_{}.json".format(entity_variable,id_entity_variable))
+            with open("Data/docs/{}_{}.json".format(self.entity_variable,self.id_entity_variable),"w") as outfile:
+                    json.dump(list_of_insertion, outfile)
         
-        
-        
-        
-        
+
         
         
         
