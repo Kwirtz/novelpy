@@ -376,6 +376,7 @@ class create_output(Dataset):
                 print("Init output collection with index on id_variable ...")
                 self.collection_output = self.db["output"]
                 self.collection_output.create_index([ (self.id_variable,1) ])
+                self.collection_output.create_index([ (self.year_variable,1) ])
             else:
                 self.collection_output = self.db["output"]
         else:
