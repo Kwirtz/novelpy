@@ -326,7 +326,7 @@ class Embedding:
             collection_authors = self.db[collection_authors]
             collection_embedding = self.db[collection_embedding]
             #collection_keywords = db[self.collection_keywords]
-            authors = collection_authors.find({}).skip(skip_-1).limit(limit_)
+            authors = collection_authors.find({},no_cursor_timeout=True).skip(skip_-1).limit(limit_)
             embedding = None
         else:
             authors = json.load(open("Data/docs/{}.json".format(collection_authors))) 
@@ -427,7 +427,8 @@ class Embedding:
                                year_variable,
                                collection_articles,
                                collection_authors,
-                               client_name):
+                               client_name,
+                               session = None):
             """
             Get author profile from the authors collection, throwaway articles written after the focal publication
             Internal to allow for parallel computing latter
@@ -489,7 +490,9 @@ class Embedding:
                                              'title_profile' :title_profile,
                                              # 'keywords_profile': k_profile
                                              })
-                    
+                    # refresh because more than 30 min
+                    self.client.admin.command('refreshSessions', [session.session_id], session=session)
+
             infos = {'authors_profiles':authors_profiles} if authors_profiles else {'authors_profiles': None}
             return infos
             
@@ -507,7 +510,8 @@ class Embedding:
 
         for year in self.time_range:
             if self.client_name:
-                docs = collection_articles.find({self.year_variable:year}).skip(skip_-1).limit(limit_)
+                session = self.client.start_session()
+                docs = collection_articles.find({self.year_variable:year},no_cursor_timeout  = True, session=session).skip(skip_-1).limit(limit_)
             else:
                 docs = json.load(open("Data/docs/{}/{}.json".format(collection_articles,year))) 
          
@@ -533,7 +537,8 @@ class Embedding:
                     year_variable = self.year_variable,
                     collection_articles = collection_articles,
                     collection_authors = collection_authors,
-                    client_name = self.client_name)
+                    client_name = self.client_name,
+                    session = session)
                 if self.client_name:
                     try:
                         infos.update({self.year_variable:doc[self.year_variable]})
