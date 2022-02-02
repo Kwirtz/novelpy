@@ -269,7 +269,7 @@ class plot_dist:
                         sns.kdeplot(data = self.df[(self.df["Indicator"]==indicator) & (self.df["Variable"]==variable)]["Scores"],ax=ax)       
                     if indicator != "wang":
                         n_indic += 1
-        plt.legend(handles=[plt.Line2D([], [], color="red", linestyle="--", linewidth = 1, label="Novelty score")])
+        plt.legend(handles=[plt.Line2D([], [], color="red", linestyle="--", linewidth = 1, label="Novelty score")],loc="lower left",bbox_to_anchor=(1.05, 1.0))
 
 class novelty_trend:
 
