@@ -55,13 +55,14 @@ class create_author_db():
 
     def process_docs(self,docs):
         for doc in tqdm.tqdm(docs):
-            pmid = doc[self.id_variable]
-            authors = [author[self.id_entity_variable] for author in doc[self.entity_variable]]
-            if self.id_entity_variable == 'AID':
-                # for pkg : AID 0 is for authors without AID or Corporate author without identifier 
-                [self.id2paper_list[id_].append(pmid) for id_ in authors if id_ != 0]
-            else:
-                [self.id2paper_list[id_].append(pmid) for id_ in authors]
+            if self.entity_variable in doc.keys():
+                pmid = doc[self.id_variable]
+                authors = [author[self.id_entity_variable] for author in doc[self.entity_variable]]
+                if self.id_entity_variable == 'AID':
+                    # for pkg : AID 0 is for authors without AID or Corporate author without identifier 
+                    [self.id2paper_list[id_].append(pmid) for id_ in authors if id_ != 0]
+                else:
+                    [self.id2paper_list[id_].append(pmid) for id_ in authors]
     
     def create_entity_pub_list(self):
         """

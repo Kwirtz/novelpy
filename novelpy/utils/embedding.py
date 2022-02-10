@@ -7,6 +7,7 @@ import spacy
 import pymongo
 import scispacy
 import numpy as np
+import re
 import pandas as pd
 from itertools import chain
 from pymongo import UpdateOne
@@ -127,7 +128,8 @@ class Embedding:
             if not os.path.exists("Data/docs/{}".format(collection_embedding)):
                 os.makedirs("Data/docs/{}".format(collection_embedding))
 
-        for year in tqdm.tqdm(self.time_range):
+        all_years = [int(re.sub('.json','',file)) for file in os.listdir("Data/docs/{}/".format(collection_articles))]
+        for year in tqdm.tqdm(all_years):
             if self.client_name:
                 collection = self.db[collection_articles]
                 docs = collection.find({self.year_variable:year},no_cursor_timeout = True)
@@ -274,53 +276,60 @@ class Embedding:
             if client_name:
                 articles = collection_embedding.find({id_variable:{'$in':doc[auth_pubs_variable]}})
             else:
-                articles = embedding[embedding['PMID'].isin(doc[auth_pubs_variable])].to_dict('records')
+                try:
+                    articles = embedding[embedding[id_variable].isin(doc[auth_pubs_variable])].to_dict('records')
+                except Exception as e:
+                    print(e)
+                    print(doc[auth_pubs_variable])
+                    articles = None
             #keywords = collection_keywords.find({id_variable:{'$in':doc[auth_pubs_variable]}},no_cursor_timeout  = True)
             #for article, keyword in zip(articles,keywords) :
-            for article in articles :
-                if 'title_embedding' in article.keys():
-                #try:
-                    year = article[year_variable]
-                    title = np.array(
-                        article['title_embedding']
-                        ) if article['title_embedding'] else None
-                    abstract = np.array(
-                        article['abstract_embedding']
-                        ) if article['abstract_embedding'] else None
-                    #keywords = pd.DataFrame(keyword[keywords_variable])[keywords_subvariable].to_list() # TO CHANGE FOR OTHER DB
-                    infos.append({'year':year,
-                                 'title':title,
-                                 'abstract':abstract,
-                                 #'keywords':keywords
-                                 })
-                # except Exception as e:
-                #     print(e)
-                
-            df = pd.DataFrame(infos)
-            if not df.empty:
-                df = df[~df['year'].isin([''])]
-                df['year'] = df['year'].astype(str)
-                df_t = df[['year','title']].dropna()
-                df_a = df[['year','abstract']].dropna()
-                #df_k = df[['year','keywords']].dropna()
-                
-                
-                abs_year = df_a.groupby('year').abstract.apply(list).to_dict()
-                title_year =  df_t.groupby('year').title.apply(list).to_dict()
-                #keywords_year =  df_k.groupby('year')['keywords'].apply(list).to_dict()
-                
-                if title_year:
-                    for year in title_year:
-                        title_year[year] = [item.tolist() for item in title_year[year]]
-                if abs_year:
-                    for year in abs_year:
-                        abs_year[year] = [item.tolist() for item in abs_year[year]]
-                
-                infos = {'embedded_abs':abs_year,
-                'embedded_titles':title_year,
-                #'keywords':keywords_year
-                }
-                return infos
+            if articles:
+                for article in articles :
+                    if 'title_embedding' in article.keys():
+                    #try:
+                        year = article[year_variable]
+                        title = np.array(
+                            article['title_embedding']
+                            ) if article['title_embedding'] else None
+                        abstract = np.array(
+                            article['abstract_embedding']
+                            ) if article['abstract_embedding'] else None
+                        #keywords = pd.DataFrame(keyword[keywords_variable])[keywords_subvariable].to_list() # TO CHANGE FOR OTHER DB
+                        infos.append({'year':year,
+                                     'title':title,
+                                     'abstract':abstract,
+                                     #'keywords':keywords
+                                     })
+                    # except Exception as e:
+                    #     print(e)
+                    
+                df = pd.DataFrame(infos)
+                if not df.empty:
+                    df = df[~df['year'].isin([''])]
+                    df['year'] = df['year'].astype(str)
+                    df_t = df[['year','title']].dropna()
+                    df_a = df[['year','abstract']].dropna()
+                    #df_k = df[['year','keywords']].dropna()
+                    
+                    
+                    abs_year = df_a.groupby('year').abstract.apply(list).to_dict()
+                    title_year =  df_t.groupby('year').title.apply(list).to_dict()
+                    #keywords_year =  df_k.groupby('year')['keywords'].apply(list).to_dict()
+                    
+                    if title_year:
+                        for year in title_year:
+                            title_year[year] = [item.tolist() for item in title_year[year]]
+                    if abs_year:
+                        for year in abs_year:
+                            abs_year[year] = [item.tolist() for item in abs_year[year]]
+                    
+                    infos = {'embedded_abs':abs_year,
+                    'embedded_titles':title_year,
+                    #'keywords':keywords_year
+                    }
+                    return infos
+
                 
         if self.client_name:
             collection_authors = self.db[collection_authors]
@@ -330,7 +339,16 @@ class Embedding:
             embedding = None
         else:
             authors = json.load(open("Data/docs/{}.json".format(collection_authors))) 
-            embedding = pd.read_json("Data/docs/{}.json".format(collection_embedding))
+            all_years = [int(re.sub('.json','',file)) for file in os.listdir("Data/docs/{}/".format(collection_embedding))]
+            embedding = pd.DataFrame()
+            for year in all_years:
+                embedding = pd.concat(
+                    [
+                     embedding,
+                     pd.read_json("Data/docs/{}/{}.json".format(collection_embedding,year))
+                     ]
+                    )
+            embedding.set_index(self.id_variable)
 
         # client = pymongo.MongoClient( client_name)
         # db = client[db_name]
@@ -357,19 +375,19 @@ class Embedding:
                 collection_keywords = None)
 
             if self.client_name:
-                try:
+                if infos:
                     list_of_insertion.append(UpdateOne({self.id_auth_variable : and_id}, {'$set': infos}, upsert = True))    
-                except Exception as e:
-                    print(e)
+                #except Exception as e:
+                #    print(e)
                 if len(list_of_insertion) % 1000 == 0:
                     collection_authors.bulk_write(list_of_insertion)
                     list_of_insertion = []
             else:
-                try:
+                if infos:
                     infos.update({self.id_auth_variable : and_id})
                     list_of_insertion.append(infos)    
-                except Exception as e:
-                    print(e)
+                #except Exception as e:
+                #    print(e)
 
         if list_of_insertion:
             if self.client_name:
@@ -462,9 +480,9 @@ class Embedding:
             if 'a02_authorlist' in doc.keys():
                 for auth in doc['a02_authorlist']: # TO CHANGE FOR OTHER DB
                     if client_name:
-                        profile = collection_authors.find_one({id_auth_variable:auth['AID']})
+                        profile = collection_authors.find_one({id_auth_variable:auth[id_auth_variable]})
                     else:
-                        profile = collection_authors[collection_authors[id_auth_variable] == auth['AID']].to_dict('records')[0]
+                        profile = collection_authors[auth[id_auth_variable]]#collection_authors[id_auth_variable] == auth['AID']].to_dict('records')[0]
                     try:
                         abs_profile = profile['embedded_abs']
                         abs_profile = drop_year_before_pub(abs_profile,
@@ -506,7 +524,8 @@ class Embedding:
             collection_authors = self.db[collection_authors]
             collection_articles_author_profile = self.db[collection_articles_author_profile]
         else:
-            collection_authors = pd.read_json("Data/docs/authors_profiles.json")
+            collection_authors = json.load(open("Data/docs/authors_profiles.json"))
+            collection_authors = {author[self.id_auth_variable]: author for author in tqdm.tqdm(collection_authors)}
 
         for year in self.time_range:
             if self.client_name:
@@ -625,7 +644,8 @@ class Embedding:
             collection_embedding = self.db[collection_embedding]
         else:
             collection_embedding_acc = []
-            for year in self.time_range:
+            all_years = [int(re.sub('.json','',file)) for file in os.listdir("Data/docs/{}/".format(collection_embedding))]
+            for year in all_years:
                 collection_embedding_acc += json.load(open("Data/docs/{}/{}.json".format(collection_embedding,year)))
             collection_embedding = {doc[self.id_variable]:{self.id_variable:doc[self.id_variable],
                                                            "title_embedding":doc["title_embedding"],
