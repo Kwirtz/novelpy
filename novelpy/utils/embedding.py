@@ -98,12 +98,12 @@ class Embedding:
         
 
 
-    def init_dbs(self,
+    def init_dbs_centroid(self,
                  collection_articles,
                  collection_embedding):
         
         if self.client_name:
-            self.all_years = self.db[collection_articles].distinct(self.year_variable)
+            self.all_years = self.db[collection_articles].distinct(self.year_variable) 
             if collection_embedding not in self.db.list_collection_names():
                 print("Init embedding collection with index on id_variable ...")
                 self.collection_embedding = self.db[collection_embedding]
@@ -116,7 +116,7 @@ class Embedding:
                 # Get all years availables 
                 self.all_years = [int(re.sub('.json','',file)) for file in os.listdir("Data/docs/{}/".format(collection_articles))]
    
-    def load_data(self,
+    def load_data_centroid(self,
                   collection_articles,
                   year):
         
@@ -156,7 +156,7 @@ class Embedding:
             self.article_abs_centroid = None
         
     
-    def insert_embedding(self,
+    def insert_embedding_centroid(self,
                          doc):
         try:
             if self.client_name:
@@ -205,18 +205,18 @@ class Embedding:
         """
         self.nlp = spacy.load(self.pretrain_path)
         #Create folder or mongo database
-        self.init_dbs(collection_articles,
+        self.init_dbs_centroid(collection_articles,
                       collection_embedding)
         
         for year in tqdm.tqdm(self.all_years):
-            self.load_data(collection_articles,
+            self.load_data_centroid(collection_articles,
                            year)
 
             self.list_of_insertion = []
             
             for doc in tqdm.tqdm(self.docs):
-                self.get_tilte_abs(doc)
-                self.insert_embedding(doc)
+                self.get_title_abs(doc)
+                self.insert_embedding_centroid(doc)
                 
                
             if self.client_name:
@@ -227,22 +227,19 @@ class Embedding:
 
 
 
-
-
 ################## REFERENCES ######################
 
-class References_embedding(Embedding):
     
-    def load_data(self,
-                  collection_articles,
-                  collection_embedding,
-                  collection_ref_embedding):
-        
+    def load_data_refs(self,
+                      collection_articles,
+                      collection_embedding,
+                      collection_ref_embedding):
+            
         if self.client_name:
             if collection_ref_embedding not in self.db.list_collection_names():
-                    print("Init references embedding collection with index on id_variable ...")
-                    self.collection_ref_embedding = self.db[collection_ref_embedding]
-                    self.collection_ref_embedding.create_index([ (self.id_variable,1) ])
+                print("Init references embedding collection with index on id_variable ...")
+                self.collection_ref_embedding = self.db[collection_ref_embedding]
+                self.collection_ref_embedding.create_index([ (self.id_variable,1) ])
             else:
                 self.collection_ref_embedding = self.db[collection_ref_embedding]
 
@@ -285,8 +282,8 @@ class References_embedding(Embedding):
                 
         self.infos = {'refs_embedding':refs_emb} if refs_emb else  {'refs_embedding': None}
        
-    def insert_embedding(self,
-                         doc):
+    def insert_embedding_ref(self,
+                             doc):
         
         if self.client_name:
             try:
@@ -307,12 +304,12 @@ class References_embedding(Embedding):
             except Exception as e:
                 print(e)
 
-    def get_embbeding(self,
-                      collection_articles,
-                      collection_embedding,
-                      collection_ref_embedding,
-                      skip_ = 1,
-                      limit_ = 0):
+    def get_references_embedding(self,
+                                  collection_articles,
+                                  collection_embedding,
+                                  collection_ref_embedding,
+                                  skip_ = 1,
+                                  limit_ = 0):
         """
         Description
         -----------
@@ -332,7 +329,7 @@ class References_embedding(Embedding):
         """
 
 
-        self.load_data(collection_articles,
+        self.load_data_ref(collection_articles,
                        collection_embedding,
                        collection_ref_embedding)
             
@@ -346,7 +343,7 @@ class References_embedding(Embedding):
             self.list_of_insertion = []
             for doc in tqdm.tqdm(docs, total = limit_):
                self.get_embedding_list(doc)
-               self.insert_embedding(doc)
+               self.insert_embedding_ref(doc)
 
             if self.client_name:
                 self.collection_ref_embedding.bulk_write(self.list_of_insertion)
@@ -360,19 +357,28 @@ class References_embedding(Embedding):
         
 
 ################## AUTHORS ######################
-class Authors_embedding(Embedding):
+
     
     def drop_year_before_pub(dict_,year):
         dict_ = {key:dict_[key] for key in dict_ if int(key) < int(year)}
         return dict_
     
-    def load_data(self,
-                  collection_authors,
-                  collection_embedding,
-                  skip_,
-                  limit_):
+    def load_data_aut(self,
+                      collection_authors,
+                      collection_embedding,
+                      skip_,
+                      limit_):
         
         if self.client_name:
+            if '{}_year_embedding'.format(self.id_auth_variable) not in self.db.list_collection_names():
+                print("Init author year profile embedding collection with index on id_variable and year ...")
+                self.collection_authors_years = self.db['{}_year_embedding'.format(self.id_auth_variable)]
+                self.collection_authors_years.create_index([ (self.id_variable,1) ])
+                self.collection_authors_years.create_index([ (self.year_variable,1) ])
+            else:
+                self.collection_authors_years = self.db['{}_year_embedding'.format(self.id_auth_variable)]
+                        
+                
             self.collection_authors = self.db[collection_authors]
             self.collection_embedding = self.db[collection_embedding]
             #collection_keywords = db[self.collection_keywords]
@@ -407,11 +413,17 @@ class Authors_embedding(Embedding):
         abs_year = df_a.groupby('year').abstract.apply(list).to_dict()
         title_year =  df_t.groupby('year').title.apply(list).to_dict()
         #keywords_year =  df_k.groupby('year')['keywords'].apply(list).to_dict()
-        
+        if title_year:
+            for year in title_year:
+                title_year[year] = [item.tolist() for item in title_year[year]]
+        if abs_year:
+            for year in abs_year:
+                abs_year[year] = [item.tolist() for item in abs_year[year]]
+                
         infos = []
         for year in title_year:
             info = {
-                'year':year,
+                'year':int(year),
                 'embedded_abs':abs_year[year] if (abs_year and year in abs_year.keys()) else None,
                 'embedded_titles':title_year[year] if (title_year and year in title_year.keys()) else None,
             #'keywords':keywords_year
@@ -487,15 +499,15 @@ class Authors_embedding(Embedding):
         self.infos = []
         if self.articles:
             for article in self.articles : 
-                self.structure_previous_work()
+                self.structure_previous_work(article)
                 
             df = pd.DataFrame(self.infos)
             if not df.empty:
                self.infos = self.get_year_embedding(df)
                
                
-    def insert_embedding(self,
-                         and_id):
+    def insert_embedding_aut(self,
+                             and_id):
         
         if self.client_name:
             if self.infos:
@@ -509,7 +521,7 @@ class Authors_embedding(Embedding):
             #except Exception as e:
             #    print(e)
             if len(self.list_of_insertion) % 1000 == 0:
-                self.collection_authors.bulk_write(self.list_of_insertion)
+                self.collection_authors_years.bulk_write(self.list_of_insertion)
                 self.list_of_insertion = []
         else:
             if self.infos:
@@ -542,17 +554,17 @@ class Authors_embedding(Embedding):
         """               
                         
         
-        self.load_data(collection_authors,
-                       collection_embedding,
-                       skip_,
-                       limit_)
+        self.load_data_aut(collection_authors,
+                           collection_embedding,
+                           skip_,
+                           limit_)
         
         self.list_of_insertion = []
         for author in tqdm.tqdm(self.authors):
         #for and_id in tqdm.tqdm(author_ids_list):
             and_id = author[self.id_auth_variable]
             self.get_author_profile(doc = author)
-            self.insert_embedding(and_id)
+            self.insert_embedding_aut(and_id)
 
         if self.list_of_insertion:
             if self.client_name:
@@ -564,7 +576,7 @@ class Authors_embedding(Embedding):
     #########################################################################################
     #########################################################################################
     
-    def load_data_authors(self,
+    def load_data_profiles(self,
                           collection_articles,
                           collection_authors,
                           collection_articles_author_profile):
@@ -682,7 +694,7 @@ class Authors_embedding(Embedding):
         """        
                 
         
-        self.load_data_authors(collection_articles,
+        self.load_data_profiles(collection_articles,
                               collection_authors,
                               collection_articles_author_profile)
       
