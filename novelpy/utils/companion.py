@@ -23,8 +23,10 @@ class plot_dist:
                  variables = [],
                  time_window_cooc = None,
                  n_reutilisation = None,
-                 embedding_entities = None,
+                 embedding_entities_shibayama = None,
                  shibayma_per = 10,
+                 embedding_entities_authors = None,
+                 authors_per = 10,
                  client_name = None,
                  db_name = None):
         """
@@ -66,8 +68,10 @@ class plot_dist:
         self.variables = variables
         self.id_variable = id_variable
         self.indicators = indicators
-        self.embedding_entities = embedding_entities
+        self.embedding_entities_shibayama = embedding_entities_shibayama
         self.shibayma_per = shibayma_per
+        self.embedding_entities_authors = embedding_entities_authors
+        self.authors_per = authors_per
         self.time_window_cooc = time_window_cooc
         self.n_reutilisation = n_reutilisation
         
@@ -77,8 +81,11 @@ class plot_dist:
             if not isinstance(time_window_cooc, list) or not isinstance(n_reutilisation, list):
                 raise ValueError('time_window_cooc and n_reutilisation should be a list for Wang et al')
         if "shibayama" in self.indicators:
-            if not isinstance(embedding_entities, list):
+            if not isinstance(embedding_entities_shibayama, list):
                 raise ValueError('embedding_entities should be a list for Shibayama et al.')
+        if "Author_proximity" in self.indicators:
+            if not isinstance(embedding_entities_authors, list):
+                raise ValueError('embedding_entities should be a list for Pelletier and Wirtz (2021).')
         else:
             if not isinstance(variables, list):
                 raise ValueError('variables should be a list')
@@ -99,12 +106,24 @@ class plot_dist:
         for indicator in self.indicators:
             if indicator =="shibayama":
                 key_name = "shibayama"
-                for embedding_entity in self.embedding_entities:
+                for embedding_entity in self.embedding_entities_shibayama:
                     df_temp = pd.DataFrame(self.doc[key_name]["scores_array_" + embedding_entity + "_embedding"], columns=["Scores"])
                     df_temp['Variable'], df_temp['Indicator'] = [embedding_entity, indicator]   
                     self.df = pd.concat([self.df,df_temp], ignore_index=True)
                     self.line_position.append(float(np.percentile(a = self.doc[key_name]["scores_array_" + embedding_entity + "_embedding"],
                                                                   q = self.shibayma_per)))
+            elif indicator == "Author_proximity":
+                key_name = "Author_proximity"   
+                for embedding_entity in self.embedding_entities_authors:
+                    df_temp_intra = pd.DataFrame(self.doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_intra"], columns=["Scores"])
+                    df_temp_inter = pd.DataFrame(self.doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_inter"], columns=["Scores"])
+                    df_temp_intra['Variable'], df_temp_intra['Indicator'] = [embedding_entity, indicator + "_intra"]   
+                    df_temp_inter['Variable'], df_temp_inter['Indicator'] = [embedding_entity, indicator+ "_inter"] 
+                    self.df = pd.concat([self.df,df_temp_intra,df_temp_inter], ignore_index=True)
+                    self.line_position.append(float(np.percentile(a = self.doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_intra"],
+                                                                  q = self.authors_per)))
+                    self.line_position.append(float(np.percentile(a = self.doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_inter"],
+                                                                  q = self.authors_per)))                    
             elif self.variables:
                 for variable in self.variables:
                     if indicator == 'wang':
@@ -132,13 +151,32 @@ class plot_dist:
                 try:
                     self.doc = [x for x in self.docs if x[self.id_variable] == self.doc_id][0]                    
                 except:
-                    raise Exception("No object with the ID {} or not enough combinations to have a score on entity {} and indicator {}".format(self.doc_id, self.embedding_entities[0],indicator))
-                for embedding_entity in self.embedding_entities:
+                    raise Exception("No object with the ID {} or not enough combinations to have a score on entity {} and indicator {}".format(self.doc_id, self.embedding_entities_shibayama[0],indicator))
+                for embedding_entity in self.embedding_entities_shibayama:
                     df_temp = pd.DataFrame(self.doc[key_name]["scores_array_" + embedding_entity + "_embedding"], columns=["Scores"])
                     df_temp['Variable'], df_temp['Indicator'] = [embedding_entity, indicator]   
                     self.df = pd.concat([self.df,df_temp], ignore_index=True)
                     self.line_position.append(float(np.percentile(a = self.doc[key_name]["scores_array_" + embedding_entity + "_embedding"],
                                                                   q = self.shibayma_per)))    
+            elif indicator == "Author_proximity":
+                key_name = "Author_proximity"   
+                self.path_doc= "Result/{}/{}".format(indicator,self.doc_year)
+                with open(self.path_doc + ".json", "r") as read_file:
+                    self.docs = json.load(read_file)
+                try:
+                    self.doc = [x for x in self.docs if x[self.id_variable] == self.doc_id][0]                    
+                except:
+                    raise Exception("No object with the ID {} or not enough combinations to have a score on entity {} and indicator {}".format(self.doc_id, self.embedding_entities_shibayama[0],indicator))
+                for embedding_entity in self.embedding_entities_authors:
+                    df_temp_intra = pd.DataFrame(self.doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_intra"], columns=["Scores"])
+                    df_temp_inter = pd.DataFrame(self.doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_inter"], columns=["Scores"])
+                    df_temp_intra['Variable'], df_temp_intra['Indicator'] = [embedding_entity, indicator + "_intra"]   
+                    df_temp_inter['Variable'], df_temp_inter['Indicator'] = [embedding_entity, indicator+ "_inter"] 
+                    self.df = pd.concat([self.df,df_temp_intra,df_temp_inter], ignore_index=True)
+                    self.line_position.append(float(np.percentile(a = self.doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_intra"],
+                                                                  q = self.authors_per)))
+                    self.line_position.append(float(np.percentile(a = self.doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_inter"],
+                                                                  q = self.authors_per)))        
             elif self.variables:
                 for variable in self.variables:
                     if indicator == 'wang':
@@ -187,8 +225,12 @@ class plot_dist:
         """
         
         legend_patches = matplotlib.patches.Patch(color="red", label="Novelty score", linestyle='--', fill = False)
-        if "shibayama" in self.indicators and len(self.indicators) > 2:
-            grid_spec_col = len(self.indicators) - 1
+        if "shibayama" in self.indicators and "Authors_proximity" in self.indicators and len(self.indicators) > 2:
+            grid_spec_col = len(self.indicators) - 3
+        elif "shibayama" in self.indicators or "Authors_proximity" in self.indicators and len(self.indicators) > 2:
+            grid_spec_col = len(self.indicators) - 2
+        else:
+            grid_spec_col = len(self.indicators) - 1 
         grid_spec_row = len(set(self.df["Variable"]))
         
         fig = plt.figure(figsize=(24, 16))
@@ -201,9 +243,9 @@ class plot_dist:
                 if len(self.indicators) > 1:
                     starting_row = int(grid_spec_row/2)
                     starting_col = int(grid_spec_col/2)
-                    if starting_row % 1 != 0:
+                    if starting_row % 2 != 0:
                         starting_row = math.ceil(starting_row)
-                    if starting_col % 1 == 0:
+                    if starting_col % 2 == 0:
                         starting_col -= 1
                     else:
                         starting_col = math.floor(starting_col)
@@ -211,20 +253,55 @@ class plot_dist:
                     starting_row = 0
                     starting_col = 0
                 n_entity = 0
-                for entity in self.embedding_entities:
+                for entity in self.embedding_entities_shibayama:
                     ax = plt.subplot(gs[starting_row, starting_col])
                     if n_entity == 0:
                         ax.set_title("Indicator = {}".format(indicator))
                     if self.line_position[n_lines] != None:
                         ax.axvline(x=self.line_position[n_lines], color='r', linestyle='--', linewidth = 1)
                     n_lines += 1
-                    row0_label = ax.twinx()
-                    row0_label.tick_params(axis='both', labelsize=0, length = 0)
-                    row0_label.set(ylabel="Variable = {}".format(entity))
+                    if "Author_proximity" in self.indicators:
+                        row0_label = ax.twinx()
+                        row0_label.tick_params(axis='both', labelsize=0, length = 0)
+                        row0_label.set(ylabel=" ")
                     n_entity += 1
                     starting_row += 1
                     sns.kdeplot(self.df[(self.df["Indicator"]==indicator) & (self.df["Variable"]==entity)]["Scores"],ax=ax)
-        
+            elif indicator == "Author_proximity":
+                if len(self.indicators) > 1:
+                    starting_row = int(grid_spec_row/2)
+                    starting_col = int(grid_spec_col/2)
+                    if starting_row % 2 != 0:
+                        starting_row = math.ceil(starting_row)
+                    if starting_col % 2 != 0:
+                        starting_col = math.ceil(starting_col)
+                else:
+                    starting_row = 0
+                    starting_col = 0
+                n_entity = 0
+                for entity in self.embedding_entities_authors:
+                    ax = plt.subplot(gs[starting_row, starting_col])
+                    if "shibayama" in self.indicators:
+                        ax.set_ylabel(" ")
+                    if n_entity == 0:
+                        ax.set_title("Indicator = {}".format(indicator))
+                    for i in range(2):
+                        if self.line_position[n_lines] != None:
+                            ax.axvline(x=self.line_position[n_lines], color='r', linestyle='--', linewidth = 1)
+                        n_lines += 1
+                    row0_label = ax.twinx()
+                    row0_label.tick_params(axis='both', labelsize=0, length = 0)
+                    row0_label.set(ylabel="Variable = {}".format(entity))
+                    df1 = self.df[(self.df["Indicator"]=="Author_proximity_inter") | (self.df["Indicator"]=="Author_proximity_intra") & (self.df["Variable"]==entity)]["Scores"]
+                    df2 = self.df[(self.df["Indicator"]=="Author_proximity_inter") | (self.df["Indicator"]=="Author_proximity_intra") & (self.df["Variable"]==entity)]["Indicator"]
+                    df3 = pd.concat([df1, df2], axis=1) 
+                    palette = {"Author_proximity_intra":"gray", "Author_proximity_inter":"tab:orange"}
+                    if n_entity == 0:
+                        sns.kdeplot(data = df3, x = "Scores", hue = "Indicator",ax=ax, palette = palette, legend = False)   
+                    else:
+                        sns.kdeplot(data = df3, x = "Scores", hue = "Indicator",ax=ax, palette = palette)  
+                    n_entity += 1
+                    starting_row += 1
             else:
                 starting_row = 0
                 starting_col = n_indic
@@ -280,8 +357,10 @@ class novelty_trend:
                  variables = [],
                  time_window_cooc = None,
                  n_reutilisation = None,
-                 embedding_entities = None,
+                 embedding_entities_shibayama = None,
                  shibayama_per = 10,
+                 embedding_entities_authors = None,
+                 authors_per = 10,
                  client_name = None,
                  db_name = None):
         """
@@ -322,8 +401,10 @@ class novelty_trend:
         self.indicators = indicators
         self.time_window_cooc = time_window_cooc
         self.n_reutilisation = n_reutilisation
-        self.embedding_entities = embedding_entities
+        self.embedding_entities_shibayama = embedding_entities_shibayama
         self.shibayama_per =  shibayama_per
+        self.embedding_entities_authors = embedding_entities_authors
+        self.authors_per = authors_per
         
         if not isinstance(indicators, list):
             raise ValueError('indicators should be a list')
@@ -331,13 +412,17 @@ class novelty_trend:
             if not isinstance(time_window_cooc, list) or not isinstance(n_reutilisation, list):
                 raise ValueError('time_window_cooc and n_reutilisation should be a list for Wang et al')
         if "shibayama" in self.indicators:
-            if not isinstance(embedding_entities, list):
-                raise ValueError('embedding_entities should be a list for Shibayama et al.')
+            if not isinstance(embedding_entities_shibayama, list):
+                raise ValueError('embedding_entities_shibayama should be a list for Shibayama et al.')
+        if "Authors_proximity" in self.indicators:
+            if not isinstance(embedding_entities_authors, list):
+                raise ValueError('embedding_entities should be a list for Pelletier and Wirtz (2021).')
         else:
             if not isinstance(variables, list):
                 raise ValueError('variables should be a list')
                 
         self.df = pd.DataFrame(columns = ["Score_mean","Variable","Indicator","Year"])
+        self.trend = defaultdict(dict)
         if self.client_name:
             self.get_info_mongo()
         else:
@@ -349,10 +434,12 @@ class novelty_trend:
         self.db = self.client[self.db_name]
         self.collection = self.db["output"]
         
+        
         for indicator in self.indicators:
+            print(indicator)
             if indicator =="shibayama":
                 key_name = "shibayama"
-                for embedding_entity in self.embedding_entities:
+                for embedding_entity in self.embedding_entities_shibayama:
                     for year in self.year_range:
                             docs = self.collection.find({"year":year})
                             score_list = []
@@ -365,6 +452,29 @@ class novelty_trend:
                             df_temp = pd.DataFrame([np.mean(score_list)], columns=["Score_mean"])
                             df_temp['Variable'], df_temp['Indicator'], df_temp['Year'] = [embedding_entity, indicator, year]
                             self.df = pd.concat([self.df,df_temp], ignore_index=True)         
+            elif indicator =="Author_proximity":
+                key_name = "Author_proximity"
+                for embedding_entity in self.embedding_entities_authors:
+                    for year in self.year_range:
+                            docs = self.collection.find({"year":year})
+                            score_list_intra = []
+                            score_list_inter = []
+                            for doc in docs:
+                                try:
+                                    score_list_intra.append(float(np.percentile(a = doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_intra"],
+                                                                  q = self.authors_per)))
+                                except:
+                                    continue
+                                try:
+                                    score_list_inter.append(float(np.percentile(a = doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_inter"],
+                                                                  q = self.authors_per)))
+                                except:
+                                    continue
+                            df_temp_intra = pd.DataFrame([np.mean(score_list_intra)], columns=["Score_mean"])
+                            df_temp_intra['Variable'], df_temp_intra['Indicator'], df_temp_intra['Year'] = [embedding_entity, indicator + "_intra", year]
+                            df_temp_inter = pd.DataFrame([np.mean(score_list_inter)], columns=["Score_mean"])
+                            df_temp_inter['Variable'], df_temp_inter['Indicator'], df_temp_inter['Year'] = [embedding_entity, indicator + "_inter", year] 
+                            self.df = pd.concat([self.df,df_temp_intra,df_temp_inter], ignore_index=True)         
             elif self.variables:
                 for variable in self.variables:
                     if indicator == 'wang':
@@ -383,21 +493,112 @@ class novelty_trend:
                                 self.df = pd.concat([self.df,df_temp], ignore_index=True)        
                     else:
                         key_name = variable + "_" + indicator
-                        df_temp = pd.DataFrame(self.doc[key_name]["scores_array"], columns=["Scores"])
-                        df_temp['Variable'], df_temp['Indicator'] = [variable, indicator]
-                        self.df = pd.concat([self.df,df_temp], ignore_index=True)
+                        for year in self.year_range:
+                            docs = self.collection.find({"year":year})
+                            score_list = []
+                            for doc in docs:
+                                try:
+                                    score_list.append(doc[key_name]["score"]["novelty"])   
+                                except:
+                                    continue
+                            df_temp = pd.DataFrame([np.mean(np.ma.masked_invalid(score_list))], columns=["Score_mean"])
+                            df_temp['Variable'], df_temp['Indicator'], df_temp["Year"] = [variable, indicator, year]
+                            self.df = pd.concat([self.df,df_temp], ignore_index=True)    
+
+
+
+
+        """
+        for year in self.year_range:
+            docs = self.collection.find({"year":year})
+            for doc in tqdm.tqdm(docs):
+                for indicator in self.indicators:
+                    if indicator =="shibayama":
+                        key_name = "shibayama"   
+                        for embedding_entity in self.embedding_entities_shibayama:
+                            try:
+                                to_append = float(np.percentile(a = doc[key_name]["scores_array_" + embedding_entity + "_embedding"],
+                                                                  q = self.shibayama_per))
+                            except:
+                                continue     
+                            try:
+                                self.trend[year][key_name + "_" + embedding_entity] += [to_append]
+                            except:
+                                self.trend[year][key_name + "_" + embedding_entity] = []
+                    elif indicator =="Author_proximity":
+                        key_name = "Author_proximity"   
+                        for embedding_entity in self.embedding_entities_authors:
+                            try:
+                                to_append_intra = float(np.percentile(a = doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_intra"],
+                                                                  q = self.authors_per))
+                            except:
+                                to_append_intra = None
+                            try:
+                                to_append_inter = float(np.percentile(a = doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_inter"],
+                                                                  q = self.authors_per))
+                            except:
+                                to_append_inter = None
+                            if to_append_intra:
+                                try:
+                                    self.trend[year][key_name + "_" + embedding_entity + "_5_intra"] += [to_append_intra]
+                                except:
+                                    self.trend[year][key_name + "_" + embedding_entity + "_5_intra"] = []
+                            if to_append_inter:
+                                try:
+                                    self.trend[year][key_name + "_" + embedding_entity + "_5_inter"] += [to_append_inter]
+                                except:
+                                    self.trend[year][key_name + "_" + embedding_entity + "_5_inter"] = []
+                    elif indicator == "disruptiveness":
+                        key_name = "disruptiveness"
+                        for measure in self.disruptiveness_measures:
+                            try:
+                                to_append = doc[key_name][measure]
+                            except:
+                                continue
+                            try:
+                                self.trend[year][key_name + "_" + measure] += [to_append]
+                            except:
+                                self.trend[year][key_name + "_" + measure] = []
+                    elif self.variables:
+                        for variable in self.variables:
+                            if indicator == 'wang':
+                                for time,reu in zip(self.time_window_cooc,self.n_reutilisation):
+                                    key_name = variable + "_" + indicator + "_" + str(time) + "_" + str(reu)
+                                    try:
+                                       to_append = doc[key_name]["score"]["novelty"]
+                                    except:
+                                        continue
+                                    try:
+                                        self.trend[year][key_name] += [to_append]
+                                    except:
+                                        self.trend[year][key_name] = []
+                            else:
+                                key_name = variable + "_" + indicator
+                                try:
+                                   to_append = doc[key_name]["score"]["novelty"]
+                                except:
+                                    continue
+                                try:
+                                    self.trend[year][key_name] += [to_append]
+                                except:
+                                    self.trend[year][key_name] = [] 
+        """
+        for year in self.year_range:
+            self.trend[year] = pd.DataFrame.from_dict(self.trend[year], orient='index').T     
+
+    
                     
     def get_info_json(self):
         for indicator in self.indicators:
             if indicator =="shibayama":
                 key_name = "shibayama"
-                for embedding_entity in self.embedding_entities:
+                for embedding_entity in self.embedding_entities_shibayama:
                     for year in self.year_range:
                         self.path_doc= "Result/{}/{}".format(indicator, year)
                         with open(self.path_doc + ".json", "r") as read_file:
-                            self.docs = json.load(read_file)   
+                            docs = json.load(read_file)   
                         score_list = []
-                        for doc in self.docs:
+                        for doc in docs:
                             try:
                                 score_list.append(float(np.percentile(a = doc[key_name]["scores_array_" + embedding_entity + "_embedding"],
                                                                   q = self.shibayama_per)))
@@ -406,6 +607,31 @@ class novelty_trend:
                         df_temp = pd.DataFrame([np.mean(np.ma.masked_invalid(score_list))], columns=["Score_mean"])
                         df_temp['Variable'], df_temp['Indicator'], df_temp["Year"] = [embedding_entity, indicator, year]
                         self.df = pd.concat([self.df,df_temp], ignore_index=True)   
+            elif indicator =="Author_proximity":
+                key_name = "Author_proximity"
+                for embedding_entity in self.embedding_entities_authors:
+                    for year in self.year_range:
+                            self.path_doc= "Result/{}/{}".format(indicator, year)
+                            with open(self.path_doc + ".json", "r") as read_file:
+                                docs = json.load(read_file)   
+                            score_list_intra = []
+                            score_list_inter = []
+                            for doc in docs:
+                                try:
+                                    score_list_intra.append(float(np.percentile(a = doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_intra"],
+                                                                  q = self.authors_per)))
+                                except:
+                                    continue
+                                try:
+                                    score_list_inter.append(float(np.percentile(a = doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_inter"],
+                                                                  q = self.authors_per)))
+                                except:
+                                    continue
+                            df_temp_intra = pd.DataFrame([np.mean(score_list_intra)], columns=["Score_mean"])
+                            df_temp_intra['Variable'], df_temp_intra['Indicator'], df_temp_intra['Year'] = [embedding_entity, indicator + "_intra", year]
+                            df_temp_inter = pd.DataFrame([np.mean(score_list_inter)], columns=["Score_mean"])
+                            df_temp_inter['Variable'], df_temp_inter['Indicator'], df_temp_inter['Year'] = [embedding_entity, indicator + "_inter", year] 
+                            self.df = pd.concat([self.df,df_temp_intra,df_temp_inter], ignore_index=True)                     
             elif self.variables:
                 for variable in self.variables:
                     if indicator == 'wang':
@@ -414,9 +640,9 @@ class novelty_trend:
                             for year in self.year_range:
                                 self.path_doc= "Result/{}/{}/{}".format(indicator, variable + "_" + str(time) + "_" + str(reu) , year)
                                 with open(self.path_doc + ".json", "r") as read_file:
-                                    self.docs = json.load(read_file)
+                                    docs = json.load(read_file)
                                 score_list = []
-                                for doc in self.docs:
+                                for doc in docs:
                                     try:
                                         score_list.append(doc[key_name]["score"]["novelty"])
                                     except:
@@ -430,9 +656,9 @@ class novelty_trend:
                         for year in self.year_range:
                             self.path_doc= "Result/{}/{}/{}".format(indicator, variable, year)
                             with open(self.path_doc + ".json", "r") as read_file:
-                                self.docs = json.load(read_file)
+                                docs = json.load(read_file)
                             score_list = []
-                            for doc in self.docs:
+                            for doc in docs:
                                 score_list.append(doc[key_name]["score"]["novelty"])
                             df_temp = pd.DataFrame([np.mean(np.ma.masked_invalid(score_list))], columns=["Score_mean"])
                             df_temp['Variable'], df_temp['Indicator'], df_temp["Year"] = [variable, indicator, year]
@@ -455,8 +681,12 @@ class novelty_trend:
 
         """
     
-        if "shibayama" in self.indicators and len(self.indicators) > 2:
-            grid_spec_col = len(self.indicators) - 1
+        if "shibayama" in self.indicators and "Authors_proximity" in self.indicators and len(self.indicators) > 2:
+            grid_spec_col = len(self.indicators) - 3
+        elif "shibayama" in self.indicators or "Authors_proximity" in self.indicators and len(self.indicators) > 2:
+            grid_spec_col = len(self.indicators) - 2
+        else:
+            grid_spec_col = len(self.indicators) - 1 
         grid_spec_row = len(set(self.df["Variable"]))
         fig = plt.figure(figsize=(24, 16))
         gs = gridspec.GridSpec(grid_spec_row, grid_spec_col)
@@ -478,7 +708,7 @@ class novelty_trend:
                     starting_row = 0
                     starting_col = 0
                 n_entity = 0
-                for entity in self.embedding_entities:
+                for entity in self.embedding_entities_shibayama:
                     ax = plt.subplot(gs[starting_row, starting_col])
                     if n_entity == 0:
                         ax.set_title("Indicator = {}".format(indicator))
@@ -488,7 +718,38 @@ class novelty_trend:
                     n_entity += 1
                     starting_row += 1
                     sns.lineplot(data = self.df[(self.df["Indicator"]==indicator) & (self.df["Variable"]==entity)], x = "Year", y = "Score_mean",ax=ax)
-        
+            elif indicator == "Author_proximity":
+                if len(self.indicators) > 1:
+                    starting_row = int(grid_spec_row/2)
+                    starting_col = int(grid_spec_col/2)
+                    if starting_row % 2 != 0:
+                        starting_row = math.ceil(starting_row)
+                    if starting_col % 2 != 0:
+                        starting_col = math.ceil(starting_col)
+                else:
+                    starting_row = 0
+                    starting_col = 0
+                n_entity = 0
+                for entity in self.embedding_entities_authors:
+                    ax = plt.subplot(gs[starting_row, starting_col])
+                    if "shibayama" in self.indicators:
+                        ax.set_ylabel(" ")
+                    if n_entity == 0:
+                        ax.set_title("Indicator = {}".format(indicator))
+                    row0_label = ax.twinx()
+                    row0_label.tick_params(axis='both', labelsize=0, length = 0)
+                    row0_label.set(ylabel="Variable = {}".format(entity))
+                    df1 = self.df[(self.df["Indicator"]=="Author_proximity_inter") | (self.df["Indicator"]=="Author_proximity_intra") & (self.df["Variable"]==entity)]["Score_mean"]
+                    df2 = self.df[(self.df["Indicator"]=="Author_proximity_inter") | (self.df["Indicator"]=="Author_proximity_intra") & (self.df["Variable"]==entity)]["Indicator"]
+                    df3 = self.df[(self.df["Indicator"]=="Author_proximity_inter") | (self.df["Indicator"]=="Author_proximity_intra") & (self.df["Variable"]==entity)]["Year"]
+                    df4 = pd.concat([df1, df2, df3], axis=1) 
+                    palette = {"Author_proximity_intra":"gray", "Author_proximity_inter":"tab:orange"}
+                    if n_entity == 0:
+                        sns.lineplot(data = df4, x = "Year", y = "Score_mean", hue = "Indicator",ax=ax, palette = palette, legend = False,ci=None)
+                    else:
+                        sns.lineplot(data = df4, x = "Year", y = "Score_mean", hue = "Indicator",ax=ax, palette = palette,ci=None)
+                    n_entity += 1
+                    starting_row += 1        
             else:
                 starting_row = 0
                 starting_col = n_indic
@@ -538,8 +799,11 @@ class correlation_indicators:
                  variables = [],
                  time_window_cooc = None,
                  n_reutilisation = None,
-                 embedding_entities = None,
+                 embedding_entities_shibayama = None,
                  shibayama_per = 10,
+                 embedding_entities_authors = None,
+                 authors_per = 10,
+                 disruptiveness_measures = None,
                  client_name = None,
                  db_name = None):
         """
@@ -579,17 +843,23 @@ class correlation_indicators:
         self.indicators = indicators
         self.time_window_cooc = time_window_cooc
         self.n_reutilisation = n_reutilisation
-        self.embedding_entities = embedding_entities
+        self.embedding_entities_shibayama = embedding_entities_shibayama
         self.shibayama_per = shibayama_per
+        self.embedding_entities_authors = embedding_entities_authors        
+        self.authors_per = authors_per
+        self.disruptiveness_measures = disruptiveness_measures
         
         if not isinstance(indicators, list):
             raise ValueError('indicators should be a list')
         if "wang" in self.indicators:
             if not isinstance(time_window_cooc, list) or not isinstance(n_reutilisation, list):
                 raise ValueError('time_window_cooc and n_reutilisation should be a list for Wang et al')
+        if "disruptiveness" in self.indicators:
+            if not isinstance(disruptiveness_measures, list):
+                raise ValueError('disruptiveness_measures should be a list')            
         if "shibayama" in self.indicators:
-            if not isinstance(embedding_entities, list):
-                raise ValueError('embedding_entities should be a list for Shibayama et al.')
+            if not isinstance(embedding_entities_shibayama, list):
+                raise ValueError('embedding_entities_shibayama should be a list for Shibayama et al.')
         else:
             if not isinstance(variables, list):
                 raise ValueError('variables should be a list')
@@ -601,25 +871,141 @@ class correlation_indicators:
             self.get_info_json()
     
     def get_info_mongo(self):
-        pass
+        
+        self.client = pymongo.MongoClient(self.client_name)
+        self.db = self.client[self.db_name]
+        self.collection = self.db["output"]
+
+        for year in self.year_range:
+            docs = self.collection.find({"year":year})
+            for doc in tqdm.tqdm(docs):
+                for indicator in self.indicators:
+                    if indicator =="shibayama":
+                        key_name = "shibayama"   
+                        for embedding_entity in self.embedding_entities_shibayama:
+                            try:
+                                to_append = float(np.percentile(a = doc[key_name]["scores_array_" + embedding_entity + "_embedding"],
+                                                                  q = self.shibayama_per))
+                            except:
+                                continue     
+                            try:
+                                self.corr[year][key_name + "_" + embedding_entity] += [to_append]
+                            except:
+                                self.corr[year][key_name + "_" + embedding_entity] = []
+                    elif indicator =="Author_proximity":
+                        key_name = "Author_proximity"   
+                        for embedding_entity in self.embedding_entities_authors:
+                            try:
+                                to_append_intra = float(np.percentile(a = doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_intra"],
+                                                                  q = self.authors_per))
+                            except:
+                                to_append_intra = None
+                            try:
+                                to_append_inter = float(np.percentile(a = doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_inter"],
+                                                                  q = self.authors_per))
+                            except:
+                                to_append_inter = None
+                            if to_append_intra:
+                                try:
+                                    self.corr[year][key_name + "_" + embedding_entity + "_5_intra"] += [to_append_intra]
+                                except:
+                                    self.corr[year][key_name + "_" + embedding_entity + "_5_intra"] = []
+                            if to_append_inter:
+                                try:
+                                    self.corr[year][key_name + "_" + embedding_entity + "_5_inter"] += [to_append_inter]
+                                except:
+                                    self.corr[year][key_name + "_" + embedding_entity + "_5_inter"] = []
+                    elif indicator == "disruptiveness":
+                        key_name = "disruptiveness"
+                        for measure in self.disruptiveness_measures:
+                            try:
+                                to_append = doc[key_name][measure]
+                            except:
+                                continue
+                            try:
+                                self.corr[year][key_name + "_" + measure] += [to_append]
+                            except:
+                                self.corr[year][key_name + "_" + measure] = []
+                    elif self.variables:
+                        for variable in self.variables:
+                            if indicator == 'wang':
+                                for time,reu in zip(self.time_window_cooc,self.n_reutilisation):
+                                    key_name = variable + "_" + indicator + "_" + str(time) + "_" + str(reu)
+                                    try:
+                                       to_append = doc[key_name]["score"]["novelty"]
+                                    except:
+                                        continue
+                                    try:
+                                        self.corr[year][key_name] += [to_append]
+                                    except:
+                                        self.corr[year][key_name] = []
+                            else:
+                                key_name = variable + "_" + indicator
+                                try:
+                                   to_append = doc[key_name]["score"]["novelty"]
+                                except:
+                                    continue
+                                try:
+                                    self.corr[year][key_name] += [to_append]
+                                except:
+                                    self.corr[year][key_name] = [] 
+    
+        for year in self.year_range:
+            self.corr[year] = pd.DataFrame.from_dict(self.corr[year], orient='index').T                    
     
     def get_info_json(self):
         for indicator in self.indicators:
             if indicator =="shibayama":
                 key_name = "shibayama"
-                for embedding_entity in self.embedding_entities:
+                for embedding_entity in self.embedding_entities_shibayama:
                     for year in self.year_range:
                         self.path_doc= "Result/{}/{}".format(indicator, year)
                         with open(self.path_doc + ".json", "r") as read_file:
-                            self.docs = json.load(read_file)   
+                            docs = json.load(read_file)   
                         score_list = []
-                        for doc in self.docs:
+                        for doc in docs:
                             try:
                                 score_list.append(float(np.percentile(a = doc[key_name]["scores_array_" + embedding_entity + "_embedding"],
                                                                   q = self.shibayama_per)))
                             except:
                                 continue
                         self.corr[year][key_name + "_" + embedding_entity] = score_list 
+            elif indicator =="Author_proximity":
+                key_name = "Author_proximity"   
+                for embedding_entity in self.embedding_entities_authors:
+                    for year in self.year_range:
+                        self.path_doc= "Result/{}/{}".format(indicator, year)
+                        with open(self.path_doc + ".json", "r") as read_file:
+                            docs = json.load(read_file)   
+                        score_list_intra = []
+                        score_list_inter = []
+                        for doc in docs:
+                            try:
+                                score_list.append(float(np.percentile(a = doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_intra"],
+                                                          q = self.authors_per)))
+                            except:
+                                continue
+                            try:
+                                score_list.append(float(np.percentile(a = doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_inter"],
+                                                          q = self.authors_per)))
+                            except:
+                                continue
+                        self.corr[year][key_name + "_" + embedding_entity + "_5_intra"] = score_list_intra
+                        self.corr[year][key_name + "_" + embedding_entity + "_5_inter"] = score_list_inter 
+            elif indicator == "disruptiveness":
+                key_name = "disruptiveness"
+                for measure in self.disruptiveness_measures:
+                    for year in self.year_range:
+                        self.path_doc= "Result/{}/{}".format(indicator, year)
+                        with open(self.path_doc + ".json", "r") as read_file:
+                            docs = json.load(read_file)   
+                        score_list = []
+                        for doc in docs:
+                            try:
+                                score_list.append(a = doc[key_name][measure])
+                            except:
+                                continue
+                        self.corr[year][key_name + "_" + measure] = score_list                 
             elif self.variables:
                 for variable in self.variables:
                     if indicator == 'wang':
@@ -628,9 +1014,9 @@ class correlation_indicators:
                             for year in self.year_range:
                                 self.path_doc= "Result/{}/{}/{}".format(indicator, variable + "_" + str(time) + "_" + str(reu) , year)
                                 with open(self.path_doc + ".json", "r") as read_file:
-                                    self.docs = json.load(read_file)
+                                    docs = json.load(read_file)
                                 score_list = []
-                                for doc in self.docs:
+                                for doc in docs:
                                     try:
                                         score_list.append(doc[key_name]["score"]["novelty"])
                                     except:
@@ -641,11 +1027,12 @@ class correlation_indicators:
                         for year in self.year_range:
                             self.path_doc= "Result/{}/{}/{}".format(indicator, variable, year)
                             with open(self.path_doc + ".json", "r") as read_file:
-                                self.docs = json.load(read_file)
+                                docs = json.load(read_file)
                             score_list = []
-                            for doc in self.docs:
+                            for doc in docs:
                                 score_list.append(doc[key_name]["score"]["novelty"])
                             self.corr[year][key_name] = score_list 
+        
         for year in self.year_range:
             self.corr[year] = pd.DataFrame.from_dict(self.corr[year], orient='index').T
     
@@ -668,7 +1055,7 @@ class correlation_indicators:
         if per_year == True:
             for year in self.year_range:
                 plt.figure()
-                cleaned_corr = self.corr[year][~self.corr[year].isin([np.nan, np.inf, -np.inf]).any(1)]
+                cleaned_corr = self.corr[year][~self.corr[year].isin([np.nan, np.inf, -np.inf, None]).any(1)]
                 sns.heatmap(cleaned_corr.corr(), cmap="Blues")
         else:
             cleaned_corr = pd.DataFrame()
