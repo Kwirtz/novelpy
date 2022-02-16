@@ -23,8 +23,8 @@ embedding = Embedding(
       title_variable = 'ArticleTitle',
       abstract_variable = 'a04_abstract',
       abstract_subvariable = 'AbstractText',
-      id_auth_variable = 'AID',
-      auth_pubs_variable = 'PMID_list')
+      aut_id_variable = 'AID',
+      aut_pubs_variable = 'PMID_list')
 
 
 
@@ -37,16 +37,7 @@ embedding.feed_author_profile(
     collection_authors = 'a02_authorlist_AID',
         collection_embedding = 'articles_embedding',
         skip_ = skip_,
-        limit_ = 1000000)
-
-print('authors profile created')
-
-# embedding.author_profile2papers(
-#     collection_authors = 'a02_authorlist_AID',
-#         collection_articles = 'authors_sample',
-#         collection_articles_author_profile = 'authors_sample',
-#         skip_ = 1,
-#         limit_ = 0)
+        limit_ = 0)
 
 # print('merged with articles database')
 

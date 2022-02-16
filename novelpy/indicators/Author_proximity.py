@@ -177,7 +177,8 @@ class Author_proximity(Dataset):
             else:
                 self.list_of_insertion.append(
                     {
-                        self.id_variable: doc[self.id_variable],'Author_proximity': self.infos
+                        self.id_variable: doc[self.id_variable],
+                        'Author_proximity': self.infos
                         }
                     )
                 
