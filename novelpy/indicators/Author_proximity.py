@@ -56,7 +56,12 @@ def get_percentiles(dist_list):
 
     return nov_list
 
-
+def med_sd_mean(dist_list):
+    return {
+        'mean' : np.mean(dist_list),
+        'sd' : np.std(dist_list),
+        'med' : np.median(dist_list),
+        'nb_comb' : len(dist_list)}
 def intra_cosine_similarity(items,
                             n):
     
@@ -170,10 +175,13 @@ class Author_proximity(Dataset):
         """
         if self.infos:
             if self.client_name:
-                self.list_of_insertion.append(
-                    UpdateOne({self.id_variable: doc[self.id_variable]},
-                                      {'$set': {'Author_proximity': self.infos}},
-                                      upsert = True))
+                self.infos.update({self.id_variable: doc[self.id_variable]})
+                self.list_of_insertion.append(self.infos)
+                
+                for ent in self.entity:
+                    if ent in self.scores_infos:
+                        self.scores_infos[ent].update({self.id_variable: doc[self.id_variable]})
+                        self.list_of_insertion.append(self.scores_infos[ent])
             else:
                 self.list_of_insertion.append(
                     {
@@ -192,14 +200,14 @@ class Author_proximity(Dataset):
 
         """
         if self.client_name:
-            if "output" not in self.db.list_collection_names():
-                print("Init output collection with index on id_variable ...")
-                self.collection_output = self.db["output"]
+            if "output_authors" not in self.db.list_collection_names():
+                print("Init output_authors collection with index on id_variable ...")
+                self.collection_output = self.db["output_authors"]
                 self.collection_output.create_index([ (self.id_variable,1) ])
             else:
-                self.collection_output = self.db["output"]
+                self.collection_output = self.db["output_authors"]
             if self.list_of_insertion: 
-                self.db['output'].bulk_write(self.list_of_insertion)
+                self.db['output_authors'].insert_many(self.list_of_insertion)
         else:
             if self.list_of_insertion:
                 with open(self.path_score + "/{}.json".format(self.focal_year), 'w') as outfile:
@@ -218,11 +226,12 @@ class Author_proximity(Dataset):
         """
         self.intra_authors_dist = {ent:[] for ent in self.entity}
         self.authors_infos = {ent:[] for ent in self.entity}
-        self.authors_info_percentiles = {ent:{} for ent in self.entity}
+        self.authors_info_percentiles = {ent:[] for ent in self.entity}
         self.inter_authors_dist = {ent:[] for ent in self.entity}
-        self.authors_infos_dist = {ent:{} for ent in self.entity}
+        self.authors_infos_dist = {ent:[] for ent in self.entity}
         self.all_aut_ids =  {ent:[] for ent in self.entity}
         self.infos = dict()
+        self.scores_infos = {}
         
         
     def structure_infos(self,
@@ -231,13 +240,17 @@ class Author_proximity(Dataset):
             'authors_novelty_{}_{}'.format(ent, str(self.windows_size)) :{
                 'intra':self.intra_nov_list,
                 'inter':self.inter_nov_list,
-                'scores_array_intra':self.intra_authors_dist[ent],
-                'scores_array_inter':self.inter_authors_dist[ent],
                 'individuals_scores': self.authors_info_percentiles[ent],
                 'iter_individuals_scores':self.authors_infos_dist[ent],
                 'share_nb_aut_captured': self.nb_aut/self.true_nb_aut}
             }
+        
+        scores = {
+            'scores_array_intra_{}_{}'.format(ent, str(self.windows_size)):self.intra_authors_dist[ent],
+            'scores_array_inter_{}_{}'.format(ent, str(self.windows_size)):self.inter_authors_dist[ent],
+                }
         self.infos.update(authors_novelty)
+        self.scores_infos.update({ent:scores})
 
             
     def get_author_papers(self,
@@ -322,9 +335,8 @@ class Author_proximity(Dataset):
             if n >1:
                 aut_dist = intra_cosine_similarity(items,
                                                    n)
-                self.authors_info_percentiles[ent].update({
-                    str(auth_id) : get_percentiles(aut_dist)
-                        })
+                self.authors_info_percentiles[ent] += [{
+                    str(self.aut_id_variable):str(auth_id),'stats':med_sd_mean(aut_dist)}]
                 self.intra_authors_dist[ent] += aut_dist
     
     def get_intra_dist(self,
@@ -385,11 +397,11 @@ class Author_proximity(Dataset):
                         self.inter_authors_dist[ent].append(inter_paper_dist)
                 
                 # get percentiles
-                self.authors_infos_dist[ent].update(
-                    {
-                        '{}_{}'.format(id_i,id_j) : get_percentiles(temp_list)
-                        }
-                    )
+                self.authors_infos_dist[ent] += [{
+                    'ids' : '{}_{}'.format(id_i,id_j),
+                    'stats': med_sd_mean(temp_list)
+                    }]
+                    
                 
     def compute_score(self,doc):
         """
@@ -405,7 +417,7 @@ class Author_proximity(Dataset):
         None.
 
         """
-
+        
         self.focal_paper_id = doc[self.id_variable]
         self.true_nb_aut =  len(doc[self.aut_list_variable])
         
