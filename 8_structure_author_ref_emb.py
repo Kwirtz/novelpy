@@ -1,62 +1,67 @@
-import yaml
-from novelpy.cleaner import Embedding
-import pandas as pd
 import argparse
 import yaml
 parser = argparse.ArgumentParser(
     description='50 chunks')
 
-parser.add_argument('-from_')
+parser.add_argument('-skip_')
 args = parser.parse_args()
-from_ = int(args.from_)
+skip_ = int(args.skip_)
 
-with open(r"C:\Users\Beta\Documents\GitHub\Taxonomy-of-novelty\mongo_config.yaml", "r") as infile:
+with open(r"C:\Users\pierre\Documents\GitHub\Taxonomy-of-novelty\mongo_config.yaml", "r") as infile:
     pars = yaml.safe_load(infile)['PC_BETA']
-db= 'pkg'
-client_name = pars['client_name']
-db_name = 'PKG'
-collection_articles = 'articles'
-collection_authors = 'authors'
-var_year = 'Journal_JournalIssue_PubDate_Year'
-var_id = 'PMID'
-var_id_list = 'pmid_list'
-var_pmid_list = 'refs_pmid_wos'
-var_auth_id = 'AND_ID'
-var_abstract = 'a04_abstract'
-var_title = 'ArticleTitle'
-var_keyword = 'a06_meshheadinglist'
-pretrain_path = "C:/Users/Beta/Documents/GitHub/Taxonomy-of-novelty/en_core_sci_lg-0.4.0/en_core_sci_lg/en_core_sci_lg-0.4.0"
-author_ids_list = pd.read_json('D:/PKG/final_folder_260721/Data/authors_id.json')
-author_ids_list = author_ids_list[var_auth_id].to_list()
 
+from novelpy.utils.embedding import Embedding
 
 embedding = Embedding(
-    client_name,
-    db_name,
-    collection_articles,
-    collection_authors,
-    var_year,
-    var_id,
-    var_pmid_list,
-    var_id_list,
-    var_auth_id,
-    pretrain_path,
-    var_title,
-    var_abstract,
-    var_keyword)
-
-# embedding.get_articles_centroid(pmid_start = 1,
-#                          pmid_end = 33*10**6,
-#                          chunk_size=1000)
-
-# chunk = round((18.6*10**6)/50)
-# from_ = list(range(1,round(18.6*10**6),chunk))[from_]
+      year_variable = 'year',
+      time_range = range(2000,2016),
+      id_variable = 'PMID',
+      client_name = 'mongodb://Pierre:ilovebeta67@localhost:27017/',
+      db_name = 'novelty_final',
+      references_variable = 'refs_pmid_wos',
+      pretrain_path = r'D:\pretrain\en_core_sci_lg-0.4.0\en_core_sci_lg\en_core_sci_lg-0.4.0',
+      title_variable = 'ArticleTitle',
+      abstract_variable = 'a04_abstract',
+      abstract_subvariable = 'AbstractText',
+      aut_id_variable = 'AID',
+      aut_pubs_variable = 'PMID_list')
 
 
-# embedding.feed_author_profile(author_ids_list[from_:from_+chunk])
 
-# embedding.author_profile2papers()
+#embedding.get_articles_centroid(
+#      collection_articles = 'Title_abs_sample',
+#      collection_embedding = 'embedding')
 
-# embedding.get_references_embbeding(skip_ = 1, limit_ = 11*10**6)
-embedding.get_references_embbeding(skip_ = 11*10**6, limit_ = 11*10**6)
-# embedding.get_references_embbeding(skip_ = 22*10**6, limit_ = 11*10**6)
+
+embedding.feed_author_profile(
+    collection_authors = 'a02_authorlist_AID',
+        collection_embedding = 'articles_embedding',
+        skip_ = skip_,
+        limit_ = 0)
+
+# print('merged with articles database')
+
+# embedding.get_references_embbeding(
+#       collection_articles = 'articles',
+#       collection_embedding = 'articles_embedding',
+#       collection_ref_embedding = 'references_embedding',
+#       skip_ = 1,
+#       limit_ = 0)
+
+# print('references embedding created')
+
+# from novelpy.indicators.Author_proximity import Author_proximity
+
+# for year in range(2000,2011):
+#     author = Author_proximity(client_name = 'mongodb://Pierre:ilovebeta67@localhost:27017/',
+#                      db_name = 'novelty_sample',
+#                      collection_name = 'authors_sample',
+#                      id_variable = 'PMID',
+#                      year_variable = 'year',
+#                      aut_profile_variable = 'authors_profiles',
+#                      aut_id_variable = 'AID',
+#                      entity = ['title_profile','abs_profile'],
+#                      focal_year = year,
+#                      windows_size = 5)
+    
+#     author.get_indicator()

@@ -3,6 +3,7 @@ import itertools
 import numpy as np
 from novelpy.utils.run_indicator_tools import Dataset
 import pymongo
+from pymongo import UpdateOne
 import tqdm
 from sklearn.metrics.pairwise import cosine_similarity
 import json 
@@ -55,6 +56,23 @@ def get_percentiles(dist_list):
 
     return nov_list
 
+def med_sd_mean(dist_list):
+    return {
+        'mean' : np.mean(dist_list),
+        'sd' : np.std(dist_list),
+        'percentiles' : get_percentiles(dist_list),
+        'nb_comb' : len(dist_list)}
+
+def intra_cosine_similarity(items,
+                            n):
+    
+    aut_mat = np.zeros((n, len(items[0])))
+    for j in range(n):
+        aut_mat[j, :] = items[j]
+    aut_dist = cosine_similarity_dist(n,aut_mat)
+    
+    return aut_dist
+
 class Author_proximity(Dataset):
     
     def __init__(self,
@@ -63,7 +81,7 @@ class Author_proximity(Dataset):
                  collection_name = None,
                  id_variable = None,
                  year_variable = None,
-                 aut_profile_variable = None,
+                 aut_list_variable = None,
                  aut_id_variable = None,
                  entity = None,
                  focal_year = None,
@@ -73,22 +91,30 @@ class Author_proximity(Dataset):
         -----------
         Compute Author proximity as presented in Pelletier and Wirtz (2022)
 
+    
         Parameters
         ----------
+        client_name : TYPE, optional
+            DESCRIPTION. The default is None.
+        db_name : TYPE, optional
+            DESCRIPTION. The default is None.
+        collection_name : TYPE, optional
+            DESCRIPTION. The default is None.
         id_variable : str
             identifier variable name.
-        aut_profile_variable : str
-            embedded representation of author articles variable name.
+        aut_list_variable : str
+            list of authors variable name.
         aut_id_variable : str
             author id variable name.
         year_variable : str
             year variable name.
         entity : list
-            Can be 'title_embedding' or 'abstract_embedding'
+            Can be 'title' or/and 'abstract'
         focal_year : int
             Calculate novelty for object that have a creation/publication year = focal_year. 
         windows_size : int
             time window to consider to compute previous work representation 
+
 
         Returns
         -------
@@ -96,7 +122,7 @@ class Author_proximity(Dataset):
 
         """
         self.id_variable = id_variable
-        self.aut_profile_variable = aut_profile_variable
+        self.aut_list_variable = aut_list_variable
         self.aut_id_variable = aut_id_variable
         self.year_variable = year_variable
         self.entity = entity
@@ -111,20 +137,229 @@ class Author_proximity(Dataset):
             year_variable = year_variable,
             focal_year = focal_year)
     
-
+        self.collection_authors_years = self.db['{}_year_embedding'.format(self.aut_id_variable)]  
         self.path_score = "Data/score/Author_proximity/"
         if not os.path.exists(self.path_score):
             os.makedirs(self.path_score)
             
+    def load_data(self):
+        """
+        
+
+        Returns
+        -------
+        None.
+
+        """
+        if self.client_name:
+            self.docs = self.collection.find({
+                self.aut_list_variable:{'$ne':None},
+                self.year_variable:self.focal_year
+                })
+        else:
+            self.docs = json.load(open("Data/docs/{}/{}.json".format(self.collection_name,self.focal_year)))
             
-    def get_intra_dist(self,ent,doc):
+    def insert_doc_output(self,
+                      doc):
         """
         
 
         Parameters
         ----------
-        ent : str
-            Entity used, can be title_profile or abstract_profile.
+        doc : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
+        if self.infos:
+            for ent in self.entity:
+                if ent in self.scores_infos:
+                    self.scores_infos[ent].update({self.id_variable: doc[self.id_variable]})
+                    self.list_of_insertion_sa.append(self.scores_infos[ent])
+                    
+            if self.client_name:
+                self.list_of_insertion_op.append(
+                    pymongo.UpdateOne({self.id_variable: doc[self.id_variable]},
+                                      {'$set': {'Authors_poximity': self.infos}},
+                                      upsert = True)
+                    )
+                
+            else:
+                self.list_of_insertion_op.append(
+                    {
+                        self.id_variable: doc[self.id_variable],
+                        'Author_proximity': self.infos
+                        }
+                    )
+              
+                
+    def save_outputs(self):
+        """
+        
+
+        Returns
+        -------
+        None.
+
+        """
+        if self.client_name:
+            if "output" not in self.db.list_collection_names():
+                print("Init output collection with index on id_variable ...")
+                self.collection_output = self.db["output"]
+                self.collection_output.create_index([ (self.id_variable,1) ])
+            else:
+                self.collection_output = self.db["output"]
+            if "output_aut_scores" not in self.db.list_collection_names():
+                print("Init output_aut_scores collection with index on id_variable ...")
+                self.collection_output_aut_scores = self.db["output_aut_scores"]
+                self.collection_output_aut_scores.create_index([ (self.id_variable,1) ])
+            else:
+                self.collection_output_aut_scores = self.db["output_aut_scores"]
+                
+            if self.list_of_insertion_op: 
+                self.db['output'].bulk_write(self.list_of_insertion_op)
+            if self.list_of_insertion_sa: 
+                self.db['output_aut_scores'].insert_many(self.list_of_insertion_sa)
+        else:
+            if self.list_of_insertion_op:
+                with open(self.path_score + "/{}.json".format(self.focal_year), 'w') as outfile:
+                    json.dump(self.list_of_insertion_op, outfile)              
+            
+            
+                
+    def init_doc_dict(self):
+        """
+        
+
+        Returns
+        -------
+        None.
+
+        """
+        self.intra_authors_dist = {ent:[] for ent in self.entity}
+        self.authors_infos = {ent:[] for ent in self.entity}
+        self.authors_info_percentiles = {ent:[] for ent in self.entity}
+        self.inter_authors_dist = {ent:[] for ent in self.entity}
+        self.authors_infos_dist = {ent:[] for ent in self.entity}
+        self.all_aut_ids =  {ent:[] for ent in self.entity}
+        self.infos = dict()
+        self.scores_infos = {}
+        
+        
+    def structure_infos(self,
+                      ent):
+        authors_novelty = {
+            'authors_novelty_{}_{}'.format(ent, str(self.windows_size)) :{
+                'individuals_scores': self.authors_info_percentiles[ent],
+                'iter_individuals_scores':self.authors_infos_dist[ent],
+                'share_nb_aut_captured': self.nb_aut/self.true_nb_aut}
+            }
+        
+        scores = {'entity':ent,
+                  'score_array':{
+                      'intra':self.intra_authors_dist[ent],
+                      'inter':self.inter_authors_dist[ent]}
+                  }
+        self.infos.update(authors_novelty)
+        self.scores_infos.update({ent:scores})
+
+            
+    def get_author_papers(self,
+                          auth_id):
+        """
+        
+
+        Parameters
+        ----------
+        auth_id : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
+        if self.client_name:
+            profile = self.collection_authors_years.find({
+                self.aut_id_variable:auth_id,
+                self.year_variable: {'$lt': self.focal_year,  '$gte': self.focal_year - self.windows_size} 
+                }
+                )
+        else:
+            profile = self.collection_authors_years[
+                self.collection_authors_years[self.aut_id_variable] == auth_id
+                ], 
+            
+            profile = profile[
+                profile[self.year_variable].between(self.focal_year,self.focal_year-self.windows_size)
+                ].to_dict("records")
+            
+        self.profile = profile
+    
+    
+    def get_listed_papers(self):
+        """
+        
+
+        Returns
+        -------
+        None.
+
+        """
+        txt_profile = {ent:[] for ent in self.entity}
+        for year_profile in self.profile:
+            if year_profile['embedded_abs'] and 'abstract' in self.entity:
+                txt_profile['abstract'] += year_profile['embedded_abs'] 
+            if year_profile['embedded_titles'] and 'title' in self.entity :
+                txt_profile['title']  += year_profile['embedded_titles'] 
+                
+        self.profile = txt_profile
+    
+    def get_intra_infos(self,
+                        items,
+                        ent,
+                        auth_id):
+        """
+        
+
+        Parameters
+        ----------
+        items : TYPE
+            DESCRIPTION.
+        ent : TYPE
+            DESCRIPTION.
+        auth_id : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
+        if items:
+            n = len(items)
+            # for arthor who have only one article before focal year
+            if n > 0:
+                self.authors_infos[ent].append(items) 
+                self.all_aut_ids[ent].append(auth_id)
+                
+            if n >1:
+                aut_dist = intra_cosine_similarity(items,
+                                                   n)
+                self.authors_info_percentiles[ent] += [{
+                    str(self.aut_id_variable):str(auth_id),'stats':med_sd_mean(aut_dist)}]
+                self.intra_authors_dist[ent] += aut_dist
+    
+    def get_intra_dist(self,
+                       doc):
+        """
+        
+
+        Parameters
+        ----------
         doc : dict
             Treated document.
 
@@ -133,64 +368,56 @@ class Author_proximity(Dataset):
         None.
 
         """
-        self.focal_paper_id = doc[self.id_variable]
-        nb_aut = len(doc[self.aut_profile_variable])
-        self.intra_authors_dist = []
-        self.authors_infos = []
-        # save intra authors info
-        self.authors_info_percentiles = {}
-
-        for i in range(nb_aut):
-            items = doc[self.aut_profile_variable][i][ent]
-            aut_id = doc[self.aut_profile_variable][i][self.aut_id_variable]
-            if items:
-                aut_item = [items[key] for key in items if int(key) > (doc[self.year_variable]-self.windows_size) ]
-                aut_item = list(itertools.chain.from_iterable(aut_item))
-                aut_item = [item for item in aut_item if item]
-                
-                n = len(aut_item)
-                if n >1:
-                    self.authors_infos.append(aut_item)
-                    aut_mat = np.zeros((n, 200))
-                    for j in range(n):
-                        aut_mat[j, :] = aut_item[j]
-                    aut_dist = cosine_similarity_dist(n,aut_mat)
+        for auth in doc[self.aut_list_variable]: # TO CHANGE FOR OTHER DB
+            auth_id = auth[self.aut_id_variable]
+            self.get_author_papers(auth_id)
+            self.get_listed_papers()
+            for ent in self.profile: 
+                self.get_intra_infos(self.profile[ent],
+                                     ent,
+                                     auth_id)
+            
                     
-                    self.authors_info_percentiles.update(
-                        {
-                            str(aut_id) : get_percentiles(aut_dist)
-                            }
-                        )
-                    self.intra_authors_dist += aut_dist
-                    
-    def get_inter_dist(self):
+    def get_inter_dist(self,
+                       ent):
+        """
         
-        self.inter_authors_dist = []
-        self.authors_infos_dist = {}
+
+        Parameters
+        ----------
+        ent : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         # for all author
         for i in range(self.nb_aut):
-            id_i = self.aut_ids[i]
+            id_i = self.all_aut_ids[ent][i]
             # for all other authors
             for j in range(i+1,self.nb_aut):
                 temp_list = []
-                id_j = self.aut_ids[j]
+                id_j = self.all_aut_ids[ent][j]
                 # take each paper
-                for item in self.authors_infos[i]:
+                for item in self.authors_infos[ent][i]:
                     # compare it with all papers of author j
-                    for j_item in self.authors_infos[j]:
+                    for j_item in self.authors_infos[ent][j]:
                         comb = np.array([item,j_item])
                         inter_paper_dist = cosine_similarity(comb)[0,1]
-                        temp_list.append(inter_paper_dist)
-                        self.inter_authors_dist.append(inter_paper_dist)
                         
-                self.authors_infos_dist.update(
-                    {
-                        '{}_{}'.format(id_i,id_j) : get_percentiles(temp_list)
-                        }
-                    )
+                        temp_list.append(inter_paper_dist)
+                        self.inter_authors_dist[ent].append(inter_paper_dist)
                 
-
-    def compute_score(self,doc,entity):
+                # get percentiles
+                self.authors_infos_dist[ent] += [{
+                    'ids' : '{}_{}'.format(id_i,id_j),
+                    'stats': med_sd_mean(temp_list)
+                    }]
+                    
+                
+    def compute_score(self,doc):
         """
         
 
@@ -198,84 +425,48 @@ class Author_proximity(Dataset):
         ----------
         doc : dict
             document from the embedded author collection.
-        entity : str
-            title or abstract.
 
         Returns
         -------
         None.
 
         """
+        
+        self.focal_paper_id = doc[self.id_variable]
+        self.true_nb_aut =  len(doc[self.aut_list_variable])
+        
+        self.init_doc_dict()
+        self.get_intra_dist(doc)
 
-        self.infos = dict()
         for ent in self.entity:
-
-            self.get_intra_dist(ent,doc)
-
-            if len(self.intra_authors_dist) > 0:
-                intra_nov_list = get_percentiles(self.intra_authors_dist) 
-                
-                self.aut_ids = list(self.authors_info_percentiles.keys())    
-                self.nb_aut = len(self.aut_ids)
+            
+            if len(self.intra_authors_dist[ent]) > 0:
+                self.nb_aut = len(self.all_aut_ids[ent])
                 
                 if self.nb_aut > 1:
-                    self.get_inter_dist()
-                    inter_nov_list = get_percentiles(self.inter_authors_dist)
-                        
-                    authors_novelty = {
-                        'authors_novelty_{}_{}'.format(ent, str(self.windows_size)) :{
-                            'intra':intra_nov_list,
-                            'inter':inter_nov_list,
-                            'scores_array_intra':self.intra_authors_dist,
-                            'scores_array_inter':self.inter_authors_dist,
-                            'individuals_scores': self.authors_info_percentiles,
-                            'iter_individuals_scores':self.authors_infos_dist}
-                        }
-                    self.infos.update(authors_novelty)
+                    self.get_inter_dist(ent)
+                    self.structure_infos(ent)
 
 
     def get_indicator(self):
-       
-        if self.client_name:
-            self.docs = self.collection.find({
-                self.aut_profile_variable:{'$ne':None},
-                self.year_variable:self.focal_year
-                })
-        else:
-            self.docs = json.load(open("Data/docs/{}/{}.json".format(self.collection_name,self.focal_year)))
+        """
+        
+
+        Returns
+        -------
+        None.
+
+        """
+        self.load_data()
         # Iterate over every docs 
-        list_of_insertion = []
+        self.list_of_insertion_op = []
+        self.list_of_insertion_sa = []
         
         for doc in tqdm.tqdm(self.docs):
-            if doc[self.aut_profile_variable]: 
-                self.compute_score(doc, self.entity)
+            if doc[self.aut_list_variable]: 
+                self.compute_score(doc)
+                self.insert_doc_output(doc)
                 
-                if self.infos:
-                    if self.client_name:
-                        list_of_insertion.append(
-                            pymongo.UpdateOne({self.id_variable: doc[self.id_variable]},
-                                              {'$set': {'Author_proximity': self.infos}},
-                                              upsert = True))
-                    else:
-                        list_of_insertion.append(
-                            {
-                                self.id_variable: doc[self.id_variable],'Author_proximity': self.infos
-                                }
-                            )
-            
-        if self.client_name:
-            if "output" not in self.db.list_collection_names():
-                print("Init output collection with index on id_variable ...")
-                self.collection_output = self.db["output"]
-                self.collection_output.create_index([ (self.id_variable,1) ])
-            else:
-                self.collection_output = self.db["output"]
-            if list_of_insertion: 
-                self.db['output'].bulk_write(list_of_insertion)
-        else:
-            if list_of_insertion:
-                with open(self.path_score + "/{}.json".format(self.focal_year), 'w') as outfile:
-                    json.dump(list_of_insertion, outfile)              
-            
+        self.save_outputs()
 
 
