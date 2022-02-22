@@ -60,8 +60,9 @@ def med_sd_mean(dist_list):
     return {
         'mean' : np.mean(dist_list),
         'sd' : np.std(dist_list),
-        'med' : np.median(dist_list),
+        'percentiles' : get_percentiles(dist_list),
         'nb_comb' : len(dist_list)}
+
 def intra_cosine_similarity(items,
                             n):
     
@@ -174,21 +175,26 @@ class Author_proximity(Dataset):
 
         """
         if self.infos:
+            for ent in self.entity:
+                if ent in self.scores_infos:
+                    self.scores_infos[ent].update({self.id_variable: doc[self.id_variable]})
+                    self.list_of_insertion_sa.append(self.scores_infos[ent])
+                    
             if self.client_name:
-                self.infos.update({self.id_variable: doc[self.id_variable]})
-                self.list_of_insertion.append(self.infos)
+                self.list_of_insertion_op.append(
+                    pymongo.UpdateOne({self.id_variable: doc[self.id_variable]},
+                                      {'$set': {'Authors_poximity': self.infos}},
+                                      upsert = True)
+                    )
                 
-                for ent in self.entity:
-                    if ent in self.scores_infos:
-                        self.scores_infos[ent].update({self.id_variable: doc[self.id_variable]})
-                        self.list_of_insertion.append(self.scores_infos[ent])
             else:
-                self.list_of_insertion.append(
+                self.list_of_insertion_op.append(
                     {
                         self.id_variable: doc[self.id_variable],
                         'Author_proximity': self.infos
                         }
                     )
+              
                 
     def save_outputs(self):
         """
@@ -200,18 +206,27 @@ class Author_proximity(Dataset):
 
         """
         if self.client_name:
-            if "output_authors" not in self.db.list_collection_names():
-                print("Init output_authors collection with index on id_variable ...")
-                self.collection_output = self.db["output_authors"]
+            if "output" not in self.db.list_collection_names():
+                print("Init output collection with index on id_variable ...")
+                self.collection_output = self.db["output"]
                 self.collection_output.create_index([ (self.id_variable,1) ])
             else:
-                self.collection_output = self.db["output_authors"]
-            if self.list_of_insertion: 
-                self.db['output_authors'].insert_many(self.list_of_insertion)
+                self.collection_output = self.db["output"]
+            if "output_aut_scores" not in self.db.list_collection_names():
+                print("Init output_aut_scores collection with index on id_variable ...")
+                self.collection_output_aut_scores = self.db["output_aut_scores"]
+                self.collection_output_aut_scores.create_index([ (self.id_variable,1) ])
+            else:
+                self.collection_output_aut_scores = self.db["output_aut_scores"]
+                
+            if self.list_of_insertion_op: 
+                self.db['output'].bulk_write(self.list_of_insertion_op)
+            if self.list_of_insertion_sa: 
+                self.db['output_aut_scores'].insert_many(self.list_of_insertion_sa)
         else:
-            if self.list_of_insertion:
+            if self.list_of_insertion_op:
                 with open(self.path_score + "/{}.json".format(self.focal_year), 'w') as outfile:
-                    json.dump(self.list_of_insertion, outfile)              
+                    json.dump(self.list_of_insertion_op, outfile)              
             
             
                 
@@ -238,17 +253,16 @@ class Author_proximity(Dataset):
                       ent):
         authors_novelty = {
             'authors_novelty_{}_{}'.format(ent, str(self.windows_size)) :{
-                'intra':self.intra_nov_list,
-                'inter':self.inter_nov_list,
                 'individuals_scores': self.authors_info_percentiles[ent],
                 'iter_individuals_scores':self.authors_infos_dist[ent],
                 'share_nb_aut_captured': self.nb_aut/self.true_nb_aut}
             }
         
-        scores = {
-            'scores_array_intra_{}_{}'.format(ent, str(self.windows_size)):self.intra_authors_dist[ent],
-            'scores_array_inter_{}_{}'.format(ent, str(self.windows_size)):self.inter_authors_dist[ent],
-                }
+        scores = {'entity':ent,
+                  'score_array':{
+                      'intra':self.intra_authors_dist[ent],
+                      'inter':self.inter_authors_dist[ent]}
+                  }
         self.infos.update(authors_novelty)
         self.scores_infos.update({ent:scores})
 
@@ -425,14 +439,12 @@ class Author_proximity(Dataset):
         self.get_intra_dist(doc)
 
         for ent in self.entity:
+            
             if len(self.intra_authors_dist[ent]) > 0:
-                self.intra_nov_list = get_percentiles(self.intra_authors_dist[ent]) 
-
                 self.nb_aut = len(self.all_aut_ids[ent])
                 
                 if self.nb_aut > 1:
                     self.get_inter_dist(ent)
-                    self.inter_nov_list = get_percentiles(self.inter_authors_dist[ent])
                     self.structure_infos(ent)
 
 
@@ -447,7 +459,8 @@ class Author_proximity(Dataset):
         """
         self.load_data()
         # Iterate over every docs 
-        self.list_of_insertion = []
+        self.list_of_insertion_op = []
+        self.list_of_insertion_sa = []
         
         for doc in tqdm.tqdm(self.docs):
             if doc[self.aut_list_variable]: 
