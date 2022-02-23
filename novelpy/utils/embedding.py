@@ -95,7 +95,7 @@ class Embedding:
         if self.client_name:
             self.client = pymongo.MongoClient(self.client_name)
             self.db = self.client[self.db_name]
-        
+            self.session = self.client.start_session()
 
 
     def init_dbs_centroid(self,
