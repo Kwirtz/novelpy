@@ -95,7 +95,7 @@ class Embedding:
         if self.client_name:
             self.client = pymongo.MongoClient(self.client_name)
             self.db = self.client[self.db_name]
-        
+            self.session = self.client.start_session()
 
 
     def init_dbs_centroid(self,
@@ -152,8 +152,7 @@ class Embedding:
         
         if self.client_name:
             collection = self.db[collection_articles]
-            self.docs = collection.find({self.year_variable:year},
-                                   no_cursor_timeout = True)
+            self.docs = collection.find({self.year_variable:year},no_cursor_timeout  = True, session=self.session)
         else:
             self.docs = json.load(
                 open("Data/docs/{}/{}.json".format(collection_articles,
@@ -276,6 +275,7 @@ class Embedding:
             for doc in tqdm.tqdm(self.docs):
                 self.get_title_abs(doc)
                 self.insert_embedding_centroid(doc)
+                self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
                 
                
             if self.client_name:
@@ -354,7 +354,7 @@ class Embedding:
             if self.client_name:
                 refs = self.collection_embedding.find({
                     self.id_variable:{'$in':doc[self.references_variable]}
-                    }
+                    },no_cursor_timeout  = True, session=self.session
                     )
             else:
                 #refs = []
@@ -438,7 +438,7 @@ class Embedding:
         for year in self.time_range:
 
             if self.client_name:
-                docs = collection_articles.find().skip(skip_-1).limit(limit_)
+                docs = collection_articles.find({},no_cursor_timeout  = True, session=self.session).skip(skip_-1).limit(limit_)
             else:
                 docs = json.load(open("Data/docs/{}/{}.json".format(collection_articles,year)))
 
@@ -446,6 +446,7 @@ class Embedding:
             for doc in tqdm.tqdm(docs, total = limit_):
                self.get_embedding_list(doc)
                self.insert_embedding_ref(doc)
+               self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
 
             if self.client_name:
                 self.collection_ref_embedding.bulk_write(self.list_of_insertion)
@@ -500,7 +501,7 @@ class Embedding:
             self.collection_authors = self.db[collection_authors]
             self.collection_embedding = self.db[collection_embedding]
             #collection_keywords = db[self.collection_keywords]
-            self.authors = self.collection_authors.find({},no_cursor_timeout=True).skip(skip_-1).limit(limit_)
+            self.authors = self.collection_authors.find({},no_cursor_timeout  = True, session=self.session).skip(skip_-1).limit(limit_)
             self.embedding = None
         else:
             if not os.path.exists("Data/docs/authors_profiles/"):
@@ -583,7 +584,7 @@ class Embedding:
         if self.client_name:
             self.articles = self.collection_embedding.find({
                 self.id_variable : {'$in':doc[self.aut_pubs_variable]}
-                }
+                },no_cursor_timeout  = True, session=self.session
                 )
         else:
             try:
@@ -736,6 +737,7 @@ class Embedding:
             and_id = author[self.aut_id_variable]
             self.get_author_profile(doc = author)
             self.insert_embedding_aut(and_id)
+            self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
 
         if self.list_of_insertion:
             if self.client_name:
