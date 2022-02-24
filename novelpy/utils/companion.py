@@ -113,16 +113,18 @@ class plot_dist:
                     self.line_position.append(float(np.percentile(a = self.doc[key_name]["scores_array_" + embedding_entity + "_embedding"],
                                                                   q = self.shibayma_per)))
             elif indicator == "Author_proximity":
-                key_name = "Author_proximity"   
+                key_name = "Author_proximity"
+                collection_author = self.db["output_authors"]
                 for embedding_entity in self.embedding_entities_authors:
-                    df_temp_intra = pd.DataFrame(self.doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_intra"], columns=["Scores"])
-                    df_temp_inter = pd.DataFrame(self.doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_inter"], columns=["Scores"])
+                    doc_author = collection_author.find_one({"PMID":self.doc["PMID"],"entity":embedding_entity})
+                    df_temp_intra = pd.DataFrame(doc_author["score_array"]["intra"], columns=["Scores"])
+                    df_temp_inter = pd.DataFrame(doc_author["score_array"]["inter"], columns=["Scores"])
                     df_temp_intra['Variable'], df_temp_intra['Indicator'] = [embedding_entity, indicator + "_intra"]   
                     df_temp_inter['Variable'], df_temp_inter['Indicator'] = [embedding_entity, indicator+ "_inter"] 
                     self.df = pd.concat([self.df,df_temp_intra,df_temp_inter], ignore_index=True)
-                    self.line_position.append(float(np.percentile(a = self.doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_intra"],
+                    self.line_position.append(float(np.percentile(a = doc_author["score_array"]["intra"],
                                                                   q = self.authors_per)))
-                    self.line_position.append(float(np.percentile(a = self.doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_inter"],
+                    self.line_position.append(float(np.percentile(a = doc_author["score_array"]["inter"],
                                                                   q = self.authors_per)))                    
             elif self.variables:
                 for variable in self.variables:
@@ -225,22 +227,22 @@ class plot_dist:
         """
         
         legend_patches = matplotlib.patches.Patch(color="red", label="Novelty score", linestyle='--', fill = False)
-        if "shibayama" in self.indicators and "Authors_proximity" in self.indicators and len(self.indicators) > 2:
-            grid_spec_col = len(self.indicators) - 3
-        elif "shibayama" in self.indicators or "Authors_proximity" in self.indicators and len(self.indicators) > 2:
+        if "shibayama" in self.indicators and "Author_proximity" in self.indicators and len(self.indicators) > 3:
             grid_spec_col = len(self.indicators) - 2
+        elif "shibayama" in self.indicators and len(self.indicators) > 2 or "Author_proximity" in self.indicators and len(self.indicators) > 2:
+            grid_spec_col = len(self.indicators) - 1
         else:
-            grid_spec_col = len(self.indicators) - 1 
+            grid_spec_col = len(self.indicators)
         grid_spec_row = len(set(self.df["Variable"]))
         
         fig = plt.figure(figsize=(24, 16))
+        fig.suptitle('doc ID:{}'.format(self.doc["PMID"]), fontsize=16)
         gs = gridspec.GridSpec(grid_spec_row, grid_spec_col)
-        
         n_indic = 0
         n_lines = 0
         for indicator in self.indicators:
             if indicator == "shibayama":
-                if len(self.indicators) > 1:
+                if len(self.indicators) > 1 and "Author_proximity" not in self.indicators:
                     starting_row = int(grid_spec_row/2)
                     starting_col = int(grid_spec_col/2)
                     if starting_row % 2 != 0:
@@ -249,6 +251,15 @@ class plot_dist:
                         starting_col -= 1
                     else:
                         starting_col = math.floor(starting_col)
+                elif len(self.indicators) > 2 and "shibayama" in self.indicators and "Author_proximity" in self.indicators:
+                    starting_row = int(grid_spec_row/2)
+                    starting_col = int(grid_spec_col/2)
+                    if starting_row % 2 != 0:
+                        starting_row = math.ceil(starting_row)
+                    starting_col = math.ceil(starting_col)-1
+                elif len(self.indicators) == 2 and "shibayama" in self.indicators and "Author_proximity" in self.indicators:
+                    starting_row = 0
+                    starting_col = 0
                 else:
                     starting_row = 0
                     starting_col = 0
@@ -264,17 +275,24 @@ class plot_dist:
                         row0_label = ax.twinx()
                         row0_label.tick_params(axis='both', labelsize=0, length = 0)
                         row0_label.set(ylabel=" ")
+                    else:
+                        row0_label = ax.twinx()
+                        row0_label.tick_params(axis='both', labelsize=0, length = 0)
+                        row0_label.set(ylabel="Variable = {}".format(entity))
                     n_entity += 1
                     starting_row += 1
                     sns.kdeplot(self.df[(self.df["Indicator"]==indicator) & (self.df["Variable"]==entity)]["Scores"],ax=ax)
             elif indicator == "Author_proximity":
-                if len(self.indicators) > 1:
+                if len(self.indicators) > 2:
                     starting_row = int(grid_spec_row/2)
                     starting_col = int(grid_spec_col/2)
                     if starting_row % 2 != 0:
                         starting_row = math.ceil(starting_row)
                     if starting_col % 2 != 0:
                         starting_col = math.ceil(starting_col)
+                elif len(self.indicators) == 2 and "shibayama" in self.indicators and "Author_proximity" in self.indicators:
+                    starting_row = 0
+                    starting_col = 1
                 else:
                     starting_row = 0
                     starting_col = 0
@@ -300,6 +318,7 @@ class plot_dist:
                         sns.kdeplot(data = df3, x = "Scores", hue = "Indicator",ax=ax, palette = palette, legend = False)   
                     else:
                         sns.kdeplot(data = df3, x = "Scores", hue = "Indicator",ax=ax, palette = palette)  
+                    print(starting_row,starting_col)
                     n_entity += 1
                     starting_row += 1
             else:
@@ -455,18 +474,19 @@ class novelty_trend:
             elif indicator =="Author_proximity":
                 key_name = "Author_proximity"
                 for embedding_entity in self.embedding_entities_authors:
+                    collection_author = self.db["output_authors"]
                     for year in self.year_range:
-                            docs = self.collection.find({"year":year})
+                            docs = collection_author.find({"year":year})
                             score_list_intra = []
                             score_list_inter = []
                             for doc in docs:
                                 try:
-                                    score_list_intra.append(float(np.percentile(a = doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_intra"],
+                                    score_list_intra.append(float(np.percentile(a = doc["score_array"]["intra"],
                                                                   q = self.authors_per)))
                                 except:
                                     continue
                                 try:
-                                    score_list_inter.append(float(np.percentile(a = doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_inter"],
+                                    score_list_inter.append(float(np.percentile(a = doc["score_array"]["inter"],
                                                                   q = self.authors_per)))
                                 except:
                                     continue
@@ -681,13 +701,14 @@ class novelty_trend:
 
         """
     
-        if "shibayama" in self.indicators and "Authors_proximity" in self.indicators and len(self.indicators) > 2:
-            grid_spec_col = len(self.indicators) - 3
-        elif "shibayama" in self.indicators or "Authors_proximity" in self.indicators and len(self.indicators) > 2:
+        if "shibayama" in self.indicators and "Author_proximity" in self.indicators and len(self.indicators) > 3:
             grid_spec_col = len(self.indicators) - 2
+        elif "shibayama" in self.indicators and len(self.indicators) > 2 or "Author_proximity" in self.indicators and len(self.indicators) > 2:
+            grid_spec_col = len(self.indicators) - 1
         else:
-            grid_spec_col = len(self.indicators) - 1 
+            grid_spec_col = len(self.indicators)
         grid_spec_row = len(set(self.df["Variable"]))
+        
         fig = plt.figure(figsize=(24, 16))
         gs = gridspec.GridSpec(grid_spec_row, grid_spec_col)
         
@@ -695,15 +716,24 @@ class novelty_trend:
         n_indic = 0
         for indicator in self.indicators:
             if indicator == "shibayama":
-                if len(self.indicators) > 1:
+                if len(self.indicators) > 1 and "Author_proximity" not in self.indicators:
                     starting_row = int(grid_spec_row/2)
                     starting_col = int(grid_spec_col/2)
-                    if starting_row % 1 != 0:
+                    if starting_row % 2 != 0:
                         starting_row = math.ceil(starting_row)
-                    if starting_col % 1 == 0:
+                    if starting_col % 2 == 0:
                         starting_col -= 1
                     else:
                         starting_col = math.floor(starting_col)
+                elif len(self.indicators) > 2 and "shibayama" in self.indicators and "Author_proximity" in self.indicators:
+                    starting_row = int(grid_spec_row/2)
+                    starting_col = int(grid_spec_col/2)
+                    if starting_row % 2 != 0:
+                        starting_row = math.ceil(starting_row)
+                    starting_col = math.ceil(starting_col)-1
+                elif len(self.indicators) == 2 and "shibayama" in self.indicators and "Author_proximity" in self.indicators:
+                    starting_row = 0
+                    starting_col = 0
                 else:
                     starting_row = 0
                     starting_col = 0
@@ -719,13 +749,16 @@ class novelty_trend:
                     starting_row += 1
                     sns.lineplot(data = self.df[(self.df["Indicator"]==indicator) & (self.df["Variable"]==entity)], x = "Year", y = "Score_mean",ax=ax)
             elif indicator == "Author_proximity":
-                if len(self.indicators) > 1:
+                if len(self.indicators) > 2:
                     starting_row = int(grid_spec_row/2)
                     starting_col = int(grid_spec_col/2)
                     if starting_row % 2 != 0:
                         starting_row = math.ceil(starting_row)
                     if starting_col % 2 != 0:
                         starting_col = math.ceil(starting_col)
+                elif len(self.indicators) == 2 and "shibayama" in self.indicators and "Author_proximity" in self.indicators:
+                    starting_row = 0
+                    starting_col = 1
                 else:
                     starting_row = 0
                     starting_col = 0
@@ -875,7 +908,8 @@ class correlation_indicators:
         self.client = pymongo.MongoClient(self.client_name)
         self.db = self.client[self.db_name]
         self.collection = self.db["output"]
-
+        collection_author = self.db["output_authors"]
+        
         for year in self.year_range:
             docs = self.collection.find({"year":year})
             for doc in tqdm.tqdm(docs):
@@ -893,15 +927,16 @@ class correlation_indicators:
                             except:
                                 self.corr[year][key_name + "_" + embedding_entity] = []
                     elif indicator =="Author_proximity":
-                        key_name = "Author_proximity"   
+                        key_name = "Author_proximity"
                         for embedding_entity in self.embedding_entities_authors:
+                            doc_author = collection_author.find_one({"PMID":doc["PMID"],"entity":embedding_entity})
                             try:
-                                to_append_intra = float(np.percentile(a = doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_intra"],
+                                to_append_intra = float(np.percentile(a = doc_author["score_array"]["intra"],
                                                                   q = self.authors_per))
                             except:
                                 to_append_intra = None
                             try:
-                                to_append_inter = float(np.percentile(a = doc[key_name]["authors_novelty_" + embedding_entity + "_profile_5"]["scores_array_inter"],
+                                to_append_inter = float(np.percentile(a = doc_author["score_array"]["inter"],
                                                                   q = self.authors_per))
                             except:
                                 to_append_inter = None
@@ -971,7 +1006,7 @@ class correlation_indicators:
                                 continue
                         self.corr[year][key_name + "_" + embedding_entity] = score_list 
             elif indicator =="Author_proximity":
-                key_name = "Author_proximity"   
+                key_name = "Author_proximity"
                 for embedding_entity in self.embedding_entities_authors:
                     for year in self.year_range:
                         self.path_doc= "Result/{}/{}".format(indicator, year)
