@@ -99,8 +99,11 @@ class create_cooc:
         if self.client_name:
             docs = self.collection.find({self.year_var:year}, no_cursor_timeout=True)
         else:
-             with open(self.path_input + "/{}.json".format(year), 'r') as infile:
-                docs = json.load(infile)   
+            try:
+                with open(self.path_input + "/{}.json".format(year), 'r') as infile:
+                    docs = json.load(infile)
+            except Exception as e:
+                docs = [] 
             
         for doc in tqdm.tqdm(docs, desc = "Populate matrix"):
             try:
