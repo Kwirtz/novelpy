@@ -8,6 +8,7 @@ import tqdm
 from sklearn.metrics.pairwise import cosine_similarity
 import json 
 import os
+import bson
 
 def cosine_similarity_dist(n,doc_mat):
     """
@@ -138,9 +139,9 @@ class Author_proximity(Dataset):
             focal_year = focal_year)
     
         self.collection_authors_years = self.db['{}_year_embedding'.format(self.aut_id_variable)]  
-        self.path_score = "Data/score/Author_proximity/"
-        if not os.path.exists(self.path_score):
-            os.makedirs(self.path_score)
+        self.path_output = "Data/Result/Author_proximity/"
+        if not os.path.exists(self.path_output):
+            os.makedirs(self.path_output)
             
     def load_data(self):
         """
@@ -152,10 +153,11 @@ class Author_proximity(Dataset):
 
         """
         if self.client_name:
+            self.session = self.client.start_session()
             self.docs = self.collection.find({
                 self.aut_list_variable:{'$ne':None},
                 self.year_variable:self.focal_year
-                })
+                },no_cursor_timeout  = True, session=self.session)
         else:
             self.docs = json.load(open("Data/docs/{}/{}.json".format(self.collection_name,self.focal_year)))
             
@@ -177,8 +179,10 @@ class Author_proximity(Dataset):
         if self.infos:
             for ent in self.entity:
                 if ent in self.scores_infos:
-                    self.scores_infos[ent].update({self.id_variable: doc[self.id_variable]})
-                    self.list_of_insertion_sa.append(self.scores_infos[ent])
+                    self.scores_infos[ent][0].update({self.id_variable: doc[self.id_variable]})
+                    self.scores_infos[ent][1].update({self.id_variable: doc[self.id_variable]})
+                    self.list_of_insertion_sa.append(self.scores_infos[ent][0])
+                    self.list_of_insertion_sa.append(self.scores_infos[ent][1])
                     
             if self.client_name:
                 self.list_of_insertion_op.append(
@@ -186,7 +190,7 @@ class Author_proximity(Dataset):
                                       {'$set': {'Authors_poximity': self.infos}},
                                       upsert = True)
                     )
-                
+                self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
             else:
                 self.list_of_insertion_op.append(
                     {
@@ -225,7 +229,7 @@ class Author_proximity(Dataset):
                 self.db['output_aut_scores'].insert_many(self.list_of_insertion_sa)
         else:
             if self.list_of_insertion_op:
-                with open(self.path_score + "/{}.json".format(self.focal_year), 'w') as outfile:
+                with open(self.path_output + "/{}.json".format(self.focal_year), 'w') as outfile:
                     json.dump(self.list_of_insertion_op, outfile)              
             
             
@@ -258,11 +262,13 @@ class Author_proximity(Dataset):
                 'share_nb_aut_captured': self.nb_aut/self.true_nb_aut}
             }
         
-        scores = {'entity':ent,
-                  'score_array':{
-                      'intra':self.intra_authors_dist[ent],
-                      'inter':self.inter_authors_dist[ent]}
-                  }
+        scores = [{'entity':ent,
+                    'type': 'intra',
+                  'score_array':self.intra_authors_dist[ent]},
+                  {'entity':ent,
+                    'type': 'inter',
+                  'score_array':self.inter_authors_dist[ent]}
+                  ]
         self.infos.update(authors_novelty)
         self.scores_infos.update({ent:scores})
 
@@ -461,12 +467,18 @@ class Author_proximity(Dataset):
         # Iterate over every docs 
         self.list_of_insertion_op = []
         self.list_of_insertion_sa = []
-        
+         
+        i = 0 
         for doc in tqdm.tqdm(self.docs):
             if doc[self.aut_list_variable]: 
                 self.compute_score(doc)
                 self.insert_doc_output(doc)
-                
+            if i % 1000 == 0:
+                self.save_outputs()
+                self.list_of_insertion_op = []
+                self.list_of_insertion_sa = []
+            i+=1
+            
         self.save_outputs()
 
 

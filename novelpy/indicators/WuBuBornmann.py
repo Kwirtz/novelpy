@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 from novelpy.utils.run_indicator_tools import create_output
 import tqdm
+import os
+import glob
 # import dask.dataframe as dd
 
 class Disruptiveness(create_output):
@@ -45,7 +47,7 @@ class Disruptiveness(create_output):
         self.client_name = client_name
         self.db_name = db_name
         self.collection_name = collection_name
-        
+
 
         create_output.__init__(
             self,
@@ -65,9 +67,11 @@ class Disruptiveness(create_output):
                 self.collection_output.create_index([ (self.id_variable,1) ])
         else:
             self.tomongo = False
+            self.path_output = "Result/Disruptiveness"
+            if not os.path.exists(self.path_output):
+                        os.makedirs(self.path_output)
 
-
-    def get_citation_network(self,path2citnet):
+    def get_citation_network(self):
         """
         
         Description
@@ -86,10 +90,15 @@ class Disruptiveness(create_output):
             Citation network indexed by pmid and cited reference.
 
         """
-        citation_network = pd.read_json(path2citnet,
-                                        dtype={self.id_variable:'uint32',
-                                               self.refs_list_variable:'uint32',
-                                               self.year_variable:'uint16'})
+        files = glob.glob(r'Data\docs\Citation_net_sample\*.json')
+        citation_network = pd.DataFrame()
+        for file in files:
+            temp = pd.read_json(file,
+                                dtype={self.id_variable:'uint32',
+                                       self.refs_list_variable:'uint32',
+                                       self.year_variable:'uint16'})
+            citation_network = pd.concat([citation_network,temp])
+
         # citation_network = dd.from_pandas(citation_network,npartitions = 8)                                                        
         citation_network = citation_network.dropna(subset=[self.refs_list_variable])
         citation_network = citation_network[citation_network[self.year_variable] != '']\
@@ -229,10 +238,17 @@ class Disruptiveness(create_output):
             except Exception as e:
                 print(e)
         else:
-            return {focal_paper_id:disruptiveness_indicators}
+            return {self.id_variable:focal_paper_id,
+                    'disruptiveness':disruptiveness_indicators['disruptiveness']}
 
     def get_indicators(self,parallel = False):
         self.get_item_paper()
+        if not self.tomongo:
+            print("Load citation network ...")  
+            self.get_citation_network()
+            print("Citation network loaded !")     
+
+        print('Getting score per paper ...')  
         if parallel:
             Parallel(n_jobs=30)(delayed(self.compute_scores)(
                         focal_paper_id = idx,
@@ -242,14 +258,20 @@ class Disruptiveness(create_output):
                         db_name = self.db_name,
                         collection_name = self.collection_name,
                         collection2update = 'output')
-            for idx in tqdm.tqdm(list(companion.papers_items)))
+            for idx in tqdm.tqdm(list(self.papers_items)))
         else:    
+            list_of_insertion = []
             for idx in tqdm.tqdm(list(self.papers_items)):
-                self.compute_scores(
+                paper_score = self.compute_scores(
                     focal_paper_id = idx,
                     focal_paper_refs = self.papers_items[idx],
                     tomongo = self.tomongo,
                     client_name = self.client_name, 
                     db_name = self.db_name,
                     collection_name = self.collection_name,
-                    collection2update = 'output') 
+                    collection2update = 'output')
+                list_of_insertion.append(paper_score)
+            if not self.tomongo:
+                with open(self.path_output + "/{}.json".format(self.focal_year), 'w') as outfile:
+                    json.dump(list_of_insertion, outfile)
+        print("Done !")     
