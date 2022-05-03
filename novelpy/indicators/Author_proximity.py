@@ -9,6 +9,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 import json 
 import os
 import bson
+import math
 
 def cosine_similarity_dist(n,doc_mat):
     """
@@ -61,7 +62,7 @@ def med_sd_mean(dist_list):
     return {
         'mean' : np.mean(dist_list),
         'sd' : np.std(dist_list),
-        'percentiles' : get_percentiles(dist_list),
+        'median' : np.median(dist_list),
         'nb_comb' : len(dist_list)}
 
 def intra_cosine_similarity(items,
@@ -179,17 +180,17 @@ class Author_proximity(Dataset):
         if self.infos:
             for ent in self.entity:
                 if ent in self.scores_infos:
-                    self.scores_infos[ent][0].update({self.id_variable: doc[self.id_variable]})
-                    self.scores_infos[ent][1].update({self.id_variable: doc[self.id_variable]})
-                    self.list_of_insertion_sa.append(self.scores_infos[ent][0])
-                    self.list_of_insertion_sa.append(self.scores_infos[ent][1])
+                    for i in range(len(self.scores_infos[ent])):
+                        self.scores_infos[ent][i].update({self.id_variable: doc[self.id_variable]})
+                        self.list_of_insertion_sa.append(self.scores_infos[ent][i])
                     
             if self.client_name:
-                self.list_of_insertion_op.append(
-                    pymongo.UpdateOne({self.id_variable: doc[self.id_variable]},
-                                      {'$set': {'Authors_poximity': self.infos}},
-                                      upsert = True)
-                    )
+                for ent in self.infos:
+                    self.list_of_insertion_op.append(
+                        pymongo.UpdateOne({self.id_variable: doc[self.id_variable]},
+                                          {'$set': {ent: self.infos[ent]}},
+                                          upsert = True)
+                        )
                 self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
             else:
                 self.list_of_insertion_op.append(
@@ -210,9 +211,9 @@ class Author_proximity(Dataset):
 
         """
         if self.client_name:
-            if "output" not in self.db.list_collection_names():
-                print("Init output collection with index on id_variable ...")
-                self.collection_output = self.db["output"]
+            if "output_aut_comb" not in self.db.list_collection_names():
+                print("Init output_aut_comb collection with index on id_variable ...")
+                self.collection_output = self.db["output_aut_comb"]
                 self.collection_output.create_index([ (self.id_variable,1) ])
             else:
                 self.collection_output = self.db["output"]
@@ -224,7 +225,12 @@ class Author_proximity(Dataset):
                 self.collection_output_aut_scores = self.db["output_aut_scores"]
                 
             if self.list_of_insertion_op: 
-                self.db['output'].bulk_write(self.list_of_insertion_op)
+                try:
+                    self.db['output_aut_comb'].bulk_write(self.list_of_insertion_op)
+                except:
+                    file_object = open(self.path_output+'/{}.txt'.format(self.focal_year), 'a')
+                    file_object.write(self.i)
+                    file_object.close()
             if self.list_of_insertion_sa: 
                 self.db['output_aut_scores'].insert_many(self.list_of_insertion_sa)
         else:
@@ -262,13 +268,28 @@ class Author_proximity(Dataset):
                 'share_nb_aut_captured': self.nb_aut/self.true_nb_aut}
             }
         
-        scores = [{'entity':ent,
-                    'type': 'intra',
-                  'score_array':self.intra_authors_dist[ent]},
-                  {'entity':ent,
-                    'type': 'inter',
-                  'score_array':self.inter_authors_dist[ent]}
-                  ]
+        dist_ = {'intra':self.intra_authors_dist,
+                'inter':self.inter_authors_dist}
+
+        scores = []
+        for type_ in dist_:
+            score = {'entity':ent,
+                    'type': type_,
+                    'score_array':dist_[type_][ent]}
+
+            len_ = len(dist_[type_][ent])
+            if len_ > 100000:
+                nb_split = math.ceil(len_/100000)
+                for i in range(nb_split):
+                    from_ = i*100000
+                    to_ = (i+1)*100000-1 if (i+1)*100000-1  < len_-1 else len_
+                    score = {'entity':ent,
+                            'type': type_,
+                            'score_array':dist_[type_][ent][from_:to_]}
+                    scores.append(score)
+            else:
+                scores.append(score)
+
         self.infos.update(authors_novelty)
         self.scores_infos.update({ent:scores})
 
@@ -356,7 +377,7 @@ class Author_proximity(Dataset):
                 aut_dist = intra_cosine_similarity(items,
                                                    n)
                 self.authors_info_percentiles[ent] += [{
-                    str(self.aut_id_variable):str(auth_id),'stats':med_sd_mean(aut_dist)}]
+                    str(self.aut_id_variable):auth_id,'stats':med_sd_mean(aut_dist)}]
                 self.intra_authors_dist[ent] += aut_dist
     
     def get_intra_dist(self,
@@ -418,7 +439,7 @@ class Author_proximity(Dataset):
                 
                 # get percentiles
                 self.authors_infos_dist[ent] += [{
-                    'ids' : '{}_{}'.format(id_i,id_j),
+                    'ids' : [id_i,id_j],
                     'stats': med_sd_mean(temp_list)
                     }]
                     
@@ -443,9 +464,10 @@ class Author_proximity(Dataset):
         
         self.init_doc_dict()
         self.get_intra_dist(doc)
+        self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
 
         for ent in self.entity:
-            
+            self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
             if len(self.intra_authors_dist[ent]) > 0:
                 self.nb_aut = len(self.all_aut_ids[ent])
                 
@@ -468,17 +490,17 @@ class Author_proximity(Dataset):
         self.list_of_insertion_op = []
         self.list_of_insertion_sa = []
          
-        i = 0 
+        self.i = 0 
         for doc in tqdm.tqdm(self.docs):
             if doc[self.aut_list_variable]: 
                 self.compute_score(doc)
                 self.insert_doc_output(doc)
-            if i % 1000 == 0:
+            if self.i % 1000 == 0:
                 self.save_outputs()
                 self.list_of_insertion_op = []
                 self.list_of_insertion_sa = []
-            i+=1
-            
+
+            self.i+=1
         self.save_outputs()
 
 
