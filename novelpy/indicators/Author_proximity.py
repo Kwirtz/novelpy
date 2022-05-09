@@ -153,6 +153,10 @@ class Author_proximity(Dataset):
         None.
 
         """
+        try:
+            self.last_i = int(open(self.path_output+'/{}failsafe.txt'.format(self.focal_year), 'r').readline())
+        except:
+            self.last_i = 0
         if self.client_name:
             self.session = self.client.start_session()
             self.docs = self.collection.find({
@@ -187,9 +191,9 @@ class Author_proximity(Dataset):
             if self.client_name:
                 for ent in self.infos:
                     self.list_of_insertion_op.append(
-                        pymongo.UpdateOne({self.id_variable: doc[self.id_variable]},
-                                          {'$set': {ent: self.infos[ent]}},
-                                          upsert = True)
+                        #pymongo.UpdateOne(
+                            {self.id_variable: doc[self.id_variable], ent: self.infos[ent]}
+                                          #upsert = True)
                         )
                 self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
             else:
@@ -226,10 +230,13 @@ class Author_proximity(Dataset):
                 
             if self.list_of_insertion_op: 
                 try:
-                    self.db['output_aut_comb'].bulk_write(self.list_of_insertion_op)
+                    self.db['output_aut_comb'].insert_many(self.list_of_insertion_op)
+                    last_i_file = open(self.path_output+'/{}failsafe.txt'.format(self.focal_year), 'w')
+                    last_i_file.write(str(self.i))
+                    last_i_file.close()
                 except:
                     file_object = open(self.path_output+'/{}.txt'.format(self.focal_year), 'a')
-                    file_object.write(self.i)
+                    file_object.write(str(self.i))
                     file_object.close()
             if self.list_of_insertion_sa: 
                 self.db['output_aut_scores'].insert_many(self.list_of_insertion_sa)
@@ -492,13 +499,14 @@ class Author_proximity(Dataset):
          
         self.i = 0 
         for doc in tqdm.tqdm(self.docs):
-            if doc[self.aut_list_variable]: 
-                self.compute_score(doc)
-                self.insert_doc_output(doc)
-            if self.i % 1000 == 0:
-                self.save_outputs()
-                self.list_of_insertion_op = []
-                self.list_of_insertion_sa = []
+            if self.i > self.last_i:
+                if doc[self.aut_list_variable]: 
+                    self.compute_score(doc)
+                    self.insert_doc_output(doc)
+                if self.i % 1000 == 0:
+                    self.save_outputs()
+                    self.list_of_insertion_op = []
+                    self.list_of_insertion_sa = []
 
             self.i+=1
         self.save_outputs()
