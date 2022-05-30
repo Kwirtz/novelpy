@@ -444,7 +444,7 @@ class Author_proximity(Dataset):
                     for j_item in self.authors_infos[ent][j]:
                         j_items.append(j_item)
 
-                inter_paper_dist = (1-cdist(np.array(items),np.array(j_items), metric='cosine')).tolist()
+                inter_paper_dist = cdist(np.array(items),np.array(j_items), metric='cosine').tolist()
                 inter_paper_dist = [item for sublist in inter_paper_dist for item in sublist]
                 temp_list += inter_paper_dist
                 self.inter_authors_dist[ent] += inter_paper_dist
