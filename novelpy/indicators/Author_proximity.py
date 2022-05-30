@@ -10,6 +10,7 @@ import json
 import os
 import bson
 import math
+from scipy.spatial.distance import cdist
 
 def cosine_similarity_dist(n,doc_mat):
     """
@@ -435,15 +436,19 @@ class Author_proximity(Dataset):
                 temp_list = []
                 id_j = self.all_aut_ids[ent][j]
                 # take each paper
+                items = []
                 for item in self.authors_infos[ent][i]:
                     # compare it with all papers of author j
+                    items.append(item)
+                    j_items = []
                     for j_item in self.authors_infos[ent][j]:
-                        comb = np.array([item,j_item])
-                        inter_paper_dist = cosine_similarity(comb)[0,1]
-                        
-                        temp_list.append(inter_paper_dist)
-                        self.inter_authors_dist[ent].append(inter_paper_dist)
-                
+                        j_items.append(j_item)
+
+                inter_paper_dist = (1-cdist(np.array(items),np.array(j_items), metric='cosine')).tolist()
+                inter_paper_dist = [item for sublist in inter_paper_dist for item in sublist]
+                temp_list += inter_paper_dist
+                self.inter_authors_dist[ent] += inter_paper_dist
+        
                 # get percentiles
                 self.authors_infos_dist[ent] += [{
                     'ids' : [id_i,id_j],
