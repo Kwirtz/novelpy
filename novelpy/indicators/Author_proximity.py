@@ -139,8 +139,8 @@ class Author_proximity(Dataset):
             id_variable = id_variable,
             year_variable = year_variable,
             focal_year = focal_year)
-    
-        self.collection_authors_years = self.db['{}_year_embedding'.format(self.aut_id_variable)]  
+        
+        self.collection_authors_years = self.db['aid_embedding'] 
         self.path_output = "Data/Result/Author_proximity/"
         if not os.path.exists(self.path_output):
             os.makedirs(self.path_output)

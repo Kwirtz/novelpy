@@ -54,9 +54,9 @@ year = int(args.year)
 from novelpy.indicators.Author_proximity import Author_proximity
 
 # for year in range(2000,2011):
-author =  Author_proximity(client_name = 'mongodb://Pierre:ilovebeta67@localhost:27017/',
-                     db_name = 'novelty_final',
-                     collection_name = 'articles',
+author =  Author_proximity(client_name = 'mongodb://localhost:27017',
+                     db_name = 'novelty',
+                     collection_name = 'authors',
                      id_variable = 'PMID',
                      year_variable = 'year',
                      aut_list_variable = 'a02_authorlist',
