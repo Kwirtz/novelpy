@@ -128,3 +128,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 Paper/mindmap.png
+*.json
+*.txt
+authors_sample.zip
