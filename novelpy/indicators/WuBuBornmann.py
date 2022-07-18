@@ -14,6 +14,7 @@ class Disruptiveness(create_output):
                 focal_year,
                 id_variable,
                 refs_list_variable,
+                cited_by_list_variable,
                 year_variable,
                 client_name = None,
                 db_name = None):
@@ -43,6 +44,7 @@ class Disruptiveness(create_output):
         self.focal_year = focal_year
         self.id_variable = id_variable 
         self.refs_list_variable = refs_list_variable
+        self.cited_by_list_variable = cited_by_list_variable
         self.year_variable = year_variable
         self.client_name = client_name
         self.db_name = db_name
@@ -56,7 +58,7 @@ class Disruptiveness(create_output):
             collection_name = collection_name,
             id_variable = id_variable,
             year_variable = year_variable,
-            variable = refs_list_variable,
+            variable = 'citation_network',
             focal_year = focal_year)
 
         if client_name:
@@ -115,6 +117,7 @@ class Disruptiveness(create_output):
     def compute_scores(self,
                        focal_paper_id, 
                        focal_paper_refs,
+                       focal_paper_cits,
                        tomongo,
                        **kwargs):
         """
@@ -148,12 +151,19 @@ class Disruptiveness(create_output):
             collection = db[kwargs['collection_name']]
             focal_paper_id = int(focal_paper_id)
             
-            docs =[doc for doc in collection.find({self.refs_list_variable:focal_paper_id})]
+            # papers that cites our focal paper
+            docs = [collection.find_one({self.id_variable:citer})[0] for citer in focal_paper_cits]
+
+            #docs =[doc for doc in collection.find({self.refs_list_variable:focal_paper_id})]
             citing_focal_paper = pd.DataFrame(docs)
             
-            docs =[doc for doc in collection.find({self.refs_list_variable:{'$in':focal_paper_refs},
-                                                   self.id_variable:{'$ne':focal_paper_id},
-                                                   self.year_variable:{'$gt':(self.focal_year-1)}})]
+
+            # papers that cite refs from focal paper
+
+            docs = [collection.find_one({self.id_variable:ref})[0] for ref in focal_paper_refs]
+            #docs =[doc for doc in collection.find({self.refs_list_variable:{'$in':focal_paper_refs},
+            #                                       self.id_variable:{'$ne':focal_paper_id},
+            #                                       self.year_variable:{'$gt':(self.focal_year-1)}})]
             
             citing_ref_from_focal_paper = pd.DataFrame(docs)
     
@@ -252,7 +262,8 @@ class Disruptiveness(create_output):
         if parallel:
             Parallel(n_jobs=30)(delayed(self.compute_scores)(
                         focal_paper_id = idx,
-                        focal_paper_refs = self.papers_items[idx],
+                        focal_paper_refs = self.papers_items[idx][self.refs_list_variable],
+                        focal_paper_cits = self.papers_items[idx][self.cited_by_list_variable],
                         tomongo = self.tomongo,
                         client_name = self.client_name, 
                         db_name = self.db_name,
@@ -264,7 +275,8 @@ class Disruptiveness(create_output):
             for idx in tqdm.tqdm(list(self.papers_items)):
                 paper_score = self.compute_scores(
                     focal_paper_id = idx,
-                    focal_paper_refs = self.papers_items[idx],
+                    focal_paper_refs = self.papers_items[idx]['citation_network'][self.refs_list_variable],
+                    focal_paper_cits = self.papers_items[idx]['citation_network'][self.cited_by_list_variable],
                     tomongo = self.tomongo,
                     client_name = self.client_name, 
                     db_name = self.db_name,

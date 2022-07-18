@@ -139,19 +139,20 @@ class Dataset:
         
         # dict of every docs. Each one contains doc_items
         self.papers_items = dict()
-        
+
+
         for doc in tqdm.tqdm(self.docs):
-            doc_items = list()
-            for item in doc[self.variable]:
-                if self.sub_variable:
+            if self.sub_variable:
+                doc_items = list()
+                for item in doc[self.variable]:
                     doc_item = self.get_item_infos(item)
                     if doc_item:
                         doc_items.append(doc_item)
-                else:
-                    if doc:
-                        doc_items.append(item)
+
+                self.papers_items.update({int(doc[self.id_variable]):doc_items})  
+            else:
+                self.papers_items.update({int(doc[self.id_variable]):doc[self.variable]})
                     
-            self.papers_items.update({int(doc[self.id_variable]):doc_items})  
 
     def sum_cooc_matrix(self,window):
         """
