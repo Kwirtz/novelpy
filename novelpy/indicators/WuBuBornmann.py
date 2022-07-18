@@ -102,7 +102,6 @@ class Disruptiveness(create_output):
                        focal_paper_id, 
                        focal_paper_refs,
                        focal_paper_cits,
-                       tomongo,
                        **kwargs):
         """
 
@@ -129,7 +128,7 @@ class Disruptiveness(create_output):
 
         """
   
-        if tomongo:
+        if self.tomongo:
             client = pymongo.MongoClient(kwargs['client_name'])
             db = client[kwargs['db_name']]
             collection = db[kwargs['collection_name']]
@@ -238,7 +237,7 @@ class Disruptiveness(create_output):
                 }
             }
         
-        if tomongo:
+        if self.tomongo:
             try:
                 query = { self.id_variable: focal_paper_id}
                 newvalue =  { '$set': disruptiveness_indicators}
@@ -399,11 +398,17 @@ class Disruptiveness(create_output):
         else:    
             list_of_insertion = []
             for idx in tqdm.tqdm(list(self.papers_items)):
+                if self.tomongo:
+                    focal_paper_refs = self.papers_items[idx][self.refs_list_variable]
+                    focal_paper_cits = self.papers_items[idx][self.cits_list_variable]
+                else:
+                    focal_paper_refs = self.papers_items[idx]['citations'][self.refs_list_variable]
+                    focal_paper_cits = self.papers_items[idx]['citations'][self.cits_list_variable]
+
                 paper_score = self.compute_scores(
                     focal_paper_id = idx,
-                    focal_paper_refs = self.papers_items[idx]['citations'][self.refs_list_variable],
-                    focal_paper_cits = self.papers_items[idx]['citations'][self.cits_list_variable],
-                    tomongo = self.tomongo,
+                    focal_paper_refs = focal_paper_refs,
+                    focal_paper_cits = focal_paper_cits,
                     client_name = self.client_name, 
                     db_name = self.db_name,
                     collection_name = self.collection_name,
