@@ -52,8 +52,8 @@ class create_citation_network():
             docs = self.collection.find({"refs_pmid_wos":{"$exists":1}})
             for doc in tqdm.tqdm(docs):
                 refs = doc[self.variable]
-                cited_by = self.pmid2citedby[doc["PMID"]]
-                list_of_insertion.append(pymongo.UpdateOne({self.id_variable: int(doc["PMID"])},
+                cited_by = self.pmid2citedby[doc[self.id_variable]]
+                list_of_insertion.append(pymongo.UpdateOne({self.id_variable: int(doc[self.id_variable])},
                                                            {'$set': {"citations": {"refs": refs,
                                                                                    "cited_by":cited_by}}},
                                                            upsert = False))
@@ -72,7 +72,7 @@ class create_citation_network():
                     gros_dict[doc[self.id_variable]]["year"] = doc["year"]
                     gros_dict[doc[self.id_variable]]["citations"] = {}
                     gros_dict[doc[self.id_variable]]["citations"]["refs"] = doc[self.variable]
-                    gros_dict[doc[self.id_variable]]["citations"]["cited_by"] = self.pmid2citedby[doc["PMID"]]
+                    gros_dict[doc[self.id_variable]]["citations"]["cited_by"] = self.pmid2citedby[doc[self.id_variable]]
             with open('Data\docs\{}.pkl'.format(self.collection_name), 'wb') as file:     
                     # A new file will be created
                 pickle.dump(gros_dict, file)       
