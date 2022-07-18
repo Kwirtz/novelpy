@@ -135,65 +135,65 @@ class Disruptiveness(create_output):
             focal_paper_id = int(focal_paper_id)
             
             # papers that cites our focal paper
-            docs = []
+            
+            citing_focal_paper = dict()
+            ids = set()
             for citer in focal_paper_cits:
                 doc = collection.find_one({self.id_variable:citer})
-                docs.append({self.id_variable:doc[self.id_variable],
-                             'refs': doc['citations'][self.refs_list_variable]})
-
-            citing_focal_paper = pd.DataFrame(docs)
+                if 'citations' in doc:
+                    citing_focal_paper.update({doc[self.id_variable]: doc['citations'][self.refs_list_variable]})
+                    ids.update([citer])
+            
             
             # papers that cite refs from focal paper
 
-            docs = []
+            citing_ref_from_focal_paper = dict()
+            ids = set()
             for ref in focal_paper_refs:
                 doc = collection.find_one({self.id_variable:ref})
-                for citing_paper in doc['citations'][self.cits_list_variable]:
-                    ref_citers = collection.find_one({self.id_variable:citing_paper})
-                    if ref_citers[self.id_variable] != focal_paper_id:
-                        docs.append({self.id_variable:ref_citers[self.id_variable],
-                                     'refs': ref_citers['citations'][self.refs_list_variable]})
+                if 'citations' in doc.keys():
+                    for citing_paper in doc['citations'][self.cits_list_variable]:
+                         if all([citing_paper != focal_paper_id,
+                            citing_paper not in ids,
+                            doc['year'] >= self.focal_year]):
+                                 
+                            ref_citers = collection.find_one({self.id_variable:citing_paper})
+                            if 'citations' in ref_citers.keys():
+                                if ref_citers[self.id_variable] != focal_paper_id:
+                                    citing_ref_from_focal_paper.update({
+                                        ref_citers[self.id_variable]: ref_citers['citations'][self.refs_list_variable]
+                                    })
+                                    ids.update([ref_citers[self.id_variable]])
 
             
-            citing_ref_from_focal_paper = pd.DataFrame(docs)
         else:
             
             # papers that cites our focal paper
-            docs = []
+            citing_focal_paper = dict()
+            ids = set()
             for citer in focal_paper_cits:
                 #try:
-                doc = self.citation_network[citer]
-                docs.append({self.id_variable:citer,
-                             'refs': doc['citations'][self.refs_list_variable]})
-                #except Exception as e:
-                #    pass
-            citing_focal_paper = pd.DataFrame(docs)
+                if citer not in ids:
+                    doc = self.citation_network[citer]
+                    citing_focal_paper.update({citer: doc['citations'][self.refs_list_variable]})
+                    ids.update([citer])
             
             # papers that cite refs from focal paper
-
-            docs = []
+            citing_ref_from_focal_paper = dict()
+            ids = set()
             for ref in focal_paper_refs:
-                #try:
                 citing_ref_from_fp = self.citation_network[ref]['citations'][self.cits_list_variable]
                 for citing_paper in citing_ref_from_fp :
-                    if citing_paper != focal_paper_id:
+
+                    if all([citing_paper != focal_paper_id,
+                            citing_paper not in ids,
+                            citing_paper_doc['year'] >= self.focal_year]):
+                        citing_paper_doc = self.citation_network[citing_paper]
                         citers_refs = self.citation_network[citing_paper]['citations'][self.refs_list_variable]
-                        docs.append({self.id_variable:citing_paper,
-                                     'refs': citers_refs})
+                        citing_ref_from_focal_paper.update({citing_paper: citers_refs})
+                        ids.update([citing_paper])
 
-                #except:
-                #    pass
-            
-            citing_ref_from_focal_paper = pd.DataFrame(docs)
-        
-        
-        citing_focal_paper = {
-            row[self.id_variable]:row[self.refs_list_variable] for index, row in citing_focal_paper.iterrows()
-            }
 
-        citing_ref_from_focal_paper = {
-            row[self.id_variable]:row[self.refs_list_variable] for index, row in citing_ref_from_focal_paper.iterrows()
-            }
         # papers that cite the focal paper that also cite reference from the focal paper
         J = set(citing_focal_paper.keys()).intersection(citing_ref_from_focal_paper.keys())
         
