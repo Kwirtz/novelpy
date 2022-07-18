@@ -61,7 +61,7 @@ class Disruptiveness(create_output):
             collection_name = collection_name,
             id_variable = id_variable,
             year_variable = year_variable,
-            variable = refs_list_variable,
+            variable = 'citations',
             focal_year = focal_year)
 
         if client_name:
@@ -165,7 +165,7 @@ class Disruptiveness(create_output):
                 #try:
                 doc = self.citation_network[citer]
                 docs.append({self.id_variable:citer,
-                             'refs': self.citation_network[citer]['citations'][self.refs_list_variable]})
+                             'refs': doc['citations'][self.refs_list_variable]})
                 #except Exception as e:
                 #    pass
             citing_focal_paper = pd.DataFrame(docs)
@@ -175,12 +175,12 @@ class Disruptiveness(create_output):
             docs = []
             for ref in focal_paper_refs:
                 #try:
-                doc = self.citation_network[ref]
-                for citing_paper in doc['citations'][self.cits_list_variable]:
-                    ref_citers = self.citation_network[citing_paper]
-                    if ref_citers[self.id_variable] != focal_paper_id:
-                        docs.append({self.id_variable:ref_citers[self.id_variable],
-                                     'refs': ref_citers['citations'][self.refs_list_variable]})
+                citing_ref_from_fp = self.citation_network[ref]['citations'][self.cits_list_variable]
+                for citing_paper in citing_ref_from_fp :
+                    if citing_paper != focal_paper_id:
+                        citers_refs = self.citation_network[citing_paper]['citations'][self.refs_list_variable]
+                        docs.append({self.id_variable:citing_paper,
+                                     'refs': citers_refs})
 
                 #except:
                 #    pass
