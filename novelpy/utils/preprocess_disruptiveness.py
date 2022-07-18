@@ -82,26 +82,9 @@ test = create_citation_network(client_name='mongodb://Pierre:ilovebeta67@localho
                                id_variable = "PMID", variable = "refs_pmid_wos")
 """
 
-test = create_citation_network(collection_name = "Citation_net",
+test = create_citation_network(collection_name = "Citation_network",
                                id_variable = "PMID", variable = "refs_pmid_wos")
 
 test.pmid2citedby()
 test.update_db()
 
-
-
-
-
-pmid2citedby = defaultdict(list)
-files = glob.glob(r'Data\docs\{}\*.json'.format("Citation_net_sample"))
-for file in files:
-    with open(file, 'r') as f:
-        docs = json.load(f)
-    for doc in tqdm.tqdm(docs):
-        for ref in doc["refs_pmid_wos"]:
-            pmid2citedby[ref].append(doc["PMID"])
-
-
-with open('Data\docs\Citation_net_sample.pkl', 'rb') as file:     
-        # A new file will be created
-    data = pickle.load(file)       
