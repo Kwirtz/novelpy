@@ -100,7 +100,8 @@ class Embedding:
 
     def init_dbs_centroid(self,
                  collection_articles,
-                 collection_embedding):
+                 collection_embedding,
+                 year_range):
         """
         
 
@@ -118,7 +119,10 @@ class Embedding:
         """
         
         if self.client_name:
-            self.all_years = self.db[collection_articles].distinct(self.year_variable) 
+            if year_range == None:
+                self.all_years = self.db[collection_articles].distinct(self.year_variable) 
+            else:
+                self.all_years = year_range
             if collection_embedding not in self.db.list_collection_names():
                 print("Init embedding collection with index on id_variable ...")
                 self.collection_embedding = self.db[collection_embedding]
@@ -245,7 +249,8 @@ class Embedding:
         
     def get_articles_centroid(self,
                               collection_articles = None,
-                              collection_embedding = None):
+                              collection_embedding = None,
+                              year_range = None):
         """
         Description
         -----------
@@ -264,7 +269,8 @@ class Embedding:
         self.nlp = spacy.load(self.pretrain_path)
         #Create folder or mongo database
         self.init_dbs_centroid(collection_articles,
-                      collection_embedding)
+                      collection_embedding,
+                      year_range)
         
         for year in tqdm.tqdm(self.all_years):
             self.load_data_centroid(collection_articles,
@@ -277,12 +283,12 @@ class Embedding:
                 self.insert_embedding_centroid(doc)
                 self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
                 
-               
-            if self.client_name:
-                self.collection_embedding.bulk_write(self.list_of_insertion)
-            else: 
-                with open("Data/docs/{}/{}.json".format(collection_embedding,year), 'w') as outfile:
-                    json.dump(self.list_of_insertion, outfile)
+            if self.list_of_insertion:
+                if self.client_name:
+                    self.collection_embedding.bulk_write(self.list_of_insertion)
+                else: 
+                    with open("Data/docs/{}/{}.json".format(collection_embedding,year), 'w') as outfile:
+                        json.dump(self.list_of_insertion, outfile)
 
 
 
