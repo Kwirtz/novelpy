@@ -184,16 +184,16 @@ class Disruptiveness(create_output):
             ids = set()
             for ref in focal_paper_refs:
                 try:
-                citing_ref_from_fp = self.citation_network[ref]['citations'][self.cits_list_variable]
-                for citing_paper in citing_ref_from_fp :
+                    citing_ref_from_fp = self.citation_network[ref]['citations'][self.cits_list_variable]
+                    for citing_paper in citing_ref_from_fp :
 
-                    if all([citing_paper != focal_paper_id,
-                            citing_paper not in ids]):
-                        citing_paper_doc = self.citation_network[citing_paper]
-                        if citing_paper_doc['year'] >= self.focal_year:
-                            citers_refs = self.citation_network[citing_paper]['citations'][self.refs_list_variable]
-                            citing_ref_from_focal_paper.update({citing_paper: citers_refs})
-                            ids.update([citing_paper])
+                        if all([citing_paper != focal_paper_id,
+                                citing_paper not in ids]):
+                            citing_paper_doc = self.citation_network[citing_paper]
+                            if citing_paper_doc['year'] >= self.focal_year:
+                                citers_refs = self.citation_network[citing_paper]['citations'][self.refs_list_variable]
+                                citing_ref_from_focal_paper.update({citing_paper: citers_refs})
+                                ids.update([citing_paper])
                 except:
                     continue
 
