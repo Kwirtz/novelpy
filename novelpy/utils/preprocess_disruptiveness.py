@@ -27,7 +27,7 @@ class create_citation_network():
 
 
         
-    def pmid2citedby(self):
+    def id2citedby(self):
         
         self.pmid2citedby = defaultdict(list)
         if self.client_name:
