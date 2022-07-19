@@ -10,7 +10,7 @@ classifiers = [
  
 setup(
   name='novelpy',
-  version='1.0',
+  version='1.1',
   description='Calculate novelty indicators',
   long_description=open('README.txt').read() + '\n\n' + open('CHANGELOG.txt').read(),
   url='',  
