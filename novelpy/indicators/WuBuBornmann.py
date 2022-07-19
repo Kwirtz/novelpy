@@ -140,10 +140,11 @@ class Disruptiveness(create_output):
             ids = set()
             for citer in focal_paper_cits:
                 doc = collection.find_one({self.id_variable:citer})
-                if 'citations' in doc:
-                    citing_focal_paper.update({doc[self.id_variable]: doc['citations'][self.refs_list_variable]})
-                    ids.update([citer])
-            
+                if doc:
+                    if 'citations' in doc:
+                        citing_focal_paper.update({doc[self.id_variable]: doc['citations'][self.refs_list_variable]})
+                        ids.update([citer])
+
             
             # papers that cite refs from focal paper
 
@@ -151,21 +152,21 @@ class Disruptiveness(create_output):
             ids = set()
             for ref in focal_paper_refs:
                 doc = collection.find_one({self.id_variable:ref})
-                if 'citations' in doc.keys():
-                    for citing_paper in doc['citations'][self.cits_list_variable]:
-                         if all([citing_paper != focal_paper_id,
-                            citing_paper not in ids,
-                            doc['year'] >= self.focal_year]):
-                                 
-                            ref_citers = collection.find_one({self.id_variable:citing_paper})
-                            if 'citations' in ref_citers.keys():
-                                if ref_citers[self.id_variable] != focal_paper_id:
-                                    citing_ref_from_focal_paper.update({
-                                        ref_citers[self.id_variable]: ref_citers['citations'][self.refs_list_variable]
-                                    })
-                                    ids.update([ref_citers[self.id_variable]])
+                if doc:
+                    if 'citations' in doc:
+                        for citing_paper in doc['citations'][self.cits_list_variable]:
+                             if all([citing_paper != focal_paper_id,
+                                citing_paper not in ids,
+                                doc['year'] >= self.focal_year]):
 
-            
+                                ref_citers = collection.find_one({self.id_variable:citing_paper})
+                                if ref_citers:
+                                    if 'citations' in ref_citers.keys():
+                                        if ref_citers[self.id_variable] != focal_paper_id:
+                                            citing_ref_from_focal_paper.update({
+                                                ref_citers[self.id_variable]: ref_citers['citations'][self.refs_list_variable]
+                                            })
+                                            ids.update([ref_citers[self.id_variable]])
         else:
             
             # papers that cites our focal paper
@@ -186,12 +187,12 @@ class Disruptiveness(create_output):
                 for citing_paper in citing_ref_from_fp :
 
                     if all([citing_paper != focal_paper_id,
-                            citing_paper not in ids,
-                            citing_paper_doc['year'] >= self.focal_year]):
+                            citing_paper not in ids]):
                         citing_paper_doc = self.citation_network[citing_paper]
-                        citers_refs = self.citation_network[citing_paper]['citations'][self.refs_list_variable]
-                        citing_ref_from_focal_paper.update({citing_paper: citers_refs})
-                        ids.update([citing_paper])
+                        if citing_paper_doc['year'] >= self.focal_year:
+                            citers_refs = self.citation_network[citing_paper]['citations'][self.refs_list_variable]
+                            citing_ref_from_focal_paper.update({citing_paper: citers_refs})
+                            ids.update([citing_paper])
 
 
         # papers that cite the focal paper that also cite reference from the focal paper
@@ -257,6 +258,7 @@ class Disruptiveness(create_output):
                            tomongo,
                            focal_year,
                            refs_list_variable,
+                           cits_list_variable,
                            id_variable,
                            year_variable,
                            **kwargs):
@@ -285,36 +287,42 @@ class Disruptiveness(create_output):
 
             """
 
-            if tomongo:
-                client = pymongo.MongoClient(kwargs['client_name'])
-                db = client[kwargs['db_name']]
-                collection = db[kwargs['collection_name']]
-                focal_paper_id = int(focal_paper_id)
+            client = pymongo.MongoClient(kwargs['client_name'])
+            db = client[kwargs['db_name']]
+            collection = db[kwargs['collection_name']]
+            focal_paper_id = int(focal_paper_id)
+            
+            # papers that cites our focal paper
+            
+            citing_focal_paper = dict()
+            ids = set()
+            for citer in focal_paper_cits:
+                doc = collection.find_one({id_variable:citer})
+                if 'citations' in doc:
+                    citing_focal_paper.update({doc[id_variable]: doc['citations'][refs_list_variable]})
+                    ids.update([citer])
+            
+            
+            # papers that cite refs from focal paper
 
-                # papers that cites our focal paper
-                #docs = [collection.find_one({self.id_variable:citer})[0] for citer in focal_paper_cits]
+            citing_ref_from_focal_paper = dict()
+            ids = set()
+            for ref in focal_paper_refs:
+                doc = collection.find_one({id_variable:ref})
+                if 'citations' in doc.keys():
+                    for citing_paper in doc['citations'][cits_list_variable]:
+                         if all([citing_paper != focal_paper_id,
+                            citing_paper not in ids,
+                            doc['year'] >= focal_year]):
+                                 
+                            ref_citers = collection.find_one({id_variable:citing_paper})
+                            if 'citations' in ref_citers.keys():
+                                if ref_citers[id_variable] != focal_paper_id:
+                                    citing_ref_from_focal_paper.update({
+                                        ref_citers[id_variable]: ref_citers['citations'][refs_list_variable]
+                                    })
+                                    ids.update([ref_citers[id_variable]])
 
-                docs =[doc for doc in collection.find({refs_list_variable:focal_paper_id})]
-                citing_focal_paper = pd.DataFrame(docs)
-
-                # papers that cite refs from focal paper
-
-                #docs = [collection.find_one({self.id_variable:ref})[0] for ref in focal_paper_refs]
-                #docs = [doc for doc in docs if doc[self.id_variable] != focal_paper_id]
-                docs =[doc for doc in collection.find({refs_list_variable:{'$in':focal_paper_refs},
-                                                       id_variable:{'$ne':focal_paper_id},
-                                                       year_variable:{'$gt':(focal_year-1)}})]
-
-                citing_ref_from_focal_paper = pd.DataFrame(docs)
-
-
-            citing_focal_paper = {
-                row[id_variable]:row[refs_list_variable] for index, row in citing_focal_paper.iterrows()
-                }
-
-            citing_ref_from_focal_paper = {
-                row[id_variable]:row[refs_list_variable] for index, row in citing_ref_from_focal_paper.iterrows()
-                }
             # papers that cite the focal paper that also cite reference from the focal paper
             J = set(citing_focal_paper.keys()).intersection(citing_ref_from_focal_paper.keys())
 
@@ -363,6 +371,7 @@ class Disruptiveness(create_output):
                     query = { id_variable: focal_paper_id}
                     newvalue =  { '$set': disruptiveness_indicators}
                     db[kwargs['collection2update']].update_one(query,newvalue,upsert = True)
+                    client.close()
                 except Exception as e:
                     print(e)
             else:
@@ -379,20 +388,23 @@ class Disruptiveness(create_output):
         print('Getting score per paper ...')  
         if parallel:
             if self.tomongo:
-                Parallel(n_jobs=10)(delayed(compute_scores_par)(
-                            focal_paper_id = idx,
-                            focal_paper_refs = self.papers_items[idx],#['citations'][self.refs_list_variable],
-                            focal_paper_cits = self.papers_items[idx],#['citations'][self.cits_list_variable],
-                            tomongo = self.tomongo,
-                            focal_year = self.focal_year,
-                            refs_list_variable = self.refs_list_variable,
-                            id_variable = self.id_variable,
-                            year_variable = self.year_variable,
-                            client_name = self.client_name, 
-                            db_name = self.db_name,
-                            collection_name = self.collection_name,
-                            collection2update = 'output')
-                for idx in tqdm.tqdm(list(self.papers_items)))
+                #Parallel(n_jobs=10)(delayed(compute_scores_par)(
+                for idx in tqdm.tqdm(list(self.papers_items)):
+                            compute_scores_par(
+                                focal_paper_id = idx,
+                                focal_paper_refs = self.papers_items[idx][self.refs_list_variable],
+                                focal_paper_cits = self.papers_items[idx][self.cits_list_variable],
+                                tomongo = self.tomongo,
+                                focal_year = self.focal_year,
+                                refs_list_variable = self.refs_list_variable,
+                                cits_list_variable = self.cits_list_variable,
+                                id_variable = self.id_variable,
+                                year_variable = self.year_variable,
+                                client_name = self.client_name, 
+                                db_name = self.db_name,
+                                collection_name = self.collection_name,
+                                collection2update = 'output')
+                #for idx in tqdm.tqdm(list(self.papers_items)))
             else:
                 print('Parallel computing only available with mongoDB')
         else:    
