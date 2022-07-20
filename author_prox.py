@@ -8,6 +8,9 @@ args = parser.parse_args()
 #skip_ = int(args.skip_)
 year = int(args.year)
 
+
+
+
 #with open(r"C:\Users\pierre\Documents\GitHub\Taxonomy-of-novelty\mongo_config.yaml", "r") as infile:
 #    pars = yaml.safe_load(infile)['PC_BETA']
 #
@@ -51,18 +54,21 @@ year = int(args.year)
 
 # print('references embedding created')
 
-from novelpy.indicators.Author_proximity import Author_proximity
+#from novelpy.indicators.Author_proximity import Author_proximity
 
 # for year in range(2000,2011):
-author =  Author_proximity(client_name = 'mongodb://localhost:27017',
-                     db_name = 'novelty',
-                     collection_name = 'authors',
-                     id_variable = 'PMID',
-                     year_variable = 'year',
-                     aut_list_variable = 'a02_authorlist',
-                     aut_id_variable = 'AID',
-                     entity = ['title','abstract'],
-                     focal_year = year,
-                     windows_size = 5)
+#author =  Author_proximity(client_name = 'mongodb://localhost:27017',
+#                     db_name = 'novelty',
+#                     collection_name = 'authors',
+#                     id_variable = 'PMID',
+#                     year_variable = 'year',
+#                     aut_list_variable = 'a02_authorlist',
+#                     aut_id_variable = 'AID',
+#                     entity = ['title','abstract'],
+#                    focal_year = year,
+#                     windows_size = 5)
     
-author.get_indicator()
+#author.get_indicator()
+
+
+#-----------------------------------------------------------------------
