@@ -27,7 +27,7 @@ class create_citation_network():
 
 
         
-    def pmid2citedby(self):
+    def id2citedby(self):
         
         self.pmid2citedby = defaultdict(list)
         if self.client_name:
@@ -73,18 +73,7 @@ class create_citation_network():
                     gros_dict[doc[self.id_variable]]["citations"] = {}
                     gros_dict[doc[self.id_variable]]["citations"]["refs"] = doc[self.variable]
                     gros_dict[doc[self.id_variable]]["citations"]["cited_by"] = self.pmid2citedby[doc[self.id_variable]]
-            with open('Data\docs\{}.pkl'.format(self.collection_name), 'wb') as file:     
+            with open('Data/docs/{}.pkl'.format(self.collection_name), 'wb') as file:     
                     # A new file will be created
                 pickle.dump(gros_dict, file)       
               
-"""
-test = create_citation_network(client_name='mongodb://Pierre:ilovebeta67@localhost:27017/',db_name="novelty_final", collection_name = "Citation_network",
-                               id_variable = "PMID", variable = "refs_pmid_wos")
-"""
-
-test = create_citation_network(collection_name = "Citation_network",
-                               id_variable = "PMID", variable = "refs_pmid_wos")
-
-test.pmid2citedby()
-test.update_db()
-

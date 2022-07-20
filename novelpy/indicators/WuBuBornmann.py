@@ -95,7 +95,7 @@ class Disruptiveness(create_output):
             Citation network indexed by pmid and cited reference.
 
         """
-        self.citation_network = pickle.load(open('Data/docs/Citation_network.pkl','rb'))
+        self.citation_network = pickle.load(open('Data/docs/{}.pkl'.format(self.collection_name),'rb'))
 
 
     def compute_scores(self,
@@ -183,16 +183,19 @@ class Disruptiveness(create_output):
             citing_ref_from_focal_paper = dict()
             ids = set()
             for ref in focal_paper_refs:
-                citing_ref_from_fp = self.citation_network[ref]['citations'][self.cits_list_variable]
-                for citing_paper in citing_ref_from_fp :
+                try:
+                    citing_ref_from_fp = self.citation_network[ref]['citations'][self.cits_list_variable]
+                    for citing_paper in citing_ref_from_fp :
 
-                    if all([citing_paper != focal_paper_id,
-                            citing_paper not in ids]):
-                        citing_paper_doc = self.citation_network[citing_paper]
-                        if citing_paper_doc['year'] >= self.focal_year:
-                            citers_refs = self.citation_network[citing_paper]['citations'][self.refs_list_variable]
-                            citing_ref_from_focal_paper.update({citing_paper: citers_refs})
-                            ids.update([citing_paper])
+                        if all([citing_paper != focal_paper_id,
+                                citing_paper not in ids]):
+                            citing_paper_doc = self.citation_network[citing_paper]
+                            if citing_paper_doc['year'] >= self.focal_year:
+                                citers_refs = self.citation_network[citing_paper]['citations'][self.refs_list_variable]
+                                citing_ref_from_focal_paper.update({citing_paper: citers_refs})
+                                ids.update([citing_paper])
+                except:
+                    continue
 
 
         # papers that cite the focal paper that also cite reference from the focal paper

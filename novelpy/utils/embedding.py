@@ -118,6 +118,8 @@ class Embedding:
 
         """
         
+        
+        print("init_dbs_centroid")
         if self.client_name:
             if year_range == None:
                 self.all_years = self.db[collection_articles].distinct(self.year_variable) 
@@ -133,8 +135,11 @@ class Embedding:
             if not os.path.exists("Data/docs/{}".format(collection_embedding)):
                 os.makedirs("Data/docs/{}".format(collection_embedding))
                 # Get all years availables 
-                self.all_years = [int(re.sub('.json','',file)) for file in os.listdir("Data/docs/{}/".format(collection_articles))]
-   
+            if year_range == None:
+                self.all_years = [int(re.sub('.json','',file)) for file in os.listdir("Data/docs/{}/".format(collection_articles))] 
+            else:
+                self.all_years = year_range
+        
     def load_data_centroid(self,
                   collection_articles,
                   year):
@@ -153,7 +158,7 @@ class Embedding:
         None.
 
         """
-        
+        print("load_data_centroid")
         if self.client_name:
             collection = self.db[collection_articles]
             self.docs = collection.find({self.year_variable:year},no_cursor_timeout  = True, session=self.session)
@@ -177,7 +182,7 @@ class Embedding:
         None.
 
         """
-        
+    
         ## Titles
         if (self.title_variable in doc.keys() and
             doc[self.title_variable] != "" ):
@@ -218,7 +223,6 @@ class Embedding:
         None.
 
         """
-        
         try:
             if self.client_name:
                 self.list_of_insertion.append(
@@ -281,7 +285,8 @@ class Embedding:
             for doc in tqdm.tqdm(self.docs):
                 self.get_title_abs(doc)
                 self.insert_embedding_centroid(doc)
-                self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
+                if self.client_name:
+                    self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
                 
             if self.list_of_insertion:
                 if self.client_name:
@@ -437,14 +442,14 @@ class Embedding:
         """
 
 
-        self.load_data_ref(collection_articles,
+        self.load_data_refs(collection_articles,
                        collection_embedding,
                        collection_ref_embedding)
             
         for year in self.time_range:
 
             if self.client_name:
-                docs = collection_articles.find({},no_cursor_timeout  = True, session=self.session).skip(skip_-1).limit(limit_)
+                docs = self.collection_articles.find({self.year_variable:year},no_cursor_timeout  = True, session=self.session).skip(skip_-1).limit(limit_)
             else:
                 docs = json.load(open("Data/docs/{}/{}.json".format(collection_articles,year)))
 
