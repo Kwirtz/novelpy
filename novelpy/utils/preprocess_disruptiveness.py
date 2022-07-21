@@ -21,6 +21,8 @@ class create_citation_network():
             self.client = pymongo.MongoClient(client_name)
             self.db = self.client[db_name]
             self.collection = self.db[collection_name]
+            self.collection_new = self.db[self.collection_name+"_cleaned"]
+            self.collection_new.create_index([ (self.id_variable,1) ])
         else:
             self.files = glob.glob(r'Data\docs\{}\*.json'.format(self.collection_name))
 
@@ -53,14 +55,13 @@ class create_citation_network():
             for doc in tqdm.tqdm(docs):
                 refs = doc[self.variable]
                 cited_by = self.pmid2citedby[doc[self.id_variable]]
-                list_of_insertion.append(pymongo.UpdateOne({self.id_variable: int(doc[self.id_variable])},
-                                                           {'$set': {"citations": {"refs": refs,
-                                                                                   "cited_by":cited_by}}},
-                                                           upsert = False))
+                list_of_insertion.append({"PMID":doc[self.id_variable],
+                                          "year":doc["year"],
+                                          "citations": {"refs": refs,"cited_by":cited_by}})
                 if len(list_of_insertion) == 10000:
-                    self.collection.bulk_write(list_of_insertion)
+                    self.collection_new.insert_many(list_of_insertion)
                     list_of_insertion = []
-            self.collection.update_many({}, { "$unset" : { self.variable : 1} })
+            self.collection_new.insert_many(list_of_insertion)
         else:
             gros_dict = {}
             for file in self.files:
