@@ -66,8 +66,8 @@ More on the structure expected
 
 Depending on the indicator you will run you'll need different info/variables/format. Here's a short summary of all the indicators and the variables you can run them on.
 
-.. image:: img/dist.png
-   :width: 300
+.. image:: img/Available_indicators.png
+   :width: 1000
 
 
 For Foster et al. [2015] :cite:p:`foster2015tradition`, Lee et al. [2015] :cite:p:`lee2015creativity` and Wang et al. [2017] :cite:p:`wang2017bias` you only need two informations of a document.
