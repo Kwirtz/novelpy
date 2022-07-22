@@ -84,7 +84,7 @@ class Wang2017(create_output):
                                time_window_cooc = time_window_cooc,
                                n_reutilisation = n_reutilisation,
                                starting_year = starting_year,
-                               list_of_journals = None)        
+                               list_of_journals = list_of_journals)        
 
         
         self.path_score = "Data/score/wang/{}/".format(self.variable + "_" + str(self.time_window_cooc) + "_" + str(self.n_reutilisation)+ self.restricted )
@@ -111,24 +111,24 @@ class Wang2017(create_output):
         mask = np.ones(self.past_adj.shape, dtype=bool)
         mask[self.past_adj.nonzero()] = False
         nbd_adj[mask] = 1
-        if list_of_journals:
-            nbd_adj = nbd_adj[list_of_journals,:]
-            nbd_adj = nbd_adj[,list_of_journals]
+        if self.list_of_journals:
+            nbd_adj = nbd_adj[self.list_of_journals,:]
+            nbd_adj = nbd_adj[,self.list_of_journals]
 
         # Reused after
         self.futur_adj[self.n_reutilisation < self.futur_adj] = 0
         self.futur_adj[self.futur_adj >= self.n_reutilisation] = 1
         self.futur_adj = csr_matrix(self.futur_adj)
         self.futur_adj.eliminate_zeros()
-        if list_of_journals:
-            self.futur_adj = self.futur_adj[list_of_journals,:]
-            self.futur_adj = self.futur_adj[,list_of_journals]
+        if self.list_of_journals:
+            self.futur_adj = self.futur_adj[self.list_of_journals,:]
+            self.futur_adj = self.futur_adj[,self.list_of_journals]
         # Create a matrix with the cosine similarity
         # for each combinaison never made before but reused in the futur
 
-        if list_of_journals:
-            self.difficulty_adj = self.difficulty_adj[list_of_journals,:]
-            self.difficulty_adj = self.difficulty_adj[,list_of_journals]
+        if self.list_of_journals:
+            self.difficulty_adj = self.difficulty_adj[self.list_of_journals,:]
+            self.difficulty_adj = self.difficulty_adj[,self.list_of_journals]
         cos_sim = get_difficulty_cos_sim(self.difficulty_adj)
 
         comb_scores = self.futur_adj.multiply(nbd_adj).multiply(cos_sim)
