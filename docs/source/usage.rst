@@ -400,7 +400,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
        Wang.get_indicator()
 
 
-| The last novelty indicator available in novelpy is Shibayama et al. [2021] :cite:p:`shibayama2021measuring`. For this indicator you won't need co-occurence matrices. You need to have the title or abstract (in our case we have both) for articles cited by focal papers and therefore the id of for each paper cited. In the sample you can find these information in two different DBs: "Title_abs_sample" and "Citation_net_sample". You then embbed the articles using spacy and do a cosine similarity between the embeddings of cited papers for focal papers. Let's start with the embedding:
+| Now for text-embedding indicators. For Shibayama et al. [2021] :cite:p:`shibayama2021measuring` you won't need co-occurence matrices. You need to have the title or abstract (in our case we have both) for articles cited by focal papers and therefore the id of for each paper cited. In the sample you can find these information in two different DBs: "Title_abs_sample" and "Citation_net_sample". You then embbed the articles using spacy and do a cosine similarity between the embeddings of cited papers for focal papers. Let's start with the embedding:
 
 .. code-block:: python
 
@@ -445,6 +445,60 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
             focal_year = focal_year)
        
        shibayama.get_indicator()
+
+
+| To run Pelletier et Wirtz [2022] You need to have the title or abstract (in our case we have both) for articles and the list of authors for the document. This will allow you to create a new collection where each document is an author ID with a list of embedded references (i.e. Papers for which this author contributed) 
+
+.. code-block:: python
+
+   from novelpy.utils.embedding import Embedding
+
+   embedding = Embedding(
+         year_variable = 'year',
+         time_range = range(2000,2016),
+         id_variable = 'PMID',
+         client_name = 'mongodb://localhost:27017',
+         db_name = 'novelty_final',
+         references_variable = 'refs_pmid_wos',
+         pretrain_path = r'D:\pretrain\en_core_sci_lg-0.4.0\en_core_sci_lg\en_core_sci_lg-0.4.0',
+         title_variable = 'ArticleTitle',
+         abstract_variable = 'a04_abstract',
+         abstract_subvariable = 'AbstractText',
+         aut_id_variable = 'AID',
+         aut_pubs_variable = 'PMID_list')
+
+
+   """ #Only if you don't already have it
+   embedding.get_articles_centroid(
+         collection_articles = 'Title_abs_sample',
+         collection_embedding = 'embedding')
+   """
+
+   embedding.feed_author_profile(
+       collection_authors = 'a02_authorlist_AID',
+           collection_embedding = 'articles_embedding',
+           skip_ = 0,
+           limit_ = 500000)
+
+| Then to run the indicator
+
+.. code-block:: python
+
+   from novelpy.indicators.Author_proximity import Author_proximity
+
+   for year in range(2000,2011):
+      author =  Author_proximity(client_name = 'mongodb://localhost:27017',
+                           db_name = 'novelty',
+                           collection_name = 'authors',
+                           id_variable = 'PMID',
+                           year_variable = 'year',
+                           aut_list_variable = 'a02_authorlist',
+                           aut_id_variable = 'AID',
+                           entity = ['title','abstract'],
+                           focal_year = year,
+                           windows_size = 5)
+          
+      author.get_indicator()
 
 
 
