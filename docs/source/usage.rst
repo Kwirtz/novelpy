@@ -60,6 +60,71 @@ We made available a small sample of data so you can get familiar using the packa
 
 Note that you will have the json files in both case, please delete the files if you use MongoDB and do not want any duplicates (saving memory is always good).
 
+.. _structure:
+More on the structure expected
+----------------
+
+Depending on the indicator you will run you'll need different info/variables/format. Here's a short summary of all the indicators and the variables you can run them on.
+
+.. image:: img/dist.png
+   :width: 300
+
+
+For Foster et al. [2015] :cite:p:`foster2015tradition`, Lee et al. [2015] :cite:p:`lee2015creativity` and Wang et al. [2017] :cite:p:`wang2017bias` you only need two informations of a document.
+The year of creation of the document and the entities they use
+
+.. code-block:: python
+
+   # Example of a single paper information
+
+   dict_Ref_Journals = {"PMID": 16992327, "c04_referencelist": [{"item": "0022-3751"}], "year": 1896}
+   # OR
+   dict_Meshterms = {"PMID": 12255534, "year": 1902, "Mesh_year_category": [{"descUI": "D000830"}, {"descUI": "D001695"}]}
+
+
+For Uzzi et al. [2013] :cite:p:`uzzi2013atypical` you will need one more information, the year of creation of the entity in order to do the resampling.
+
+
+.. code-block:: python
+
+   # Example of a single paper information
+
+   dict_Ref_Journals = {"PMID": 16992327, "c04_referencelist": [{"item": "0022-3751", "year": 1893}], "year": 1896}
+   # OR
+   dict_Meshterms = {"PMID": 12255534, "year": 1902, "Mesh_year_category": [{"descUI": "D000830", "year": 1999}, {"descUI": "D001695", "year": 1999}]}
+
+For text embedding indicators you need different entities. 
+
+To run Shibayama et al. [2021] :cite:p:`shibayama2021measuring` you need the Citation_network (e.g the ID of papers the document cite) but also the abstract or/and title of papers.
+
+.. code-block:: python
+
+   # Example of a single paper information
+
+   dict_citation_net = {"PMID": 20793277, "year": 1850, "refs_pmid_wos": [20794613, 20794649, 20794685, 20794701, 20794789, 20794829]}
+   # AND
+   dict_title_abs = 
+
+
+To run Pelletier et Wirtz [2022] you need the abstract or/and title of papers but also the list of authors for each paper.
+
+.. code-block:: python
+
+   # Example of a single paper information
+
+   dict_authors_list = 
+   # AND
+   dict_title_abs = 
+
+Finally for disruptiveness indicators you only need the citation network
+
+.. code-block:: python
+
+   # Example of a single paper information
+
+   dict_citation_net = {"PMID": 20793277, "year": 1850, "refs_pmid_wos": [20794613, 20794649, 20794685, 20794701, 20794789, 20794829]}
+
+
 .. _tutorial:
 Tutorial
 ----------------
@@ -255,7 +320,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
    ref_cooc.main()
 
 
-   # Uzzi et al.(2013) meshterms
+   # Uzzi et al.(2013) Meshterms_sample
    for focal_year in tqdm.tqdm(range(2000,2011), desc = "Computing indicator for window of time"):
        Uzzi = novelpy.indicators.Uzzi2013(collection_name = "Meshterms_sample",
                                               id_variable = 'PMID',
@@ -265,7 +330,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
                                               focal_year = focal_year)
        Uzzi.get_indicator()
 
-   # Uzzi et al.(2013) Ref_Journals
+   # Uzzi et al.(2013) Ref_Journals_sample
    for focal_year in tqdm.tqdm(range(2000,2011), desc = "Computing indicator for window of time"):
        Uzzi = novelpy.indicators.Uzzi2013(collection_name = "Ref_Journals_sample",
                                               id_variable = 'PMID',
@@ -275,7 +340,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
                                               focal_year = focal_year)
        Uzzi.get_indicator()
 
-   # Foster et al.(2015) meshterms
+   # Foster et al.(2015) Meshterms_sample
    for focal_year in tqdm.tqdm(range(2000,2011), desc = "Computing indicator for window of time"):
        Foster = novelpy.indicators.Foster2015(collection_name = "Meshterms_sample",
                                               id_variable = 'PMID',
@@ -287,7 +352,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
                                               community_algorithm = "Louvain")
        Foster.get_indicator()
 
-   # Lee et al.(2015) meshterms
+   # Lee et al.(2015) Meshterms_sample
    for focal_year in tqdm.tqdm(range(2000,2011), desc = "Computing indicator for window of time"):
        Lee = novelpy.indicators.Lee2015(collection_name = "Meshterms_sample",
                                               id_variable = 'PMID',
@@ -297,7 +362,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
                                               focal_year = focal_year)
        Lee.get_indicator()
 
-   # Lee et al.(2015) Ref_Journals
+   # Lee et al.(2015) Ref_Journals_sample
    for focal_year in tqdm.tqdm(range(2000,2011), desc = "Computing indicator for window of time"):
        Lee = novelpy.indicators.Lee2015(collection_name = "Ref_Journals_sample",
                                               id_variable = 'PMID',
@@ -307,7 +372,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
                                               focal_year = focal_year)
        Lee.get_indicator()
 
-   # Wang et al.(2017) meshterms
+   # Wang et al.(2017) Meshterms_sample
    for focal_year in tqdm.tqdm(range(2000,2011)):
        Wang = novelpy.indicators.Wang2017(collection_name = "Meshterms_sample",
                                               id_variable = 'PMID',
@@ -321,7 +386,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
        Wang.get_indicator()
 
 
-   # Wang et al.(2017) Ref_Journals
+   # Wang et al.(2017) Ref_Journals_sample
    for focal_year in tqdm.tqdm(range(2000,2011)):
        Wang = novelpy.indicators.Wang2017(collection_name = "Ref_Journals_sample",
                                               id_variable = 'PMID',
