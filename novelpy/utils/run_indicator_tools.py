@@ -20,7 +20,8 @@ class Dataset:
              time_window_cooc = None,
              n_reutilisation = None,
              starting_year = None,
-             new_infos = None):
+             new_infos = None,
+             list_of_journals = None):
         """
         Description
         -----------
@@ -68,7 +69,8 @@ class Dataset:
         self.starting_year = starting_year
         self.new_infos = new_infos
         self.item_name = self.variable.split('_')[0] if self.variable else None
-        
+        self.list_of_journals = list_of_journals 
+        self.restricted = '_restricted' if self.list_of_journals else ''
         if self.client_name:
             self.client = pymongo.MongoClient(client_name)
             self.db = self.client[db_name]
@@ -249,18 +251,23 @@ class create_output(Dataset):
         
         scores_list = []
         for combi in combis:
-            combi = sorted( (self.name2index[combi[0]], self.name2index[combi[1]]) )
+            if self.list_of_journals:
+                if combi[0] in self.list_of_journals and combi[1] in self.list_of_journals: 
+                    combi = sorted( (self.name2index[combi[0]], self.name2index[combi[1]]) )
+                    scores_list.append(float(self.comb_scores[combi[0], combi[1]]))
+            else:
+                combi = sorted( (self.name2index[combi[0]], self.name2index[combi[1]]) )
+                scores_list.append(float(self.comb_scores[combi[0], combi[1]]))
             """
             comb_infos.append({"item1" : combi[0],
                           "item2" : combi[1],
                           "score" : float(self.comb_scores[combi[0], combi[1]]) })
             """
-            scores_list.append(float(self.comb_scores[combi[0], combi[1]]))
         self.scores_array = np.array(scores_list)
         
         key = self.variable + '_' + self.indicator
         if self.n_reutilisation and self.time_window_cooc:
-            key = key +'_'+str(self.time_window_cooc)+'_'+str(self.n_reutilisation)
+            key = key +'_'+str(self.time_window_cooc)+'_'+str(self.n_reutilisation)+self.restricted
         elif self.time_window_cooc:
             key = key +'_'+str(self.time_window_cooc)
            
@@ -302,8 +309,10 @@ class create_output(Dataset):
         if self.indicator == 'wang':
             self.comb_scores = pickle.load(
                     open(
-                        'Data/score/{}/{}_{}_{}/{}.p'.format(
-                            self.indicator,self.variable,str(self.time_window_cooc), str(self.n_reutilisation), self.focal_year),
+                        'Data/score/{}/{}/{}.p'.format(
+                            self.indicator,
+                            self.variable+' '+str(self.time_window_cooc)+' '+str(self.n_reutilisation)+self.restricted,
+                             self.focal_year),
                         "rb" ))       
         else:
             self.comb_scores = pickle.load(
@@ -382,7 +391,7 @@ class create_output(Dataset):
                 self.collection_output = self.db["output"]
         else:
             if self.indicator == "wang":
-                self.path_output = "Result/{}/{}".format(self.indicator, self.variable+ "_" + str(self.time_window_cooc) + "_" + str(self.n_reutilisation))
+                self.path_output = "Result/{}/{}".format(self.indicator, self.variable+ "_" + str(self.time_window_cooc) + "_" + str(self.n_reutilisation)+self.restricted)
             else:
                 self.path_output = "Result/{}/{}".format(self.indicator, self.variable)
             if not os.path.exists(self.path_output):

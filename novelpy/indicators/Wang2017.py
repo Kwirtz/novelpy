@@ -45,7 +45,8 @@ class Wang2017(create_output):
                  n_reutilisation,
                  starting_year,
                  client_name = None,
-                 db_name = None,):
+                 db_name = None,
+                 list_of_journals = None,):
         """
         
         Description
@@ -82,9 +83,12 @@ class Wang2017(create_output):
                                focal_year = focal_year,
                                time_window_cooc = time_window_cooc,
                                n_reutilisation = n_reutilisation,
-                               starting_year = starting_year)        
+                               starting_year = starting_year,
+                               list_of_journals = None)        
 
-        self.path_score = "Data/score/wang/{}/".format(self.variable + "_" + str(self.time_window_cooc) + "_" + str(self.n_reutilisation) )
+        
+        self.path_score = "Data/score/wang/{}/".format(self.variable + "_" + str(self.time_window_cooc) + "_" + str(self.n_reutilisation)+ self.restricted )
+       
         if not os.path.exists(self.path_score):
             os.makedirs(self.path_score)        
 
@@ -100,24 +104,35 @@ class Wang2017(create_output):
         None.
 
         """
+
+
         # Never been done
         nbd_adj = lil_matrix(self.past_adj.shape, dtype="int8")
         mask = np.ones(self.past_adj.shape, dtype=bool)
         mask[self.past_adj.nonzero()] = False
         nbd_adj[mask] = 1
-        
+        if list_of_journals:
+            nbd_adj = nbd_adj[list_of_journals,:]
+            nbd_adj = nbd_adj[,list_of_journals]
+
         # Reused after
         self.futur_adj[self.n_reutilisation < self.futur_adj] = 0
         self.futur_adj[self.futur_adj >= self.n_reutilisation] = 1
         self.futur_adj = csr_matrix(self.futur_adj)
         self.futur_adj.eliminate_zeros()
+        if list_of_journals:
+            self.futur_adj = self.futur_adj[list_of_journals,:]
+            self.futur_adj = self.futur_adj[,list_of_journals]
         # Create a matrix with the cosine similarity
         # for each combinaison never made before but reused in the futur
-        print("doing cosim")
+
+        if list_of_journals:
+            self.difficulty_adj = self.difficulty_adj[list_of_journals,:]
+            self.difficulty_adj = self.difficulty_adj[,list_of_journals]
         cos_sim = get_difficulty_cos_sim(self.difficulty_adj)
-        print("cosim done")
+
         comb_scores = self.futur_adj.multiply(nbd_adj).multiply(cos_sim)
-        comb_scores[comb_scores.nonzero()] = 1 - comb_scores[comb_scores.nonzero()]        
+        comb_scores[comb_scores.nonzero()] = 1 - comb_scores[comb_scores.nonzero()]   
                     
         pickle.dump(comb_scores, open(self.path_score + "{}.p".format(self.focal_year), "wb" ) )
         
