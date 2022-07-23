@@ -269,7 +269,7 @@ class create_output(Dataset):
         if self.n_reutilisation and self.time_window_cooc:
             key = key +'_'+str(self.time_window_cooc)+'_'+str(self.n_reutilisation)+self.restricted
         elif self.time_window_cooc:
-            key = key +'_'+str(self.time_window_cooc)
+            key = key +'_'+str(self.time_window_cooc)+self.restricted
            
         if self.indicator == 'wang':
             score = {'novelty':sum(self.scores_array)}
@@ -311,7 +311,7 @@ class create_output(Dataset):
                     open(
                         'Data/score/{}/{}/{}.p'.format(
                             self.indicator,
-                            self.variable+' '+str(self.time_window_cooc)+' '+str(self.n_reutilisation)+self.restricted,
+                            self.variable+' '+str(self.time_window_cooc)+' '+str(self.n_reutilisation),
                              self.focal_year),
                         "rb" ))       
         else:
