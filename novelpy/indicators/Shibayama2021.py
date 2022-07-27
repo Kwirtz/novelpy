@@ -124,6 +124,8 @@ class Shibayama2021(Dataset):
         None.
 
         """
+        chunk_size = 10000
+        
         for ent in entity:
             clean_refs = [ref for ref in doc[self.ref_variable] if ref[ent] and isinstance(ref[ent],list)]
             n = len(clean_refs)
@@ -136,11 +138,32 @@ class Shibayama2021(Dataset):
                 dist_list = cosine_similarity_dist(n,doc_mat)
                 nov_list = get_percentiles(dist_list)
                 
-                references_novelty = {
-                    'shibayama_{}'.format(ent) :nov_list,
-                    'scores_array_{}'.format(ent) :dist_list
-                    }
-                self.infos.update(references_novelty)
+                if self.client_name:
+                    self.splitted_dict = []
+                    if len(dist_list) > 10000:
+                        list_chunked = [dist_list[i:i + chunk_size] for i in range(0, len(dist_list), chunk_size )]
+                        for chunk in list_chunked:
+                            new_dict = dict()
+                            references_novelty = {
+                                'shibayama_{}'.format(ent) :nov_list,
+                                'scores_array_{}'.format(ent) :chunk
+                                }
+                            new_dict.update(references_novelty)
+                            self.splitted_dict.append(new_dict)
+                    else:
+                        new_dict = dict()
+                        references_novelty = {
+                             'shibayama_{}'.format(ent) :nov_list,
+                             'scores_array_{}'.format(ent) : dist_list
+                             }
+                        new_dict.update(references_novelty)                    
+                        self.splitted_dict.append(new_dict)
+                else:
+                    references_novelty = {
+                        'shibayama_{}'.format(ent) :nov_list,
+                        'scores_array_{}'.format(ent) :dist_list
+                        }
+                    self.infos.update(references_novelty)
 
     def get_indicator(self):
        
@@ -153,18 +176,20 @@ class Shibayama2021(Dataset):
             self.docs = json.load(open("Data/docs/{}/{}.json".format(self.collection_name,self.focal_year)))
         print('Getting score per paper ...')     
         # Iterate over every docs 
-        list_of_insertion = []
+        self.list_of_insertion = []
         for doc in tqdm.tqdm(self.docs):
             self.infos = dict()
             if doc[self.ref_variable] and len(doc[self.ref_variable])>1: 
                 self.compute_score(doc, self.entity)
-                if self.infos:
-                    if self.client_name:
-                        list_of_insertion.append(pymongo.UpdateOne({self.id_variable: doc[self.id_variable]},
-                                                                   {'$set': {'shibayama': self.infos}},
-                                                                   upsert = True))
-                    else:
-                        list_of_insertion.append({self.id_variable: doc[self.id_variable],'shibayama': self.infos})
+                if self.client_name:
+                    if self.splitted_dict:
+                        for doc_to_insert in self.splitted_dict:
+                            self.list_of_insertion.append(pymongo.UpdateOne({self.id_variable: doc[self.id_variable]},
+                                                                       {'$set': {'shibayama': doc_to_insert,"year":doc["year"]}},
+                                                                       upsert = True))
+                else:
+                    if self.infos:
+                        self.list_of_insertion.append({self.id_variable: doc[self.id_variable],'shibayama': self.infos})
 
         if self.client_name:
             if "output" not in self.db.list_collection_names():
@@ -173,8 +198,8 @@ class Shibayama2021(Dataset):
                 self.collection_output.create_index([ (self.id_variable,1) ])
             else:
                 self.collection_output = self.db["output"]
-            if list_of_insertion:
-                self.db['output'].bulk_write(list_of_insertion)
+            if self.list_of_insertion:
+                self.collection_output.bulk_write(self.list_of_insertion)
         else:
             if list_of_insertion:
                 with open(self.path_score + "/{}.json".format(self.focal_year), 'w') as outfile:
