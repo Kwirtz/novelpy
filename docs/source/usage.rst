@@ -103,7 +103,7 @@ To run Shibayama et al. [2021] :cite:p:`shibayama2021measuring` you need the Cit
 
    dict_citation_net = {"PMID": 20793277, "year": 1850, "refs_pmid_wos": [20794613, 20794649, 20794685, 20794701, 20794789, 20794829]}
    # AND
-   dict_title_abs = 
+   dict_title_abs = {"PMID": 20793277, "year": 1850, "ArticleTitle": "Here is the title", "a04_abstract":[{"AbstractText":"This is the abstract"}]}
 
 
 To run Pelletier et Wirtz [2022] you need the abstract or/and title of papers but also the list of authors for each paper.
@@ -112,9 +112,9 @@ To run Pelletier et Wirtz [2022] you need the abstract or/and title of papers bu
 
    # Example of a single paper information
 
-   dict_authors_list = 
+   dict_authors_list = {"PMID": 20793277, "year": 1850, "a02_authorlist": [{"id":201645},{"id":51331354}]}
    # AND
-   dict_title_abs = 
+   dict_title_abs = {"PMID": 20793277, "year": 1850, "ArticleTitle": "Here is the title", "a04_abstract":[{"AbstractText":"This is the abstract"}]}
 
 Finally for disruptiveness indicators you only need the citation network
 
