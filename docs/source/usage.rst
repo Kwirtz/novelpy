@@ -202,7 +202,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
        Foster.get_indicator()
     
 
-| Here the indicator is calculated using the co-occurence matrix done before. You can change the period depending on your data, read more here :ref:`indicators:foster`.
+| Here the indicator is calculated using the co-occurence matrix done before. You can change the period depending on your data, read more here :ref:`Indicators:foster`.
 | Now you should have one more folder "Results" with a json for the focal year with the results. 
 
 ::
