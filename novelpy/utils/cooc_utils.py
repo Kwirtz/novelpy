@@ -21,7 +21,7 @@ class create_cooc:
                  weighted_network = False,
                  self_loop = False,
                  client_name = None,
-                 db_name = None,):
+                 db_name = None):
         '''
         Description
         -----------
@@ -51,7 +51,8 @@ class create_cooc:
         db_name : str
             name of the db where your data is ("pkg" for us)            
         '''
-
+        
+        self.item_list = []
         self.var = var
         self.sub_var = sub_var
         self.year_var = year_var
@@ -94,17 +95,8 @@ class create_cooc:
         ''' 
         self.x = self.x.tocsr()
         pickle.dump( self.x, open( self.path_output + "/{}.p".format(year), "wb" ) )
-        
-    def populate_matrix(self,year):
-        if self.client_name:
-            docs = self.collection.find({self.year_var:year}, no_cursor_timeout=True)
-        else:
-            try:
-                with open(self.path_input + "/{}.json".format(year), 'r') as infile:
-                    docs = json.load(infile)
-            except Exception as e:
-                docs = [] 
-            
+
+    def get_combi(self, docs, year):
         for doc in tqdm.tqdm(docs, desc = "Populate matrix"):
             try:
                 items = doc[self.var]
@@ -123,6 +115,19 @@ class create_cooc:
         
         if self.self_loop == False:
             self.x.setdiag(0)
+        
+    def populate_cooc(self, year):
+
+        if self.client_name:
+            docs = self.collection.find({self.year_var:year}, no_cursor_timeout=True)
+        else:
+            try:
+                with open(self.path_input + "/{}.json".format(year), 'r') as infile:
+                    docs = json.load(infile)
+            except Exception as e:
+                docs = [] 
+        self.get_combi(docs,year)
+            
 
     def create_matrix(self):
         '''
@@ -193,9 +198,7 @@ class create_cooc:
         pickle.dump( self.index2name, open( self.path_output + "/index2name.p", "wb" ) )
 
 
-    def create_item_list(self):
-        
-        self.item_list = []
+    def populate_item_list(self):
         
         if self.client_name:
             docs = self.collection.find({},no_cursor_timeout=True)
@@ -219,10 +222,11 @@ class create_cooc:
         Returns
         -------
 
-        ''' 
-        self.create_item_list()
+        '''
+        
+        self.populate_item_list()
         self.create_save_index()
         for year in tqdm.tqdm(self.time_window, desc="For each year in range"):
             self.create_matrix()
-            self.populate_matrix(year)
+            self.populate_cooc(year)
             self.save_matrix(year)
