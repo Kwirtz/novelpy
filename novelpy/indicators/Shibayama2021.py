@@ -185,19 +185,19 @@ class Shibayama2021(Dataset):
                 if doc[self.id_variable] in self.processed:
                     continue
                 if self.client_name and len(doc[self.ref_variable]) == 500:
-                    docs_temp = self.collection.find({id_variable: doc[self.id_variable]})
+                    docs_temp = self.collection.find({self.id_variable: doc[self.id_variable]})
                     refs_emb = []
                     for doc_temp in docs_temp:
                         refs_emb.append(doc_temp[self.ref_variable])
-                    doc[self.ref_variable] = refs_emb 
+                    doc[self.ref_variable] = refs_em    b 
                     self.processed.append(doc[self.id_variable])
                 self.compute_score(doc, self.entity)
                 if self.client_name:
                     if self.splitted_dict:
                         for doc_to_insert in self.splitted_dict:
-                            self.list_of_insertion.append(pymongo.UpdateOne({self.id_variable: doc[self.id_variable]},
-                                                                       {'$set': {'shibayama': doc_to_insert,"year":doc["year"]}},
-                                                                       upsert = True))
+                            self.list_of_insertion.append({self.id_variable: doc[self.id_variable],
+                                                           'shibayama':self.splitted_dict,
+                                                           "year":doc["year"]})
                 else:
                     if self.infos:
                         self.list_of_insertion.append({self.id_variable: doc[self.id_variable],'shibayama': self.infos})
@@ -210,11 +210,11 @@ class Shibayama2021(Dataset):
             else:
                 self.collection_output = self.db["output"]
             if self.list_of_insertion:
-                self.collection_output.bulk_write(self.list_of_insertion)
+                self.collection_output.insert_many(self.list_of_insertion)
         else:
-            if list_of_insertion:
+            if self.list_of_insertion:
                 with open(self.path_score + "/{}.json".format(self.focal_year), 'w') as outfile:
-                    json.dump(list_of_insertion, outfile)        
+                    json.dump(self.list_of_insertion, outfile)        
     
 
 

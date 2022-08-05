@@ -11,6 +11,7 @@ import community as community_louvain
 from scipy.sparse import csr_matrix, lil_matrix, triu
 from sklearn.metrics.pairwise import cosine_similarity
 from novelpy.utils.cooc_utils import *
+import numpy as np
 
 
 #%% Test cooc
