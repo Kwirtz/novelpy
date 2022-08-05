@@ -124,6 +124,7 @@ ref_cooc.main()
 
 
 
+
 class TestUzzi(unittest.TestCase):
     
     def __init__(self):
@@ -211,6 +212,23 @@ class TestUzzi(unittest.TestCase):
         
         np.testing.assert_array_equal(comb_scores.A,
                                        nan_mat)
+        
+    def test_update_paper_values(self):
+        self.uzzi.update_paper_values()
+        score = json.load(open(self.uzzi.path_output+ "/{}.json".format(self.uzzi.focal_year),"r" ))
+        nan_score = [{"id": 5,
+                      "Ref_journals_uzzi": {"scores_array": [math.nan, math.nan, math.nan], 
+                                            "score": {"conventionality": math.nan,
+                                                      "novelty": math.nan}}},
+                     {"id": 6,
+                      "Ref_journals_uzzi": {"scores_array": [math.nan, math.nan, math.nan], 
+                                            "score": {"conventionality": math.nan, 
+                                                      "novelty": math.nan}}}
+                    ]
+        json.dump(nan_score,open(self.uzzi.path_output+ "/{}_test.json".format(self.uzzi.focal_year),"w" ))
+        nan_score = json.load(open(self.uzzi.path_output+ "/{}_test.json".format(self.uzzi.focal_year),"r" ))
+        self.assertListEqual(score,nan_score)
+        
         
 #%% Test Lee
 
