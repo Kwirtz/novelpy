@@ -17,7 +17,7 @@ class create_cooc:
                  year_var,
                  collection_name,
                  time_window,
-                 dtype = np.uint16,
+                 dtype = np.uint32,
                  weighted_network = False,
                  self_loop = False,
                  client_name = None,
@@ -96,7 +96,7 @@ class create_cooc:
         self.x = self.x.tocsr()
         pickle.dump( self.x, open( self.path_output + "/{}.p".format(year), "wb" ) )
 
-    def get_combi(self, docs, year):
+    def get_combi(self, docs):
         for doc in tqdm.tqdm(docs, desc = "Populate matrix"):
             try:
                 items = doc[self.var]
@@ -126,7 +126,7 @@ class create_cooc:
                     docs = json.load(infile)
             except Exception as e:
                 docs = [] 
-        self.get_combi(docs,year)
+        self.get_combi(docs)
             
 
     def create_matrix(self):
