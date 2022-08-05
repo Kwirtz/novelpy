@@ -189,7 +189,7 @@ class Shibayama2021(Dataset):
                     refs_emb = []
                     for doc_temp in docs_temp:
                         refs_emb.append(doc_temp[self.ref_variable])
-                    doc[self.ref_variable] = refs_em    b 
+                    doc[self.ref_variable] = refs_emb 
                     self.processed.append(doc[self.id_variable])
                 self.compute_score(doc, self.entity)
                 if self.client_name:
