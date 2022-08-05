@@ -402,21 +402,21 @@ class Embedding:
         if self.client_name:
             chunk_size = 500
             if len(self.refs_emb) > chunk_size:
-                list_chunked = [dist_list[i:i + chunk_size] for i in range(0, len(dist_list), chunk_size )]
+                list_chunked = [self.refs_emb[i:i + chunk_size] for i in range(0, len(self.refs_emb), chunk_size )]
                 for chunk in list_chunked:
-                    self.infos = {'refs_embedding': chunk} if refs_emb else  {'refs_embedding': None}
+                    self.infos = {'refs_embedding': chunk} if chunk else  {'refs_embedding': None}
                     try:
-                        self.infos.update({self.year_variable:doc[self.year_variable]})
-                        self.list_of_insertion.append(UpdateOne({self.id_variable:doc[self.id_variable]},
-                                                                {'$set': self.infos},
-                                                                upsert = True))    
+                        self.infos.update({self.id_variable:doc[self.id_variable],
+                                           self.year_variable:doc[self.year_variable]})
+                        self.list_of_insertion.append(self.infos)    
                     except Exception as e:
                         print(e)
             if len(self.list_of_insertion) % 1000 == 0:
-                self.collection_ref_embedding.bulk_write(self.list_of_insertion)
+                self.collection_ref_embedding.insert_many(self.list_of_insertion)
                 self.list_of_insertion = []
         else:
             try:
+                self.infos = {'refs_embedding': self.refs_emb} if self.refs_emb else  {'refs_embedding': None}
                 self.infos.update({self.id_variable:doc[self.id_variable],
                             self.year_variable:doc[self.year_variable]})
                 self.list_of_insertion.append(self.infos)    
