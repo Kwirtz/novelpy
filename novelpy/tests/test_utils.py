@@ -19,7 +19,7 @@ paper_1 = {"id": 1, "Ref_journals": [{"item": "1"},{"item": "2"}], "year": 1990}
 paper_2 = {"id": 1, "Ref_journals": [{"item": "1"},{"item": "2"},{"item": "3"}], "year": 1991}
 paper_3 = {"id": 1, "Ref_journals": [{"item": "2"}], "year": 1991}
 paper_4 = {"id": 1, "Ref_journals": [{"item": "4"},{"item": "3"}], "year": 1992}
-paper_5 = {"id": 1, "Ref_journals": [{"item": "1"},{"item": "2"},{"item": "3"},{"item": "4"}], "year": 1992}
+paper_5 = {"id": 1, "Ref_journals": [{"item": "1"},{"item": "2"},{"item": "3"},{"item": "2"}], "year": 1992}
 docs = [paper_1, paper_2, paper_3, paper_4, paper_5]
 
 
@@ -41,11 +41,21 @@ class Test(unittest.TestCase):
         
         
     def test_populate_matrix(self):
-        pass 
-"""
-    def test_populate_matrix_no_self_loop(self):
-        self.assertEquals(cube('abc'), 8)
-"""
+        x = lil_matrix((4, 4), dtype = np.uint32)
+        x[0,1] = 4; x[0,2] = 2; x[1,2] = 3; x[2,3] = 1 
+        instance= create_cooc(var = "Ref_journals",
+                               sub_var = "item",
+                               year_var = "year",
+                               collection_name = "no_need",
+                               time_window = range(1990,1996),
+                               dtype = np.uint16)
+        instance.item_list = ["1","2","3","4"]
+        instance.create_matrix()
+        instance.get_combi(docs)
+        self.assertEqual(instance.x, x)
+
+    def test_populate_matrix_unw_no_self_loop(self):
+        pass
 
       
 
