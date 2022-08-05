@@ -172,14 +172,25 @@ class Shibayama2021(Dataset):
                 self.ref_variable:{'$ne':None},
                 self.year_variable:self.focal_year
                 })
+            self.processed = []
         else:
             self.docs = json.load(open("Data/docs/{}/{}.json".format(self.collection_name,self.focal_year)))
         print('Getting score per paper ...')     
         # Iterate over every docs 
         self.list_of_insertion = []
+
         for doc in tqdm.tqdm(self.docs):
             self.infos = dict()
-            if doc[self.ref_variable] and len(doc[self.ref_variable])>1: 
+            if doc[self.ref_variable] and len(doc[self.ref_variable])>1:
+                if doc[self.id_variable] in self.processed:
+                    continue
+                if self.client_name and len(doc[self.ref_variable]) == 500:
+                    docs_temp = self.collection.find({id_variable: doc[self.id_variable]})
+                    refs_emb = []
+                    for doc_temp in docs_temp:
+                        refs_emb.append(doc_temp[self.ref_variable])
+                    doc[self.ref_variable] = refs_emb 
+                    self.processed.append(doc[self.id_variable])
                 self.compute_score(doc, self.entity)
                 if self.client_name:
                     if self.splitted_dict:
