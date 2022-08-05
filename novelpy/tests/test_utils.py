@@ -42,20 +42,41 @@ class Test(unittest.TestCase):
         
     def test_populate_matrix(self):
         x = lil_matrix((4, 4), dtype = np.uint32)
-        x[0,1] = 4; x[0,2] = 2; x[1,2] = 3; x[2,3] = 1 
+        x[0,1] = 4; x[0,2] = 2; x[1,2] = 3; x[2,3] = 1; x[1,1] = 1 
         instance= create_cooc(var = "Ref_journals",
-                               sub_var = "item",
+                               sub_var = "item", 
                                year_var = "year",
                                collection_name = "no_need",
                                time_window = range(1990,1996),
+                               weighted_network = True,
+                               self_loop = True,
                                dtype = np.uint16)
         instance.item_list = ["1","2","3","4"]
+        instance.name2index = {"1":0,"2":1,"3":2,"4":3}
         instance.create_matrix()
         instance.get_combi(docs)
-        self.assertEqual(instance.x, x)
+        for i in range(4):
+            for j in range(4):
+                self.assertEqual(instance.x[i,j], x[i,j])
 
     def test_populate_matrix_unw_no_self_loop(self):
-        pass
+        x = lil_matrix((4, 4), dtype = np.uint32)
+        x[0,1] = 3; x[0,2] = 2; x[1,2] = 2; x[2,3] = 1
+        instance= create_cooc(var = "Ref_journals",
+                               sub_var = "item", 
+                               year_var = "year",
+                               collection_name = "no_need",
+                               time_window = range(1990,1996),
+                               weighted_network = False,
+                               self_loop = False,
+                               dtype = np.uint16)
+        instance.item_list = ["1","2","3","4"]
+        instance.name2index = {"1":0,"2":1,"3":2,"4":3}
+        instance.create_matrix()
+        instance.get_combi(docs)
+        for i in range(4):
+            for j in range(4):
+                self.assertEqual(instance.x[i,j], x[i,j])        
 
       
 
