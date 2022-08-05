@@ -360,7 +360,8 @@ class Embedding:
 
         """
         
-        refs_emb = []
+        
+        self.refs_emb = []
         if self.references_variable in doc.keys():
             if self.client_name:
                 refs = self.collection_embedding.find({
@@ -372,16 +373,15 @@ class Embedding:
                 #refs = collection_embedding[collection_embedding[id_variable].isin(doc[self.references_variable])].to_dict('records')
                 refs = [self.collection_embedding[id_] for id_ in doc["refs_pmid_wos"] if id_ in self.collection_embedding]
             for ref in refs:
-                refs_emb.append({
+                self.refs_emb.append({
                     'id':
                         ref[self.id_variable],
                     'abstract_embedding':
                         ref['abstract_embedding'] if 'abstract_embedding' in ref.keys() else None,
                     'title_embedding':
                         ref['title_embedding'] if 'title_embedding' in ref.keys() else None})
+        
                 
-        self.infos = {'refs_embedding':refs_emb} if refs_emb else  {'refs_embedding': None}
-       
     def insert_embedding_ref(self,
                              doc):
         """
@@ -398,14 +398,20 @@ class Embedding:
 
         """
         
+        
         if self.client_name:
-            try:
-                self.infos.update({self.year_variable:doc[self.year_variable]})
-                self.list_of_insertion.append(UpdateOne({self.id_variable:doc[self.id_variable]},
-                                                        {'$set': self.infos},
-                                                        upsert = True))    
-            except Exception as e:
-                print(e)
+            chunk_size = 500
+            if len(self.refs_emb) > chunk_size:
+                list_chunked = [dist_list[i:i + chunk_size] for i in range(0, len(dist_list), chunk_size )]
+                for chunk in list_chunked:
+                    self.infos = {'refs_embedding': chunk} if refs_emb else  {'refs_embedding': None}
+                    try:
+                        self.infos.update({self.year_variable:doc[self.year_variable]})
+                        self.list_of_insertion.append(UpdateOne({self.id_variable:doc[self.id_variable]},
+                                                                {'$set': self.infos},
+                                                                upsert = True))    
+                    except Exception as e:
+                        print(e)
             if len(self.list_of_insertion) % 1000 == 0:
                 self.collection_ref_embedding.bulk_write(self.list_of_insertion)
                 self.list_of_insertion = []
