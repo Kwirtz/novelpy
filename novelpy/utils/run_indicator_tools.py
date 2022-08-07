@@ -350,16 +350,15 @@ class create_output(Dataset):
             
             
             if self.client_name:
-                list_of_insertion.append(pymongo.UpdateOne({self.id_variable: int(idx)},
-                                                           {'$set': {self.key: self.doc_infos,
-                                                                     self.year_variable:self.focal_year}},
-                                                           upsert = True))
+                list_of_insertion.append({self.id_variable: int(idx),
+                                          self.key: self.doc_infos,
+                                          self.year_variable:self.focal_year})
             else:
                 list_of_insertion.append({self.id_variable: int(idx),self.key: self.doc_infos})
 
         
         if self.client_name:
-            self.collection_output.bulk_write(list_of_insertion)
+            self.collection_output.insert_many(list_of_insertion)
         else:
             with open(self.path_output + "/{}.json".format(self.focal_year), 'w') as outfile:
                 json.dump(list_of_insertion, outfile)        
@@ -382,13 +381,14 @@ class create_output(Dataset):
 
         """
         if self.client_name:
-            if "output" not in self.db.list_collection_names():
-                print("Init output collection with index on id_variable ...")
-                self.collection_output = self.db["output"]
-                self.collection_output.create_index([ (self.id_variable,1) ])
-                self.collection_output.create_index([ (self.year_variable,1) ])
-            else:
-                self.collection_output = self.db["output"]
+                self.collection_output_name = "output_" + self.indicator + "_" + self.variable
+                if self.indicator == "wang":
+                    self.collection_output_name = "output_" + self.indicator + "_" + self.variable + "_" + str(self.time_window_cooc) + "_" + str(self.n_reutilisation)+self.restricted
+                self.collection_output = self.db[self.collection_output_name]
+                if self.collection_output_name not in self.db.list_collection_names():
+                    print("Init output collection with index on id_variable ...")
+                    self.collection_output.create_index([ (self.id_variable,1) ])
+                    self.collection_output.create_index([ (self.year_variable,1) ])
         else:
             if self.indicator == "wang":
                 self.path_output = "Result/{}/{}".format(self.indicator, self.variable+ "_" + str(self.time_window_cooc) + "_" + str(self.n_reutilisation)+self.restricted)

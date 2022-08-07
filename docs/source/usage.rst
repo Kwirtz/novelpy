@@ -400,7 +400,9 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
        Wang.get_indicator()
 
 
-| Now for text-embedding indicators. For Shibayama et al. [2021] :cite:p:`shibayama2021measuring` you won't need co-occurence matrices. You need to have the title or abstract (in our case we have both) for articles cited by focal papers and therefore the id of for each paper cited. In the sample you can find these information in two different DBs: "Title_abs_sample" and "Citation_net_sample". You then embbed the articles using spacy and do a cosine similarity between the embeddings of cited papers for focal papers. Let's start with the embedding:
+| Now for text-embedding indicators. For Shibayama et al. [2021] :cite:p:`shibayama2021measuring` you won't need co-occurence matrices. You need to have the title or abstract (in our case we have both) for articles cited by focal papers and therefore the id of for each paper cited. In the sample you can find these information in two different DBs: "Title_abs_sample" and "Citation_net_sample". You then embbed the articles using spacy and do a cosine similarity between the embeddings of cited papers for focal papers. You can find a pretrain here https://pypi.org/project/scispacy/. We used en_core_sci_lg-0.4.0. Change the pretrain_path depending on the one you use
+
+| Let's start with the embedding:
 
 .. code-block:: python
 
