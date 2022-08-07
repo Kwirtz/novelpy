@@ -17,7 +17,7 @@ class create_cooc:
                  year_var,
                  collection_name,
                  time_window,
-                 dtype = np.uint16,
+                 dtype = np.uint32,
                  weighted_network = False,
                  self_loop = False,
                  client_name = None,
