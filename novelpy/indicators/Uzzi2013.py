@@ -52,7 +52,8 @@ def get_adjacency_matrix(unique_items,
                 ind_1 = unique_items[combi[0]]
                 ind_2 = unique_items[combi[1]]
                 adj_mat[ind_1,ind_2] += 1
-                adj_mat[ind_2,ind_1] += 1          
+                if ind_1 != ind_2:
+                    adj_mat[ind_2,ind_1] += 1          
     adj_mat = lil_matrix(adj_mat)
     if keep_diag == False:
         adj_mat.setdiag(0)
