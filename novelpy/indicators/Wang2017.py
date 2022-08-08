@@ -85,7 +85,8 @@ class Wang2017(create_output):
                                time_window_cooc = time_window_cooc,
                                n_reutilisation = n_reutilisation,
                                starting_year = starting_year,
-                               list_of_journals = list_of_journals)        
+                               list_of_journals = list_of_journals,
+                               density = density)        
 
         
         self.path_score = "Data/score/wang/{}/".format(self.variable + "_" + str(self.time_window_cooc) + "_" + str(self.n_reutilisation)+ self.restricted )

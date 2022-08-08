@@ -280,7 +280,8 @@ class Uzzi2013(create_output):
                                year_variable = year_variable,
                                variable = variable,
                                sub_variable = sub_variable,
-                               focal_year = focal_year)
+                               focal_year = focal_year,
+                               density = density) 
         
         
         self.path_sample = "Data/cooc_sample/{}/".format(self.variable)

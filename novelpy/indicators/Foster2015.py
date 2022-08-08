@@ -57,7 +57,8 @@ class Foster2015(create_output):
                                variable = variable,
                                sub_variable = sub_variable,
                                focal_year = focal_year,
-                               starting_year = starting_year)
+                               starting_year = starting_year,
+                               density = density)
 
         self.path_score = "Data/score/foster/{}".format(self.variable)
         

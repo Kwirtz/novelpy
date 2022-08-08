@@ -49,7 +49,8 @@ class Lee2015(create_output):
                                year_variable = year_variable,
                                variable = variable,
                                sub_variable = sub_variable,
-                               focal_year = focal_year)
+                               focal_year = focal_year,
+                               density = density) 
         
 
         self.path_score = "Data/score/lee/{}".format(variable)
