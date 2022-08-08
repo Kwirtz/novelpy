@@ -386,7 +386,9 @@ class Author_proximity(Dataset):
                 aut_dist = intra_cosine_similarity(items,
                                                    n)
                 self.authors_info_percentiles[ent] += [{
-                    str(self.aut_id_variable):auth_id,'stats':med_sd_mean(aut_dist)}]
+                    str(self.aut_id_variable):auth_id,
+                    'stats':med_sd_mean(aut_dist),
+                    'percentiles': get_percentiles(aut_dist)}]
                 self.intra_authors_dist[ent] += aut_dist
     
     def get_intra_dist(self,
@@ -453,7 +455,8 @@ class Author_proximity(Dataset):
                 # get percentiles
                 self.authors_infos_dist[ent] += [{
                     'ids' : [id_i,id_j],
-                    'stats': med_sd_mean(temp_list)
+                    'stats': med_sd_mean(temp_list),
+                    'percentiles': get_percentiles(temp_list)
                     }]
                     
                 
