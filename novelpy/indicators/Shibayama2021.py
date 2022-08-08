@@ -195,9 +195,9 @@ class Shibayama2021(Dataset):
         if self.client_name:
             self.docs = self.collection.find({
                 self.ref_variable:{'$ne':None},
-                self.year_variable:self.focal_year,
-                no_cursor_timeout=True
-                })
+                self.year_variable:self.focal_year
+                },
+                no_cursor_timeout=True)
             self.processed = []
             self.collection_embedding = self.db[self.collection_embedding_name]
         else:
