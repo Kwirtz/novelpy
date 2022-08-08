@@ -17,7 +17,8 @@ class Lee2015(create_output):
              sub_variable,
              focal_year,
              client_name = None,
-             db_name = None):
+             db_name = None,
+             density = False):
         """
         Description
         -----------

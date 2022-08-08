@@ -66,7 +66,8 @@ class Shibayama2021(Dataset):
                  embedding_dim = 200,
                  client_name = None, 
                  db_name =  None,
-                 collection_name = None):
+                 collection_name = None,
+                 density = False):
         """
         Description
         -----------

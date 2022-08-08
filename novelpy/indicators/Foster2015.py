@@ -25,7 +25,8 @@ class Foster2015(create_output):
              starting_year,
              community_algorithm = "Louvain",
              client_name = None,
-             db_name = None):
+             db_name = None,
+             density = False):
         
         '''
         Description

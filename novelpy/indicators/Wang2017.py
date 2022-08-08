@@ -46,7 +46,8 @@ class Wang2017(create_output):
                  starting_year,
                  client_name = None,
                  db_name = None,
-                 list_of_journals = None,):
+                 list_of_journals = None,
+                 density = False):
         """
         
         Description

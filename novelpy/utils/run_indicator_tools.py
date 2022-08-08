@@ -21,7 +21,8 @@ class Dataset:
              n_reutilisation = None,
              starting_year = None,
              new_infos = None,
-             list_of_journals = None):
+             list_of_journals = None,
+             density = False):
         """
         Description
         -----------
@@ -50,6 +51,8 @@ class Dataset:
             year of interest.
         time_window_cooc: int
             Sum the coocurence between the t-time_window_cooc and t+time_window_cooc
+        density: bool
+            Store scores' density 
         Returns
         -------
         None.
@@ -71,6 +74,7 @@ class Dataset:
         self.item_name = self.variable.split('_')[0] if self.variable else None
         self.list_of_journals = list_of_journals 
         self.restricted = '_restricted' if self.list_of_journals else ''
+        self.density  = density
         if self.client_name:
             self.client = pymongo.MongoClient(client_name)
             self.db = self.client[db_name]
@@ -285,9 +289,12 @@ class create_output(Dataset):
             scores_list = [1-i for i in self.scores_array]
             score = {'novelty': float(np.mean(scores_list))}
 
-        doc_infos = {"scores_array": scores_list,
-                     'score':score}
-        
+        if self.density:
+            doc_infos = {"scores_array": scores_list,
+                         'score':score}
+        else:
+            doc_infos = {'score':score}
+
         self.key = key
         self.doc_infos = doc_infos
         return {key:doc_infos}

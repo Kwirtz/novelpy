@@ -241,7 +241,8 @@ class Uzzi2013(create_output):
              focal_year,                 
              client_name = None,
              db_name = None,
-             nb_sample = 20):
+             nb_sample = 20,
+             density = False):
         """
         Description
         -----------

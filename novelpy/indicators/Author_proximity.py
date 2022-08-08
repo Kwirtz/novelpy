@@ -88,7 +88,8 @@ class Author_proximity(Dataset):
                  aut_id_variable = None,
                  entity = None,
                  focal_year = None,
-                 windows_size = 5):
+                 windows_size = 5,
+                 density = False):
         """
         Description
         -----------
