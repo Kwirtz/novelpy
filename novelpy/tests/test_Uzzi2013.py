@@ -54,7 +54,7 @@ class TestUzzi(unittest.TestCase):
                                                            keep_diag = True)
 
         adj_mat = np.array([[0,0,1,1],
-                            [0,2,2,0],
+                            [0,1,2,0],
                             [0,0,0,1],
                             [0,0,0,0]])
         np.testing.assert_array_equal(sampled_current_adj.A,
@@ -85,7 +85,7 @@ class TestUzzi(unittest.TestCase):
                                                   self.uzzi.focal_year)
         
         mean_adj_mat = np.array([[0,0,1,1],
-                            [0,2,2,0],
+                            [0,1,2,0],
                             [0,0,0,1],
                             [0,0,0,0]])
         
