@@ -171,6 +171,7 @@ class Shibayama2021(Dataset):
                              }
                         new_dict.update(references_novelty)                    
                         self.splitted_dict.append(new_dict)
+                    self.infos.update({ent:self.splitted_dict})
                 else:
                     references_novelty = {
                         'shibayama_{}'.format(ent) :nov_list,
@@ -232,11 +233,14 @@ class Shibayama2021(Dataset):
                 refs = self.get_references_embedding(doc)
                 self.compute_score(refs, self.entity)
                 if self.client_name:
-                    if self.splitted_dict:
-                        for doc_to_insert in self.splitted_dict:
-                            self.list_of_insertion.append({self.id_variable: doc[self.id_variable],
-                                                           'shibayama':self.splitted_dict,
-                                                           "year":doc["year"]})
+                    for ent in self.entity:
+                        if ent in self.infos:
+                            if self.infos[ent]:
+                                for doc_to_insert in self.infos[ent]:
+                                    scores = {self.id_variable: doc[self.id_variable],
+                                            "year":doc["year"]}
+                                    scores.update(doc_to_insert)
+                                    self.list_of_insertion.append(scores)
                 else:
                     if self.infos:
                         self.list_of_insertion.append({self.id_variable: doc[self.id_variable],'shibayama': self.infos})
