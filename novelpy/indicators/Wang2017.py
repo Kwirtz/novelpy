@@ -111,10 +111,10 @@ class Wang2017(create_output):
         mask = np.ones(self.past_adj.shape, dtype=bool)
         mask[self.past_adj.nonzero()] = False
         self.nbd_adj[mask] = 1
-
+        self.nbd_adj = triu(self.nbd_adj,k=1)
 
         # Reused after
-        self.futur_adj[self.n_reutilisation < self.futur_adj] = 0
+        self.futur_adj[self.futur_adj < self.n_reutilisation] = 0
         self.futur_adj[self.futur_adj >= self.n_reutilisation] = 1
         self.futur_adj = csr_matrix(self.futur_adj)
         self.futur_adj.eliminate_zeros()
