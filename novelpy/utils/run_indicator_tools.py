@@ -289,7 +289,7 @@ class create_output(Dataset):
             scores_list = [1-i for i in self.scores_array]
             score = {'novelty': float(np.mean(scores_list))}
 
-        if not self.density:
+        if self.density:
             doc_infos = {"scores_array": scores_list,
                          'score':score}
         else:

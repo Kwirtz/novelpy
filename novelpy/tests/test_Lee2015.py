@@ -23,7 +23,8 @@ class TestLee(unittest.TestCase):
                                     year_variable = 'year',
                                     variable = 'Ref_journals',
                                     sub_variable = 'item',
-                                    focal_year = 3)
+                                    focal_year = 3,
+                                    density = True)
     
     def test_get_data(self):
         self.get_papers_items()

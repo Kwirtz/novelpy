@@ -25,7 +25,8 @@ class TestFoster(unittest.TestCase):
                                        sub_variable = "item",
                                        focal_year = 3,
                                        starting_year = 1,
-                                       community_algorithm = "Louvain")
+                                       community_algorithm = "Louvain",
+                                       density = True)
     
     def test_get_data(self):
         self.get_papers_items()

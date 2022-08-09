@@ -22,7 +22,8 @@ class TestWang(unittest.TestCase):
                                        focal_year = 3,
                                        time_window_cooc = 2,
                                        starting_year = 1,
-                                       n_reutilisation = 1)
+                                       n_reutilisation = 1,
+                                       density = True)
         self.papers_item = docs3 = {5:["A", "C", "D"],#NEWCOMB
                            6:["B", "C", "B"]
                           }
