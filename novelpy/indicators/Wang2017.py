@@ -122,9 +122,9 @@ class Wang2017(create_output):
         # Create a matrix with the cosine similarity
         # for each combinaison never made before but reused in the futur
 
-        cos_sim = get_difficulty_cos_sim(self.difficulty_adj)
+        self.cos_sim = get_difficulty_cos_sim(self.difficulty_adj)
 
-        comb_scores = self.futur_adj.multiply(self.nbd_adj).multiply(cos_sim)
+        comb_scores = self.futur_adj.multiply(self.nbd_adj).multiply(self.cos_sim)
         comb_scores[comb_scores.nonzero()] = 1 - comb_scores[comb_scores.nonzero()]   
                     
         pickle.dump(comb_scores, open(self.path_score + "{}.p".format(self.focal_year), "wb" ) )
