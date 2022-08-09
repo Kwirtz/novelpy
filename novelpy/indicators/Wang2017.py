@@ -107,10 +107,10 @@ class Wang2017(create_output):
 
         """
         # Never been done
-        nbd_adj = lil_matrix(self.past_adj.shape, dtype="int8")
+        self.nbd_adj = lil_matrix(self.past_adj.shape, dtype="int8")
         mask = np.ones(self.past_adj.shape, dtype=bool)
         mask[self.past_adj.nonzero()] = False
-        nbd_adj[mask] = 1
+        self.nbd_adj[mask] = 1
 
 
         # Reused after
@@ -124,7 +124,7 @@ class Wang2017(create_output):
 
         cos_sim = get_difficulty_cos_sim(self.difficulty_adj)
 
-        comb_scores = self.futur_adj.multiply(nbd_adj).multiply(cos_sim)
+        comb_scores = self.futur_adj.multiply(self.nbd_adj).multiply(cos_sim)
         comb_scores[comb_scores.nonzero()] = 1 - comb_scores[comb_scores.nonzero()]   
                     
         pickle.dump(comb_scores, open(self.path_score + "{}.p".format(self.focal_year), "wb" ) )

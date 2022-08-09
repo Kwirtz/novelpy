@@ -8,7 +8,7 @@ import numpy as np
 import networkx as nx
 import community as community_louvain
 from collections import defaultdict
-from scipy.sparse import lil_matrix
+from scipy.sparse import lil_matrix, spdiags
 from novelpy.utils.run_indicator_tools import create_output
 
 
@@ -97,6 +97,7 @@ class Foster2015(create_output):
                 i = sorted(i)
                 self.df[i[0], i[1]] += 1
         print("Done ...")
+
     def run_iteration(self):
         if self.community_algorithm == "Louvain":
             self.Louvain_based()
@@ -119,6 +120,8 @@ class Foster2015(create_output):
         '''
         
         df = lil_matrix((len(self.g), len(self.g)), dtype = np.int8)
+        diag = spdiags(np.ones(len(self.g)), 0, len(self.g), len(self.g))
+        df = df + diag
         self.df = df
     
     
