@@ -8,7 +8,7 @@ import numpy as np
 import networkx as nx
 import community as community_louvain
 from collections import defaultdict
-from scipy.sparse import lil_matrix
+from scipy.sparse import lil_matrix, spdiags
 from novelpy.utils.run_indicator_tools import create_output
 
 
@@ -25,7 +25,8 @@ class Foster2015(create_output):
              starting_year,
              community_algorithm = "Louvain",
              client_name = None,
-             db_name = None):
+             db_name = None,
+             density = False):
         
         '''
         Description
@@ -56,7 +57,8 @@ class Foster2015(create_output):
                                variable = variable,
                                sub_variable = sub_variable,
                                focal_year = focal_year,
-                               starting_year = starting_year)
+                               starting_year = starting_year,
+                               density = density)
 
         self.path_score = "Data/score/foster/{}".format(self.variable)
         
@@ -93,8 +95,11 @@ class Foster2015(create_output):
             community_appartenance = [i for i in itertools.combinations(communities[community], r=2)]
             for i in community_appartenance:
                 i = sorted(i)
-                self.df[i[0], i[1]] += 1
+                self.df[i[0], i[1]] = 1
+        for i in range(len(self.g)):
+            self.df[i, i] = 1
         print("Done ...")
+
     def run_iteration(self):
         if self.community_algorithm == "Louvain":
             self.Louvain_based()
@@ -116,8 +121,7 @@ class Foster2015(create_output):
 
         '''
         
-        df = lil_matrix((len(self.g), len(self.g)), dtype = np.int8)
-        self.df = df
+        self.df = lil_matrix((len(self.g), len(self.g)), dtype = np.int8)
     
     
     def get_indicator(self):
