@@ -24,8 +24,7 @@ class create_citation_network():
             self.collection_new = self.db[self.collection_name+"_cleaned"]
             self.collection_new.create_index([ (self.id_variable,1) ])
         else:
-            self.files = glob.glob(r'Data\docs\{}\*.json'.format(self.collection_name))
-
+            self.files = glob.glob('Data/docs/{}/*.json'.format(self.collection_name))
 
 
         

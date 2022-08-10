@@ -25,7 +25,7 @@ class create_authors_past():
             self.collection_new = self.db[self.collection_name+"_cleaned"]
             self.collection_new.create_index([ ("AID",1) ])
         else:
-            self.files = glob.glob(r'Data\docs\{}\*.json'.format(self.collection_name))
+            self.files = glob.glob('Data/docs/{}/*.json'.format(self.collection_name))
 
 
 
@@ -62,7 +62,7 @@ class create_authors_past():
         if self.client_name:
              self.collection_new.insert_many(list_of_insertion)   
         else:
-            with open('Data/docs/{}.json'.format(self.collection_name+"_cleaned"), 'wb') as file:     
+            with open('Data/docs/{}.json'.format(self.collection_name+"_cleaned"), 'w') as file:     
                         # A new file will be created
-                json.dump(gros_dict, file)       
+                json.dump(list_of_insertion, file)       
                   

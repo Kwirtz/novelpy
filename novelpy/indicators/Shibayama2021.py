@@ -8,7 +8,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 import json
 import os
 
-def cosine_similarity_dist(n,doc_mat):
+def cosine_similarity_dist(n,doc_mat,distance_fun = cosine_similarity):
     """
     Description
     -----------
@@ -26,7 +26,7 @@ def cosine_similarity_dist(n,doc_mat):
     """
 
     # Compute similarity
-    cos_sim = cosine_similarity(doc_mat)
+    cos_sim = distance_fun(doc_mat)
     dist_list = []
     for i in range(n):
         for j in range(i+1,n):

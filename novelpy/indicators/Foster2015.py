@@ -123,6 +123,7 @@ class Foster2015(create_output):
         diag = spdiags(np.ones(len(self.g)), 0, len(self.g), len(self.g))
         df = df + diag
         self.df = df
+        
     
     
     def get_indicator(self):

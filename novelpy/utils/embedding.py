@@ -82,14 +82,9 @@ class Embedding:
         self.year_variable = year_variable
         self.time_range = time_range
         self.id_variable = id_variable
-        self.references_variable = references_variable
-        self.aut_pubs_variable = aut_pubs_variable
-        self.aut_id_variable = aut_id_variable
         self.pretrain_path = pretrain_path
         self.title_variable = title_variable
         self.abstract_variable = abstract_variable
-        self.keywords_variable = keywords_variable
-        self.keywords_subvariable = keywords_subvariable
         self.abstract_subvariable = abstract_subvariable
         
         if self.client_name:
@@ -534,7 +529,7 @@ class Embedding:
                      pd.read_json("Data/docs/{}/{}.json".format(collection_embedding,year))
                      ]
                     )
-            self.embedding.set_index(self.aut_id_variable)
+            self.embedding.set_index(self.id_variable)
         
     def get_year_embedding(self,
                            df):
@@ -719,6 +714,7 @@ class Embedding:
                     
                     
     def feed_author_profile(self,
+                            aut_id_variable,
                             collection_authors,
                             collection_embedding,
                             skip_ = 1,
