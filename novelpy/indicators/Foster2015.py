@@ -95,7 +95,9 @@ class Foster2015(create_output):
             community_appartenance = [i for i in itertools.combinations(communities[community], r=2)]
             for i in community_appartenance:
                 i = sorted(i)
-                self.df[i[0], i[1]] += 1
+                self.df[i[0], i[1]] = 1
+        for i in range(len(self.g)):
+            self.df[i, i] = 1
         print("Done ...")
 
     def run_iteration(self):
@@ -124,7 +126,6 @@ class Foster2015(create_output):
         df = df + diag
         self.df = df
         
-    
     
     def get_indicator(self):
         '''
