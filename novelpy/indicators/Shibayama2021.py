@@ -7,8 +7,9 @@ import tqdm
 from sklearn.metrics.pairwise import cosine_similarity
 import json
 import os
+import re 
 
-def cosine_similarity_dist(n,doc_mat,distance_fun = cosine_similarity):
+def similarity_dist(n,doc_mat,distance_fun):
     """
     Description
     -----------
@@ -49,11 +50,12 @@ def get_percentiles(dist_list):
         dict of novelty percentiles.
     """
 
-    nov_list = dict()
+    nov_list = {'percentiles': dict()}
     for q in [100, 99, 95, 90, 80, 50, 20, 10, 5, 1, 0]:
-        nov_list.update({str(q)+'%': np.percentile(dist_list, q)})
-    nov_list.update({'mean': np.mean(dist_list),
-                     'sd': np.std(dist_list)})
+        nov_list['percentiles'].update({str(q)+'%': np.percentile(dist_list, q)})
+    nov_list.update({'stats':{'mean': np.mean(dist_list),
+                                'sd': np.std(dist_list),
+                                'nb_comb' : len(dist_list)}})
 
     return nov_list
 
@@ -70,6 +72,7 @@ class Shibayama2021(Dataset):
                  db_name =  None,
                  collection_name = None,
                  collection_embedding_name = None,
+                 distance_fun = cosine_similarity,
                  density = False):
         """
         Description
@@ -86,7 +89,8 @@ class Shibayama2021(Dataset):
             embedded representation of author articles variable name.
         year_variable : str
             year variable name.
-
+        distance_fun : fun
+            distance function, this function need to take an array with documents as row and features as columns, it needs to return a square matrix of distance between documents
         Returns
         -------
         None.
@@ -97,6 +101,7 @@ class Shibayama2021(Dataset):
         self.year_variable = year_variable
         self.entity = entity
         self.embedding_dim = embedding_dim
+        self.distance_fun = distance_fun
 
         Dataset.__init__(
             self,
@@ -130,7 +135,6 @@ class Shibayama2021(Dataset):
 
         """
         chunk_size = 10000
-        
         for ent in entity:
             clean_refs = [ref for ref in refs if ref[ent] and isinstance(ref[ent],list)]
             n = len(clean_refs)
@@ -140,7 +144,7 @@ class Shibayama2021(Dataset):
                     item = clean_refs[i][ent]
                     if item:
                         doc_mat[i, :] =  item
-                dist_list = cosine_similarity_dist(n,doc_mat)
+                dist_list = similarity_dist(n,doc_mat,distance_fun = self.distance_fun)
                 nov_list = get_percentiles(dist_list)
                 
                 if self.client_name:
@@ -173,10 +177,16 @@ class Shibayama2021(Dataset):
                         self.splitted_dict.append(new_dict)
                     self.infos.update({ent:self.splitted_dict})
                 else:
-                    references_novelty = {
-                        'shibayama_{}'.format(ent) :nov_list,
-                        'scores_array_{}'.format(ent) :dist_list
-                        }
+                    if self.density:
+                        references_novelty = {
+                            'shibayama_{}'.format(ent) :nov_list,
+                            'scores_array_{}'.format(ent) :dist_list
+                            }
+                    else:
+                        references_novelty = {
+                            'shibayama_{}'.format(ent) :nov_list
+                            }
+
                     self.infos.update(references_novelty)
 
     def get_references_embedding(self,
@@ -184,10 +194,14 @@ class Shibayama2021(Dataset):
         refs_embedding = []
         refs_ids = doc[self.ref_variable]
         for ref in refs_ids:
-            ref_embedding = self.collection_embedding.find_one({self.id_variable: ref})
+            if self.client_name:
+                ref_embedding = self.collection_embedding.find_one({self.id_variable: ref})
+            else:
+                ref_embedding = self.collection_embedding[ref]
             if ref_embedding:
-                ref_embedding.pop('_id')
-                ref_embedding.pop('year')
+                if self.client_name:
+                    ref_embedding.pop('_id')
+                    ref_embedding.pop('year')
                 refs_embedding.append(ref_embedding)
         return refs_embedding
 
@@ -204,9 +218,9 @@ class Shibayama2021(Dataset):
         else:
             self.docs = json.load(open("Data/docs/{}/{}.json".format(self.collection_name,self.focal_year)))
             collection_embedding_acc = []
-            all_years = [int(re.sub('.json','',file)) for file in os.listdir("Data/docs/{}/".format(collection_embedding))]
+            all_years = [int(re.sub('.json','',file)) for file in os.listdir("Data/docs/{}/".format(self.collection_embedding_name))]
             for year in all_years:
-                collection_embedding_acc += json.load(open("Data/docs/{}/{}.json".format(collection_embedding,year)))
+                collection_embedding_acc += json.load(open("Data/docs/{}/{}.json".format(self.collection_embedding_name,year)))
             self.collection_embedding = {doc[self.id_variable]:{self.id_variable:doc[self.id_variable],
                                                            "title_embedding":doc["title_embedding"],
                                                            "abstract_embedding":doc["abstract_embedding"]} for doc in collection_embedding_acc}

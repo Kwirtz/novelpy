@@ -53,18 +53,15 @@ def get_percentiles(dist_list):
         dict of novelty percentiles.
     """
 
-    nov_list = dict()
+    nov_list = {'percentiles': dict()}
     for q in [100, 99, 95, 90, 80, 50, 20, 10, 5, 1, 0]:
-        nov_list.update({str(q)+'%': np.percentile(dist_list, q)})
+        nov_list['percentiles'].update({str(q)+'%': np.percentile(dist_list, q)})
+    nov_list.update({'stats':{'mean': np.mean(dist_list),
+                                'sd': np.std(dist_list),
+                                'nb_comb' : len(dist_list)}})
 
     return nov_list
 
-def med_sd_mean(dist_list):
-    return {
-        'mean' : np.mean(dist_list),
-        'sd' : np.std(dist_list),
-        'median' : np.median(dist_list),
-        'nb_comb' : len(dist_list)}
 
 def intra_cosine_similarity(items,
                             n):
@@ -391,10 +388,10 @@ class Author_proximity(Dataset):
             if n >1:
                 aut_dist = intra_cosine_similarity(items,
                                                    n)
-                self.authors_info_percentiles[ent] += [{
-                    str(self.aut_id_variable):auth_id,
-                    'stats':med_sd_mean(aut_dist),
-                    'percentiles': get_percentiles(aut_dist)}]
+                temp_dict = {str(self.aut_id_variable):auth_id}
+                temp_dict.update(get_percentiles(aut_dist))
+
+                self.authors_info_percentiles[ent] += [temp_dict]
                 self.intra_authors_dist[ent] += aut_dist
     
     def get_intra_dist(self,

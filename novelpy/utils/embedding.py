@@ -711,10 +711,12 @@ class Embedding:
             if self.infos:
                 for info in self.infos:
                     info.update({self.aut_id_variable : and_id})
+                    self.list_of_insertion.append(info)
                     
                     
     def feed_author_profile(self,
                             aut_id_variable,
+                            aut_pubs_variable,
                             collection_authors,
                             collection_embedding,
                             skip_ = 1,
@@ -738,7 +740,8 @@ class Embedding:
 
         """               
                         
-        
+        self.aut_id_variable = aut_id_variable
+        self.aut_pubs_variable = aut_pubs_variable
         self.load_data_aut(collection_authors,
                            collection_embedding,
                            skip_,
@@ -750,7 +753,8 @@ class Embedding:
             and_id = author[self.aut_id_variable]
             self.get_author_profile(doc = author)
             self.insert_embedding_aut(and_id)
-            self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
+            if self.client_name:
+                self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
 
         if self.list_of_insertion:
             if self.client_name:
