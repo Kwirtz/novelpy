@@ -121,9 +121,9 @@ class Foster2015(create_output):
 
         '''
         
+
         self.df = lil_matrix((len(self.g), len(self.g)), dtype = np.int8)
-    
-    
+   
     def get_indicator(self):
         '''
         Description

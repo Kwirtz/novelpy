@@ -46,7 +46,8 @@ class Wang2017(create_output):
                  starting_year,
                  client_name = None,
                  db_name = None,
-                 list_of_journals = None,):
+                 list_of_journals = None,
+                 density = False):
         """
         
         Description
@@ -84,7 +85,8 @@ class Wang2017(create_output):
                                time_window_cooc = time_window_cooc,
                                n_reutilisation = n_reutilisation,
                                starting_year = starting_year,
-                               list_of_journals = list_of_journals)        
+                               list_of_journals = list_of_journals,
+                               density = density)        
 
         
         self.path_score = "Data/score/wang/{}/".format(self.variable + "_" + str(self.time_window_cooc) + "_" + str(self.n_reutilisation)+ self.restricted )
@@ -105,14 +107,14 @@ class Wang2017(create_output):
 
         """
         # Never been done
-        nbd_adj = lil_matrix(self.past_adj.shape, dtype="int8")
+        self.nbd_adj = lil_matrix(self.past_adj.shape, dtype="int8")
         mask = np.ones(self.past_adj.shape, dtype=bool)
         mask[self.past_adj.nonzero()] = False
-        nbd_adj[mask] = 1
-
+        self.nbd_adj[mask] = 1
+        self.nbd_adj = triu(self.nbd_adj,k=1)
 
         # Reused after
-        self.futur_adj[self.n_reutilisation < self.futur_adj] = 0
+        self.futur_adj[self.futur_adj < self.n_reutilisation] = 0
         self.futur_adj[self.futur_adj >= self.n_reutilisation] = 1
         self.futur_adj = csr_matrix(self.futur_adj)
         self.futur_adj.eliminate_zeros()
@@ -120,9 +122,9 @@ class Wang2017(create_output):
         # Create a matrix with the cosine similarity
         # for each combinaison never made before but reused in the futur
 
-        cos_sim = get_difficulty_cos_sim(self.difficulty_adj)
+        self.cos_sim = get_difficulty_cos_sim(self.difficulty_adj)
 
-        comb_scores = self.futur_adj.multiply(nbd_adj).multiply(cos_sim)
+        comb_scores = self.futur_adj.multiply(self.nbd_adj).multiply(self.cos_sim)
         comb_scores[comb_scores.nonzero()] = 1 - comb_scores[comb_scores.nonzero()]   
                     
         pickle.dump(comb_scores, open(self.path_score + "{}.p".format(self.focal_year), "wb" ) )

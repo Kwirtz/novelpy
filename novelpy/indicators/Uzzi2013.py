@@ -52,11 +52,13 @@ def get_adjacency_matrix(unique_items,
                 ind_1 = unique_items[combi[0]]
                 ind_2 = unique_items[combi[1]]
                 adj_mat[ind_1,ind_2] += 1
-                adj_mat[ind_2,ind_1] += 1          
+                if ind_1 != ind_2:
+                    adj_mat[ind_2,ind_1] += 1          
     adj_mat = lil_matrix(adj_mat)
     if keep_diag == False:
         adj_mat.setdiag(0)
     adj_mat = adj_mat.tocsr()
+    adj_mat = triu(adj_mat,format='csr')	
     adj_mat.eliminate_zeros()
     return adj_mat
 
@@ -119,7 +121,7 @@ def get_unique_value_used(all_sampled_adj_freq):
         j_list = sampled_adj.nonzero()[1].tolist()
         for i, j in zip(i_list,j_list):
             tuples_set.update([(i, j)])
-    return list(tuples_set)
+    return sorted(list(tuples_set))
 
 def get_cell_mean_sd(value,all_sampled_adj_freq):
     """
@@ -240,7 +242,8 @@ class Uzzi2013(create_output):
              focal_year,                 
              client_name = None,
              db_name = None,
-             nb_sample = 20):
+             nb_sample = 20,
+             density = False):
         """
         Description
         -----------
@@ -278,7 +281,8 @@ class Uzzi2013(create_output):
                                year_variable = year_variable,
                                variable = variable,
                                sub_variable = sub_variable,
-                               focal_year = focal_year)
+                               focal_year = focal_year,
+                               density = density) 
         
         
         self.path_sample = "Data/cooc_sample/{}/".format(self.variable)
@@ -323,6 +327,18 @@ class Uzzi2013(create_output):
                     sampled_current_adj,
                     open(self.path_sample + filename,
                          "wb" ) )
+
+    def get_all_adj(self):
+	# Get nb_sample networks
+        self.all_sampled_adj_freq = []
+        for i in tqdm.tqdm(range(self.nb_sample),desc = 'Get sample network'):
+            sampled_current_adj_freq = pickle.load(
+                open(self.path_sample + "sample_{}_{}.p".format(i,self.focal_year),
+                "rb" ) )
+            
+            self.all_sampled_adj_freq.append(sampled_current_adj_freq)
+        
+
                 
     def compute_comb_score(self):
         """
@@ -336,27 +352,18 @@ class Uzzi2013(create_output):
         None.
 
         """
-        # Get nb_sample networks
-        all_sampled_adj_freq = []
-        for i in tqdm.tqdm(range(self.nb_sample),desc = 'Get sample network'):
-            sampled_current_adj_freq = pickle.load(
-                open(self.path_sample + "sample_{}_{}.p".format(i,self.focal_year),
-                "rb" ) )
-            
-            all_sampled_adj_freq.append(sampled_current_adj_freq)
-        
-
-        self.unique_values = get_unique_value_used(all_sampled_adj_freq)
+       	self.get_all_adj()
+        self.unique_values = get_unique_value_used(self.all_sampled_adj_freq)
         
         mean_adj_freq, sd_adj_freq = get_comb_mean_sd(self.path_score,
-                                                      all_sampled_adj_freq,
+                                                      self.all_sampled_adj_freq,
                                                       self.unique_values,
                                                       self.variable,
                                                       self.focal_year)
         
         comb_scores = (self.current_adj-mean_adj_freq)/sd_adj_freq  
-        comb_scores[np.isinf(comb_scores)] =  0
-        comb_scores[np.isnan(comb_scores)] =  0
+        comb_scores[np.isinf(comb_scores)] =  None
+        comb_scores[np.isnan(comb_scores)] =  None
         comb_scores = triu(comb_scores,format='csr')
         comb_scores.eliminate_zeros()
             

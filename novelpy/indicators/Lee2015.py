@@ -17,7 +17,8 @@ class Lee2015(create_output):
              sub_variable,
              focal_year,
              client_name = None,
-             db_name = None):
+             db_name = None,
+             density = False):
         """
         Description
         -----------
@@ -48,7 +49,8 @@ class Lee2015(create_output):
                                year_variable = year_variable,
                                variable = variable,
                                sub_variable = sub_variable,
-                               focal_year = focal_year)
+                               focal_year = focal_year,
+                               density = density) 
         
 
         self.path_score = "Data/score/lee/{}".format(variable)
@@ -70,13 +72,14 @@ class Lee2015(create_output):
         
         Nt = np.sum(triu(self.current_adj))
         
-        ij_sums = np.sum(self.current_adj.A, axis= 0)[np.newaxis]
+        temp_adj = self.current_adj.T+triu(self.current_adj,k=1)
+        ij_sums = np.sum(temp_adj.A, axis= 0)[np.newaxis]
         ij_sums = ij_sums.astype('uint64')
         ij_products = ij_sums.T.dot(ij_sums)
         self.ij_sums = ij_sums
         self.ij_products = ij_products
             
-        comb_scores = (csr_matrix(self.current_adj,dtype=float)*int(Nt))/ij_products
+        comb_scores = (csr_matrix(temp_adj,dtype=float)*int(Nt))/ij_products
         comb_scores[np.isinf(comb_scores)] =  0
         comb_scores[np.isnan(comb_scores)] =  0
         comb_scores = triu(comb_scores,format='csr')

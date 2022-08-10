@@ -88,7 +88,8 @@ class Author_proximity(Dataset):
                  aut_id_variable = None,
                  entity = None,
                  focal_year = None,
-                 windows_size = 5):
+                 windows_size = 5,
+                 density = False):
         """
         Description
         -----------
@@ -138,7 +139,8 @@ class Author_proximity(Dataset):
             collection_name = collection_name ,
             id_variable = id_variable,
             year_variable = year_variable,
-            focal_year = focal_year)
+            focal_year = focal_year,
+            density = density)
         
         self.collection_authors_years = self.db['aid_embedding'] 
         self.path_output = "Data/Result/Author_proximity/"
@@ -183,12 +185,13 @@ class Author_proximity(Dataset):
 
         """
         if self.infos:
-            for ent in self.entity:
-                if ent in self.scores_infos:
-                    for i in range(len(self.scores_infos[ent])):
-                        self.scores_infos[ent][i].update({self.id_variable: doc[self.id_variable]})
-                        self.list_of_insertion_sa.append(self.scores_infos[ent][i])
-                    
+            if not self.density:
+                for ent in self.entity:
+                    if ent in self.scores_infos:
+                        for i in range(len(self.scores_infos[ent])):
+                            self.scores_infos[ent][i].update({self.id_variable: doc[self.id_variable]})
+                            self.list_of_insertion_sa.append(self.scores_infos[ent][i])
+                        
             if self.client_name:
                 for ent in self.infos:
                     self.list_of_insertion_op.append(
@@ -222,13 +225,15 @@ class Author_proximity(Dataset):
                 self.collection_output.create_index([ (self.id_variable,1) ])
             else:
                 self.collection_output = self.db["output"]
-            if "output_aut_scores" not in self.db.list_collection_names():
-                print("Init output_aut_scores collection with index on id_variable ...")
-                self.collection_output_aut_scores = self.db["output_aut_scores"]
-                self.collection_output_aut_scores.create_index([ (self.id_variable,1) ])
-            else:
-                self.collection_output_aut_scores = self.db["output_aut_scores"]
-                
+
+            if not self.density:
+                if "output_aut_scores" not in self.db.list_collection_names():
+                    print("Init output_aut_scores collection with index on id_variable ...")
+                    self.collection_output_aut_scores = self.db["output_aut_scores"]
+                    self.collection_output_aut_scores.create_index([ (self.id_variable,1) ])
+                else:
+                    self.collection_output_aut_scores = self.db["output_aut_scores"]
+                    
             if self.list_of_insertion_op: 
                 try:
                     self.db['output_aut_comb'].insert_many(self.list_of_insertion_op)
@@ -239,8 +244,10 @@ class Author_proximity(Dataset):
                     file_object = open(self.path_output+'/{}.txt'.format(self.focal_year), 'a')
                     file_object.write(str(self.i))
                     file_object.close()
-            if self.list_of_insertion_sa: 
-                self.db['output_aut_scores'].insert_many(self.list_of_insertion_sa)
+
+            if not self.density:
+                if self.list_of_insertion_sa:    
+                    self.db['output_aut_scores'].insert_many(self.list_of_insertion_sa)
         else:
             if self.list_of_insertion_op:
                 with open(self.path_output + "/{}.json".format(self.focal_year), 'w') as outfile:
@@ -385,7 +392,9 @@ class Author_proximity(Dataset):
                 aut_dist = intra_cosine_similarity(items,
                                                    n)
                 self.authors_info_percentiles[ent] += [{
-                    str(self.aut_id_variable):auth_id,'stats':med_sd_mean(aut_dist)}]
+                    str(self.aut_id_variable):auth_id,
+                    'stats':med_sd_mean(aut_dist),
+                    'percentiles': get_percentiles(aut_dist)}]
                 self.intra_authors_dist[ent] += aut_dist
     
     def get_intra_dist(self,
@@ -452,7 +461,8 @@ class Author_proximity(Dataset):
                 # get percentiles
                 self.authors_infos_dist[ent] += [{
                     'ids' : [id_i,id_j],
-                    'stats': med_sd_mean(temp_list)
+                    'stats': med_sd_mean(temp_list),
+                    'percentiles': get_percentiles(temp_list)
                     }]
                     
                 

@@ -66,9 +66,9 @@ class Disruptiveness(create_output):
 
         if client_name:
             self.tomongo = True
-            if "output" not in self.db.list_collection_names():
+            if "output_disruptiveness" not in self.db.list_collection_names():
                 print("Init output collection with index on id_variable ...")
-                self.collection_output = self.db["output"]
+                self.collection_output = self.db["output_disruptiveness"]
                 self.collection_output.create_index([ (self.id_variable,1) ])
         else:
             self.tomongo = False
@@ -238,7 +238,8 @@ class Disruptiveness(create_output):
                 'DeIn': sum_Jxc/(len_I+len_J) if any([len_I,len_J !=0]) else 0,
                 'Breadth' : len_B/(len_I+len_J) if any([len_I,len_J !=0]) else 0,
                 'Depth' : len_D/(len_I+len_J) if any([len_I,len_J !=0]) else 0
-                }
+                },
+            "year":self.focal_year
             }
         
         if self.tomongo:
@@ -250,7 +251,8 @@ class Disruptiveness(create_output):
                 print(e)
         else:
             return {self.id_variable:focal_paper_id,
-                    'disruptiveness':disruptiveness_indicators['disruptiveness']}
+                    'disruptiveness':disruptiveness_indicators['disruptiveness'],
+                    "year":self.focal_year}
 
     def get_indicators(self,parallel = False):
         
@@ -406,7 +408,7 @@ class Disruptiveness(create_output):
                                 client_name = self.client_name, 
                                 db_name = self.db_name,
                                 collection_name = self.collection_name,
-                                collection2update = 'output')
+                                collection2update = 'output_disruptiveness')
                 #for idx in tqdm.tqdm(list(self.papers_items)))
             else:
                 print('Parallel computing only available with mongoDB')
@@ -427,7 +429,7 @@ class Disruptiveness(create_output):
                     client_name = self.client_name, 
                     db_name = self.db_name,
                     collection_name = self.collection_name,
-                    collection2update = 'output')
+                    collection2update = 'output_disruptiveness')
                 list_of_insertion.append(paper_score)
             if not self.tomongo:
                 with open(self.path_output + "/{}.json".format(self.focal_year), 'w') as outfile:

@@ -52,6 +52,8 @@ def get_percentiles(dist_list):
     nov_list = dict()
     for q in [100, 99, 95, 90, 80, 50, 20, 10, 5, 1, 0]:
         nov_list.update({str(q)+'%': np.percentile(dist_list, q)})
+    nov_list.update({'mean': np.mean(dist_list),
+                     'sd': np.std(dist_list)})
 
     return nov_list
 
@@ -66,7 +68,9 @@ class Shibayama2021(Dataset):
                  embedding_dim = 200,
                  client_name = None, 
                  db_name =  None,
-                 collection_name = None):
+                 collection_name = None,
+                 collection_embedding_name = None,
+                 density = False):
         """
         Description
         -----------
@@ -101,14 +105,15 @@ class Shibayama2021(Dataset):
             collection_name = collection_name ,
             id_variable = id_variable,
             year_variable = year_variable,
-            focal_year = focal_year)
-    
+            focal_year = focal_year,
+            density = density)
+        self.collection_embedding_name = collection_embedding_name
         self.path_score = "Result/shibayama/"
         if not os.path.exists(self.path_score):
             os.makedirs(self.path_score)
     
     
-    def compute_score(self,doc,entity):
+    def compute_score(self,refs,entity):
         """
         
 
@@ -127,7 +132,7 @@ class Shibayama2021(Dataset):
         chunk_size = 10000
         
         for ent in entity:
-            clean_refs = [ref for ref in doc[self.ref_variable] if ref[ent] and isinstance(ref[ent],list)]
+            clean_refs = [ref for ref in refs if ref[ent] and isinstance(ref[ent],list)]
             n = len(clean_refs)
             if n > 1:
                 doc_mat = np.zeros((n, self.embedding_dim))
@@ -140,24 +145,33 @@ class Shibayama2021(Dataset):
                 
                 if self.client_name:
                     self.splitted_dict = []
-                    if len(dist_list) > 10000:
-                        list_chunked = [dist_list[i:i + chunk_size] for i in range(0, len(dist_list), chunk_size )]
-                        for chunk in list_chunked:
+                    if self.density:
+                        if len(dist_list) > 10000:
+                            list_chunked = [dist_list[i:i + chunk_size] for i in range(0, len(dist_list), chunk_size )]
+                            for chunk in list_chunked:
+                                new_dict = dict()
+                                references_novelty = {
+                                    'shibayama_{}'.format(ent) :nov_list,
+                                    'scores_array_{}'.format(ent) :chunk
+                                    }
+                                new_dict.update(references_novelty)
+                                self.splitted_dict.append(new_dict)
+                        else:
                             new_dict = dict()
                             references_novelty = {
-                                'shibayama_{}'.format(ent) :nov_list,
-                                'scores_array_{}'.format(ent) :chunk
-                                }
-                            new_dict.update(references_novelty)
+                                 'shibayama_{}'.format(ent) :nov_list,
+                                 'scores_array_{}'.format(ent) : dist_list
+                                 }
+                            new_dict.update(references_novelty)                    
                             self.splitted_dict.append(new_dict)
-                    else:
+                    else: 
                         new_dict = dict()
                         references_novelty = {
-                             'shibayama_{}'.format(ent) :nov_list,
-                             'scores_array_{}'.format(ent) : dist_list
+                             'shibayama_{}'.format(ent) :nov_list
                              }
                         new_dict.update(references_novelty)                    
                         self.splitted_dict.append(new_dict)
+                    self.infos.update({ent:self.splitted_dict})
                 else:
                     references_novelty = {
                         'shibayama_{}'.format(ent) :nov_list,
@@ -165,16 +179,41 @@ class Shibayama2021(Dataset):
                         }
                     self.infos.update(references_novelty)
 
-    def get_indicator(self):
-       
+    def get_references_embedding(self,
+                                 doc):
+        refs_embedding = []
+        refs_ids = doc[self.ref_variable]
+        for ref in refs_ids:
+            ref_embedding = self.collection_embedding.find_one({self.id_variable: ref})
+            if ref_embedding:
+                ref_embedding.pop('_id')
+                ref_embedding.pop('year')
+                refs_embedding.append(ref_embedding)
+        return refs_embedding
+
+    def load_data(self):
+
         if self.client_name:
             self.docs = self.collection.find({
                 self.ref_variable:{'$ne':None},
                 self.year_variable:self.focal_year
-                })
+                },
+                no_cursor_timeout=True)
             self.processed = []
+            self.collection_embedding = self.db[self.collection_embedding_name]
         else:
             self.docs = json.load(open("Data/docs/{}/{}.json".format(self.collection_name,self.focal_year)))
+            collection_embedding_acc = []
+            all_years = [int(re.sub('.json','',file)) for file in os.listdir("Data/docs/{}/".format(collection_embedding))]
+            for year in all_years:
+                collection_embedding_acc += json.load(open("Data/docs/{}/{}.json".format(collection_embedding,year)))
+            self.collection_embedding = {doc[self.id_variable]:{self.id_variable:doc[self.id_variable],
+                                                           "title_embedding":doc["title_embedding"],
+                                                           "abstract_embedding":doc["abstract_embedding"]} for doc in collection_embedding_acc}
+
+    def get_indicator(self):
+
+        self.load_data()
         print('Getting score per paper ...')     
         # Iterate over every docs 
         self.list_of_insertion = []
@@ -182,33 +221,37 @@ class Shibayama2021(Dataset):
         for doc in tqdm.tqdm(self.docs):
             self.infos = dict()
             if doc[self.ref_variable] and len(doc[self.ref_variable])>1:
-                if doc[self.id_variable] in self.processed:
-                    continue
-                if self.client_name and len(doc[self.ref_variable]) == 500:
-                    docs_temp = self.collection.find({self.id_variable: doc[self.id_variable]})
-                    refs_emb = []
-                    for doc_temp in docs_temp:
-                        refs_emb.append(doc_temp[self.ref_variable])
-                    doc[self.ref_variable] = refs_em    b 
-                    self.processed.append(doc[self.id_variable])
-                self.compute_score(doc, self.entity)
+                #if doc[self.id_variable] in self.processed:
+                #    continue
+                #if self.client_name and len(doc[self.ref_variable]) == 500:
+                #    docs_temp = self.collection.find({self.id_variable: doc[self.id_variable]})
+                #    refs_emb = []
+                #    for doc_temp in docs_temp:
+                #        refs_emb.append(doc_temp[self.ref_variable])
+                #    doc[self.ref_variable] = refs_emb 
+                #    self.processed.append(doc[self.id_variable])
+                refs = self.get_references_embedding(doc)
+                self.compute_score(refs, self.entity)
                 if self.client_name:
-                    if self.splitted_dict:
-                        for doc_to_insert in self.splitted_dict:
-                            self.list_of_insertion.append({self.id_variable: doc[self.id_variable],
-                                                           'shibayama':self.splitted_dict,
-                                                           "year":doc["year"]})
+                    for ent in self.entity:
+                        if ent in self.infos:
+                            if self.infos[ent]:
+                                for doc_to_insert in self.infos[ent]:
+                                    scores = {self.id_variable: doc[self.id_variable],
+                                            "year":doc["year"]}
+                                    scores.update(doc_to_insert)
+                                    self.list_of_insertion.append(scores)
                 else:
                     if self.infos:
                         self.list_of_insertion.append({self.id_variable: doc[self.id_variable],'shibayama': self.infos})
 
         if self.client_name:
-            if "output" not in self.db.list_collection_names():
+            if "output_shibayama" not in self.db.list_collection_names():
                 print("Init output collection with index on id_variable ...")
-                self.collection_output = self.db["output"]
+                self.collection_output = self.db["output_shibayama"]
                 self.collection_output.create_index([ (self.id_variable,1) ])
             else:
-                self.collection_output = self.db["output"]
+                self.collection_output = self.db["output_shibayama"]
             if self.list_of_insertion:
                 self.collection_output.insert_many(self.list_of_insertion)
         else:
