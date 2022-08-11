@@ -121,10 +121,7 @@ class Foster2015(create_output):
 
         '''
         
-        df = lil_matrix((len(self.g), len(self.g)), dtype = np.int8)
-        diag = spdiags(np.ones(len(self.g)), 0, len(self.g), len(self.g))
-        df = df + diag
-        self.df = df
+        self.df = lil_matrix((len(self.g), len(self.g)), dtype = np.int8)
         
     
     def get_indicator(self):
