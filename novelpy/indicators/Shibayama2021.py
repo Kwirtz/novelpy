@@ -4,12 +4,13 @@ import numpy as np
 from novelpy.utils.run_indicator_tools import Dataset
 import pymongo
 import tqdm
-from sklearn.metrics.pairwise import cosine_similarity
+#from sklearn.metrics.pairwise import cosine_similarity
 import json
 import os
 import re 
+from scipy.spatial.distance import cdist
 
-def similarity_dist(n,doc_mat,distance_fun):
+def similarity_dist(n, i, j, distance_type):
     """
     Description
     -----------
@@ -25,14 +26,9 @@ def similarity_dist(n,doc_mat,distance_fun):
     dist_list : list
         list of distances.
     """
-
     # Compute similarity
-    cos_sim = distance_fun(doc_mat)
-    dist_list = []
-    for i in range(n):
-        for j in range(i+1,n):
-            dist_list.append(1 - cos_sim[i][j])
-
+    dist_list = cdist(np.array(i),np.array(j), metric=distance_type).tolist()
+    dist_list = [item for sublist in dist_list for item in sublist]
     return dist_list
 
 def get_percentiles(dist_list):
@@ -72,7 +68,7 @@ class Shibayama2021(Dataset):
                  db_name =  None,
                  collection_name = None,
                  collection_embedding_name = None,
-                 distance_fun = cosine_similarity,
+                 distance_type = 'cosine',
                  density = False):
         """
         Description
@@ -89,7 +85,7 @@ class Shibayama2021(Dataset):
             embedded representation of author articles variable name.
         year_variable : str
             year variable name.
-        distance_fun : fun
+        distance_type : fun
             distance function, this function need to take an array with documents as row and features as columns, it needs to return a square matrix of distance between documents
         Returns
         -------
@@ -101,7 +97,7 @@ class Shibayama2021(Dataset):
         self.year_variable = year_variable
         self.entity = entity
         self.embedding_dim = embedding_dim
-        self.distance_fun = distance_fun
+        self.distance_type = distance_type
 
         Dataset.__init__(
             self,
@@ -139,12 +135,13 @@ class Shibayama2021(Dataset):
             clean_refs = [ref for ref in refs if ref[ent] and isinstance(ref[ent],list)]
             n = len(clean_refs)
             if n > 1:
-                doc_mat = np.zeros((n, self.embedding_dim))
+                doc_mat = []#np.zeros((n, self.embedding_dim))
                 for i in range(n):
                     item = clean_refs[i][ent]
                     if item:
-                        doc_mat[i, :] =  item
-                dist_list = similarity_dist(n,doc_mat,distance_fun = self.distance_fun)
+                        #doc_mat[i, :] =  item
+                        doc_mat.append(item)
+                dist_list = similarity_dist(n,i = doc_mat,j = doc_mat, distance_type = self.distance_type)
                 nov_list = get_percentiles(dist_list)
                 
                 if self.client_name:
