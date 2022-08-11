@@ -96,6 +96,7 @@ class Disruptiveness(create_output):
 
         """
         self.citation_network = pickle.load(open('Data/docs/{}.pkl'.format(self.collection_name),'rb'))
+        self.papers_items = {pmid:self.citation_network[pmid] for pmid in self.citation_network if self.citation_network[pmid][self.year_variable] == self.focal_year}
 
 
     def compute_scores(self,
@@ -191,22 +192,24 @@ class Disruptiveness(create_output):
                                 citing_paper not in ids]):
                             citing_paper_doc = self.citation_network[citing_paper]
                             if citing_paper_doc['year'] >= self.focal_year:
+                                print(citing_paper)
                                 citers_refs = self.citation_network[citing_paper]['citations'][self.refs_list_variable]
                                 citing_ref_from_focal_paper.update({citing_paper: citers_refs})
                                 ids.update([citing_paper])
-                except:
-                    continue
+                except Exception as e:
+                    print(e)
+            print(citing_ref_from_focal_paper)
 
 
         # papers that cite the focal paper that also cite reference from the focal paper
         J = set(citing_focal_paper.keys()).intersection(citing_ref_from_focal_paper.keys())
-        
+        print(J)
         # papers that cite the focal paper but do not cite reference from the focal paper
         I = set(citing_focal_paper.keys()) - J
-        
+        print(I)
         # papers that do not cite the focal paper but cite reference from the focal paper
         K = set(citing_ref_from_focal_paper.keys()) - J
-
+        print(K)
         # number of reference cited by a paper that cite the focal paper that are cited by the focal paper
         Jxc = [len(set(focal_paper_refs).intersection(cited_ref)) for cited_ref in citing_focal_paper.values()]
         
@@ -383,13 +386,10 @@ class Disruptiveness(create_output):
                 return {id_variable:focal_paper_id,
                         'disruptiveness':disruptiveness_indicators['disruptiveness']} 
 
-        
-        if not self.tomongo:
-            print("Load citation network ...")  
-            self.get_citation_network()   
-            self.papers_items = {pmid:self.citation_network[pmid] for pmid in self.citation_network if self.citation_network[pmid][self.year_variable] == self.focal_year}
-        else:
-            self.get_item_paper()
+    
+        print("Load citation network ...")  
+        self.get_citation_network()   
+
         print('Getting score per paper ...')  
         if parallel:
             if self.tomongo:
