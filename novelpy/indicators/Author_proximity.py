@@ -11,8 +11,9 @@ import os
 import bson
 import math
 from scipy.spatial.distance import cdist
+import pandas as pd
 
-def cosine_similarity_dist(n,doc_mat):
+def similarity_dist( i, j, distance_type):
     """
     Description
     -----------
@@ -28,14 +29,9 @@ def cosine_similarity_dist(n,doc_mat):
     dist_list : list
         list of distances.
     """
-
     # Compute similarity
-    cos_sim = cosine_similarity(doc_mat)
-    dist_list = []
-    for i in range(n):
-        for j in range(i+1,n):
-            dist_list.append(1 - cos_sim[i][j])
-
+    dist_list = cdist(np.array(i),np.array(j), metric=distance_type).tolist()
+    dist_list = [item for sublist in dist_list for item in sublist]
     return dist_list
 
 def get_percentiles(dist_list):
@@ -64,12 +60,13 @@ def get_percentiles(dist_list):
 
 
 def intra_cosine_similarity(items,
-                            n):
+                            n,
+                            distance_type):
     
-    aut_mat = np.zeros((n, len(items[0])))
+    aut_mat = [] #np.zeros((n, len(items[0])))
     for j in range(n):
-        aut_mat[j, :] = items[j]
-    aut_dist = cosine_similarity_dist(n,aut_mat)
+        aut_mat.append(items[j])#[j, :] = items[j]
+    aut_dist = similarity_dist( i = aut_mat, j = aut_mat, distance_type = distance_type)
     
     return aut_dist
 
@@ -86,7 +83,8 @@ class Author_proximity(Dataset):
                  entity = None,
                  focal_year = None,
                  windows_size = 5,
-                 density = False):
+                 density = False,
+                 distance_type = 'cosine'):
         """
         Description
         -----------
@@ -128,7 +126,7 @@ class Author_proximity(Dataset):
         self.year_variable = year_variable
         self.entity = entity
         self.windows_size = windows_size 
-
+        self.distance_type = distance_type
         Dataset.__init__(
             self,
             client_name = client_name,
@@ -138,8 +136,10 @@ class Author_proximity(Dataset):
             year_variable = year_variable,
             focal_year = focal_year,
             density = density)
-        
-        self.collection_authors_years = self.db['aid_embedding'] 
+        if self.client_name:
+            self.collection_authors_years = self.db['aid_embedding'] 
+        else:
+            self.collection_authors_years = pd.read_json("Data/docs/authors_years_profile.json")
         self.path_output = "Data/Result/Author_proximity/"
         if not os.path.exists(self.path_output):
             os.makedirs(self.path_output)
@@ -182,7 +182,7 @@ class Author_proximity(Dataset):
 
         """
         if self.infos:
-            if not self.density:
+            if self.density:
                 for ent in self.entity:
                     if ent in self.scores_infos:
                         for i in range(len(self.scores_infos[ent])):
@@ -223,7 +223,7 @@ class Author_proximity(Dataset):
             else:
                 self.collection_output = self.db["output"]
 
-            if not self.density:
+            if self.density:
                 if "output_aut_scores" not in self.db.list_collection_names():
                     print("Init output_aut_scores collection with index on id_variable ...")
                     self.collection_output_aut_scores = self.db["output_aut_scores"]
@@ -242,7 +242,7 @@ class Author_proximity(Dataset):
                     file_object.write(str(self.i))
                     file_object.close()
 
-            if not self.density:
+            if self.density:
                 if self.list_of_insertion_sa:    
                     self.db['output_aut_scores'].insert_many(self.list_of_insertion_sa)
         else:
@@ -330,12 +330,12 @@ class Author_proximity(Dataset):
         else:
             profile = self.collection_authors_years[
                 self.collection_authors_years[self.aut_id_variable] == auth_id
-                ], 
-            
+                ]
+
             profile = profile[
-                profile[self.year_variable].between(self.focal_year,self.focal_year-self.windows_size)
+                profile[self.year_variable].between((self.focal_year-self.windows_size),self.focal_year)
                 ].to_dict("records")
-            
+        
         self.profile = profile
     
     
@@ -350,10 +350,10 @@ class Author_proximity(Dataset):
         """
         txt_profile = {ent:[] for ent in self.entity}
         for year_profile in self.profile:
-            if year_profile['embedded_abs'] and 'abstract' in self.entity:
+            if year_profile['embedded_abs']:# and 'abstract' in self.entity:
                 txt_profile['abstract'] += year_profile['embedded_abs'] 
-            if year_profile['embedded_titles'] and 'title' in self.entity :
-                txt_profile['title']  += year_profile['embedded_titles'] 
+            if year_profile['embedded_title']:# and 'title' in self.entity :
+                txt_profile['title']  += year_profile['embedded_title'] 
                 
         self.profile = txt_profile
     
@@ -387,7 +387,8 @@ class Author_proximity(Dataset):
                 
             if n >1:
                 aut_dist = intra_cosine_similarity(items,
-                                                   n)
+                                                   n,
+                                                   self.distance_type)
                 temp_dict = {str(self.aut_id_variable):auth_id}
                 temp_dict.update(get_percentiles(aut_dist))
 
@@ -450,17 +451,13 @@ class Author_proximity(Dataset):
                     for j_item in self.authors_infos[ent][j]:
                         j_items.append(j_item)
 
-                inter_paper_dist = cdist(np.array(items),np.array(j_items), metric='cosine').tolist()
-                inter_paper_dist = [item for sublist in inter_paper_dist for item in sublist]
+                inter_paper_dist = similarity_dist(i = items, j = j_items, distance_type = self.distance_type)
                 temp_list += inter_paper_dist
                 self.inter_authors_dist[ent] += inter_paper_dist
-        
+                temp_dict = {'ids' : [id_i,id_j]}
+                temp_dict.update(get_percentiles(temp_list))
                 # get percentiles
-                self.authors_infos_dist[ent] += [{
-                    'ids' : [id_i,id_j],
-                    'stats': med_sd_mean(temp_list),
-                    'percentiles': get_percentiles(temp_list)
-                    }]
+                self.authors_infos_dist[ent] += [temp_dict]
                     
                 
     def compute_score(self,doc):
@@ -483,10 +480,12 @@ class Author_proximity(Dataset):
         
         self.init_doc_dict()
         self.get_intra_dist(doc)
-        self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
+        if self.client_name:
+            self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
 
         for ent in self.entity:
-            self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
+            if self.client_name:
+                self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
             if len(self.intra_authors_dist[ent]) > 0:
                 self.nb_aut = len(self.all_aut_ids[ent])
                 

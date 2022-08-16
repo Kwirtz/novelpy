@@ -5,10 +5,11 @@ import json
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import unittest
+from scipy.spatial.distance import cdist
 
 class TestShibayama(unittest.TestCase):
         
-    def test_get_indicators(self):
+    def test_get_indicator(self):
             
         shibayama = novelpy.indicators.Shibayama2021(
                      collection_name = 'Ref_journals',
@@ -35,13 +36,15 @@ class TestShibayama(unittest.TestCase):
             titles_emb.append(collection_embedding[i]['title_embedding'])
 
         n = 3
-        doc_mat = np.zeros((n,200))
+        doc_mat = []#np.zeros((n,200))
         for i in range(n):
             item = titles_emb[i]
             if item:
-                doc_mat[i, :] =  item
+                doc_mat.append(item)#[i, :] =  item
 
-        dist_list = novelpy.similarity_dist(n,doc_mat = doc_mat,distance_fun = cosine_similarity)
+        dist_list = [1-cosine_similarity(np.array([doc_mat[0]]),np.array([doc_mat[1]])),
+                    1-cosine_similarity(np.array([doc_mat[0]]),np.array([doc_mat[2]])),
+                    1-cosine_similarity(np.array([doc_mat[1]]),np.array([doc_mat[2]]))]
         mean = np.mean(dist_list)
         nov_list = novelpy.get_percentiles(dist_list)
         self.assertEqual(nov_list['stats']['mean'],mean)

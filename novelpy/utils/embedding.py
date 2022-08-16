@@ -570,7 +570,7 @@ class Embedding:
             info = {
                 self.year_variable:int(year),
                 'embedded_abs':abs_year[year] if (abs_year and year in abs_year.keys()) else None,
-                'embedded_titles':title_year[year] if (title_year and year in title_year.keys()) else None,
+                'embedded_title':title_year[year] if (title_year and year in title_year.keys()) else None,
             #'keywords':keywords_year
             }
             infos.append(info)
