@@ -73,7 +73,7 @@ class create_citation_network():
                     gros_dict[doc[self.id_variable]]["citations"] = {}
                     gros_dict[doc[self.id_variable]]["citations"]["refs"] = doc[self.variable]
                     gros_dict[doc[self.id_variable]]["citations"]["cited_by"] = self.pmid2citedby[doc[self.id_variable]]
-            with open('Data/docs/{}.pkl'.format(self.collection_name), 'wb') as file:     
+            with open('Data/docs/{}_cleaned.pkl'.format(self.collection_name), 'wb') as file:     
                     # A new file will be created
                 pickle.dump(gros_dict, file)       
               
