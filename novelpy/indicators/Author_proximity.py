@@ -31,11 +31,15 @@ def similarity_dist( i, j, distance_type):
     """
     # Compute similarity
     cos_dist = cdist(np.array(i),np.array(j), metric=distance_type)
-    n = cos_dist.shape[0]
-    dist_list = []
-    for i in range(n):
-        for j in range(i+1,n):
-            dist_list.append(cos_dist[i][j])
+    if i == j:
+        n = cos_dist.shape[0]
+        dist_list = []
+        for i in range(n):
+            for j in range(i+1,n):
+                dist_list.append(cos_dist[i][j])
+    else:
+        dist_list = [num for line in cos_dist.tolist() for num in line]
+
     return dist_list
 
 def get_percentiles(dist_list):
@@ -418,7 +422,7 @@ class Author_proximity(Dataset):
             auth_id = auth[self.aut_id_variable]
             self.get_author_papers(auth_id)
             self.get_listed_papers()
-            for ent in self.profile: 
+            for ent in self.profile:
                 self.get_intra_infos(self.profile[ent],
                                      ent,
                                      auth_id)

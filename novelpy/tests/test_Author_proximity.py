@@ -7,53 +7,70 @@ import numpy as np
 import unittest
 
 class TestAuthor_proximity(unittest.TestCase):
+       
+    def get_data(self):
+        self.ap = novelpy.indicators.Author_proximity(
+                         collection_name = 'Ref_journals',
+                         id_variable = 'id',
+                         year_variable = 'year',
+                         aut_list_variable = 'a02_authorlist',
+                         aut_id_variable = 'AID',
+                         entity = ['title','abstract'],
+                         focal_year = 4,
+                         windows_size = 5,
+                         density = False,
+                 distance_type = 'cosine')
         
-    def test_get_indicators(self):
+        self.ap.load_data()
 
-        ap = novelpy.indicators.Author_proximity(
-                     collection_name = 'Ref_journals',
-                     id_variable = 'id',
-                     year_variable = 'year',
-                     aut_list_variable = 'a02_authorlist',
-                     aut_id_variable = 'AID',
-                     entity = ['title','abstract'],
-                     focal_year = 4,
-                     windows_size = 5,
-                     density = False,
-                    distance_type = 'cosine')
-
-        ap.load_data()
-
-        doc = {'id':8,
-                  'year':4,
-                 'a02_authorlist':[{'AID':2},{'AID':1}],
+        self.doc = {'id':8,
+               'year':4,
+               'a02_authorlist':[{'AID':2},
+                                 {'AID':1}],
          }
 
-        ap.compute_score(doc)
+        self.ap.compute_score(self.doc)
 
-        collection_embedding_acc = []
-        all_years = [int(re.sub('.json','',file)) for file in os.listdir("Data/docs/{}/".format('articles_embedding'))]
-        for year in all_years:
-            collection_embedding_acc += json.load(open("Data/docs/{}/{}.json".format('articles_embedding',str(4))))
+ 
+    def test_get_indicators_intra(self):
+        self.get_data()
+        self.ap.get_author_papers(2)
 
-        collection_embedding = {doc[shibayama.id_variable]:{ap.id_variable:doc[ap.id_variable],
-                                   "title_embedding":doc["title_embedding"],
-                                   "abstract_embedding":doc["abstract_embedding"]} for doc in collection_embedding_acc}
-
-        titles_emb = []
-        for i in [1,4,5]:
-            titles_emb.append(collection_embedding[i]['title_embedding'])
-
-        n = 3
-        doc_mat = []
-        for i in range(n):
-            item = titles_emb[i]
-            if item:
-                doc_mat.append(item)
-
-        dist_list = [1-cosine_similarity(np.array([doc_mat[0]]),np.array([doc_mat[1]])),
-                    1-cosine_similarity(np.array([doc_mat[0]]),np.array([doc_mat[2]])),
-                    1-cosine_similarity(np.array([doc_mat[1]]),np.array([doc_mat[2]]))]
+        test = [paper for year in self.ap.profile for paper in year['embedded_title']]
+        dist_list = [1-cosine_similarity(np.array([test[0]]),np.array([test[1]])),
+                    1-cosine_similarity(np.array([test[0]]),np.array([test[2]])),
+                    1-cosine_similarity(np.array([test[1]]),np.array([test[2]]))]
 
         mean = np.mean(dist_list)
-        self.assertEqual(ap.infos['authors_novelty_title_5']['individuals_scores'][0]['stats']['mean'],mean)
+        score_mean = self.ap.infos['authors_novelty_title_5']['individuals_scores'][0]['stats']['mean']
+        self.assertEqual(score_mean,mean)
+ 
+    def test_get_indicators_inter(self):
+        self.get_data()
+
+        self.ap.get_author_papers(2)
+        item = [paper for year in self.ap.profile for paper in year['embedded_title']]
+
+        self.ap.get_author_papers(1)
+        j_item =  [paper for year in self.ap.profile for paper in year['embedded_title']]
+         
+        dist_list = [1-1,
+                1-cosine_similarity(np.array([item[0]]),np.array([j_item[1]])),
+                1-cosine_similarity(np.array([item[0]]),np.array([j_item[2]])),
+                1-1,
+                
+                1-cosine_similarity(np.array([item[1]]),np.array([j_item[0]])),
+                1-cosine_similarity(np.array([item[1]]),np.array([j_item[1]])),
+                1-cosine_similarity(np.array([item[1]]),np.array([j_item[2]])),
+                1-cosine_similarity(np.array([item[1]]),np.array([j_item[3]])),
+                
+                1-cosine_similarity(np.array([item[2]]),np.array([j_item[0]])),
+                1-cosine_similarity(np.array([item[2]]),np.array([j_item[1]])),
+                1-1,
+                1-cosine_similarity(np.array([item[2]]),np.array([j_item[3]]))]
+
+        dist_list = [float(num) for num in dist_list]
+
+        mean = np.mean(dist_list)
+        score_mean = self.ap.infos['authors_novelty_title_5']['iter_individuals_scores'][0]['stats']['mean']
+        self.assertEqual(score_mean,mean)
