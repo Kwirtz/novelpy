@@ -131,3 +131,5 @@ Paper/mindmap.png
 *.json
 *.txt
 authors_sample.zip
+*.p
+*.pkl
