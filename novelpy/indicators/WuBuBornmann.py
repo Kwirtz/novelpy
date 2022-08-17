@@ -101,8 +101,7 @@ class Disruptiveness(create_output):
         else:
             self.citation_network = pickle.load(open('Data/docs/{}.pkl'.format(self.collection_name),'rb'))
             self.papers_items = {pmid:self.citation_network[pmid] for pmid in self.citation_network if self.citation_network[pmid][self.year_variable] == self.focal_year}
-
-
+        
     def compute_scores(self,
                        focal_paper_id, 
                        focal_paper_refs,
@@ -200,15 +199,19 @@ class Disruptiveness(create_output):
                                 citing_ref_from_focal_paper.update({citing_paper: citers_refs})
                                 ids.update([citing_paper])
                 except Exception as e:
-                    print(str(e))
+                    print(e)
+            print(citing_ref_from_focal_paper)
 
 
         # papers that cite the focal paper that also cite reference from the focal paper
         J = set(citing_focal_paper.keys()).intersection(citing_ref_from_focal_paper.keys())
+        print(J)
         # papers that cite the focal paper but do not cite reference from the focal paper
         I = set(citing_focal_paper.keys()) - J
+        print(I)
         # papers that do not cite the focal paper but cite reference from the focal paper
         K = set(citing_ref_from_focal_paper.keys()) - J
+        print(K)
         # number of reference cited by a paper that cite the focal paper that are cited by the focal paper
         Jxc = [len(set(focal_paper_refs).intersection(cited_ref)) for cited_ref in citing_focal_paper.values()]
         
@@ -346,10 +349,12 @@ class Disruptiveness(create_output):
             J5 = [len_match_ref for len_match_ref in Jxc if len_match_ref > 4]
 
             # papers that cite the focal paper that do not cite papers that cite the focal paper
-            Breadth = [pmid for pmid in citing_focal_paper if not any([ref in citing_focal_paper.keys() for ref in citing_focal_paper[pmid]])]
+            Breadth = [pmid for pmid in citing_focal_paper
+                       if not any([ref in citing_focal_paper.keys() for ref in citing_focal_paper[pmid]])]
 
             # papers that cite the focal paper that cite at least one other paper that cite the focal paper
-            Depth = [pmid for pmid in citing_focal_paper if any([ref in citing_focal_paper.keys() for ref in citing_focal_paper[pmid]])]
+            Depth = [pmid for pmid in citing_focal_paper
+                       if any([ref in citing_focal_paper.keys() for ref in citing_focal_paper[pmid]])]
 
             len_I = len(I) if I else 0
             len_J = len(J) if J else 0
@@ -378,7 +383,7 @@ class Disruptiveness(create_output):
                     db[kwargs['collection2update']].update_one(query,newvalue,upsert = True)
                     client.close()
                 except Exception as e:
-                    print(str(e))
+                    print(e)
             else:
                 return {id_variable:focal_paper_id,
                         'disruptiveness':disruptiveness_indicators['disruptiveness']} 
