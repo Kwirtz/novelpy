@@ -10,7 +10,7 @@ import os
 import re 
 from scipy.spatial.distance import cdist
 
-def similarity_dist(n, i, j, distance_type):
+def similarity_dist( i, j, distance_type):
     """
     Description
     -----------
@@ -27,8 +27,12 @@ def similarity_dist(n, i, j, distance_type):
         list of distances.
     """
     # Compute similarity
-    dist_list = cdist(np.array(i),np.array(j), metric=distance_type).tolist()
-    dist_list = [item for sublist in dist_list for item in sublist]
+    cos_dist = cdist(np.array(i),np.array(j), metric=distance_type)
+    n = cos_dist.shape[0]
+    dist_list = []
+    for i in range(n):
+        for j in range(i+1,n):
+            dist_list.append(cos_dist[i][j])
     return dist_list
 
 def get_percentiles(dist_list):
@@ -141,7 +145,7 @@ class Shibayama2021(Dataset):
                     if item:
                         #doc_mat[i, :] =  item
                         doc_mat.append(item)
-                dist_list = similarity_dist(n,i = doc_mat,j = doc_mat, distance_type = self.distance_type)
+                dist_list = similarity_dist(i = doc_mat,j = doc_mat, distance_type = self.distance_type)
                 nov_list = get_percentiles(dist_list)
                 
                 if self.client_name:

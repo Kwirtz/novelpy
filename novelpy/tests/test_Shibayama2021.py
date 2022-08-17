@@ -47,4 +47,5 @@ class TestShibayama(unittest.TestCase):
                     1-cosine_similarity(np.array([doc_mat[1]]),np.array([doc_mat[2]]))]
         mean = np.mean(dist_list)
         nov_list = novelpy.get_percentiles(dist_list)
+        print(nov_list['stats'])
         self.assertEqual(nov_list['stats']['mean'],mean)

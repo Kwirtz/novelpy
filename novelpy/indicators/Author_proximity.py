@@ -30,8 +30,12 @@ def similarity_dist( i, j, distance_type):
         list of distances.
     """
     # Compute similarity
-    dist_list = cdist(np.array(i),np.array(j), metric=distance_type).tolist()
-    dist_list = [item for sublist in dist_list for item in sublist]
+    cos_dist = cdist(np.array(i),np.array(j), metric=distance_type)
+    n = cos_dist.shape[0]
+    dist_list = []
+    for i in range(n):
+        for j in range(i+1,n):
+            dist_list.append(cos_dist[i][j])
     return dist_list
 
 def get_percentiles(dist_list):
@@ -321,6 +325,7 @@ class Author_proximity(Dataset):
         None.
 
         """
+
         if self.client_name:
             profile = self.collection_authors_years.find({
                 self.aut_id_variable:auth_id,
@@ -333,9 +338,8 @@ class Author_proximity(Dataset):
                 ]
 
             profile = profile[
-                profile[self.year_variable].between((self.focal_year-self.windows_size),self.focal_year)
+                profile[self.year_variable].between((self.focal_year-self.windows_size),(self.focal_year-1))
                 ].to_dict("records")
-        
         self.profile = profile
     
     
@@ -356,7 +360,7 @@ class Author_proximity(Dataset):
                 txt_profile['title']  += year_profile['embedded_title'] 
                 
         self.profile = txt_profile
-    
+
     def get_intra_infos(self,
                         items,
                         ent,
@@ -398,7 +402,7 @@ class Author_proximity(Dataset):
     def get_intra_dist(self,
                        doc):
         """
-        
+
 
         Parameters
         ----------
