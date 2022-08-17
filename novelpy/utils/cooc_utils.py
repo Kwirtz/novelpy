@@ -37,19 +37,19 @@ class create_cooc:
         year_var : str        
             field where the year is
         collection_name : str
-            name of the collection where your data is ("pkg" for us)
+            name of the collection where your data is
         time_window: range
             range of year you will work on
-        dtype:
+        dtype: np.dtype
             Type of coocurence matrix, basis is uint16 but can be changed if numbers are to high
         weighted_network : bool
             allow a given document to make multiple time the same coocurrence
         self_loop : bool
             keep the diagonal on the coocurrence matrix
         client_name : str
-            name of the mongdb client
+            name of the MongoDB client
         db_name : str
-            name of the db where your data is ("pkg" for us)            
+            name of the MongoDB where your data is           
         '''
         
         self.item_list = []

@@ -23,50 +23,55 @@ class Embedding:
     
     def __init__(self,
                  year_variable,
-                 time_range,
                  id_variable,
                  references_variable,
                  pretrain_path,
-                 title_variable,
-                 abstract_variable,
-                 client_name = None,
-                 db_name = None,
+                 time_range,
+                 title_variable = None,
+                 abstract_variable = None,
                  keywords_variable = None,
                  keywords_subvariable = None,
                  abstract_subvariable = None,
                  aut_id_variable = None,
-                 aut_pubs_variable = None):
+                 aut_pubs_variable = None,
+                 client_name = None,
+                 db_name = None):
         """
         
         Description
         -----------
         This class allows to 
-        Compute semantic centroid for each paper (abstract and title)
-        Compute an author profile of embedded articles per year 
-        Add all authors previous work embedded representation for each article.
+        Compute semantic centroid for each paper (abstract and title) necessary for Shibayama et al. and Pelletier et Wirtz
+        Create a new collection where each doc is a individual and its list of publications (embedded) by year necessary for Pelletier et Wirtz.
 
         Parameters
         ----------
-        client_name : str
-            mongo client name.
-        db_name : str
-            mongo db name.
         year_variable : str
-            year variable name.
+            Key where value is the year of publication of the document.
         id_variable : str
-            identifier variable name.
-        aut_id_variable : str
-            authors identifer variable name.
+            Key where value is the id of the document.
+        time_range : range
+            Create the embedding for papers published in the time_range
         pretrain_path : str
             path to the pretrain word2vec: 'your/path/to/en_core_sci_lg-0.4.0/en_core_sci_lg/en_core_sci_lg-0.4.0.
         title_variable : str
-            title variable name.
+            Key where value is the title of the document.
         abstract_variable : str
-            abstract variable name.
+            Key where value is the abstract's information for the document.
+        abstract_sub_variable:
+            Key inside abstract variable where value is text of the abstract.
         keywords_variable : str
-            keyword variable name.
+            Key where value is the keywords' information for the document.
         keywords_subvariable : str
-            keyword subvariable name.
+            Key inside keywords_variable where value is the actual keyword.
+        aut_id_variable : str
+            In collection author key where value is the ID of an author.
+        aut_pubs_variable : str
+            In collection author key where value is the list of document for a given author.
+        client_name : str
+            name of the MongoDB client
+        db_name : str
+            name of the MongoDB where your data is.
 
         Returns
         -------
