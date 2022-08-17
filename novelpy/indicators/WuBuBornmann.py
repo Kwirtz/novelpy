@@ -200,18 +200,13 @@ class Disruptiveness(create_output):
                                 ids.update([citing_paper])
                 except Exception as e:
                     print(e)
-            print(citing_ref_from_focal_paper)
-
 
         # papers that cite the focal paper that also cite reference from the focal paper
         J = set(citing_focal_paper.keys()).intersection(citing_ref_from_focal_paper.keys())
-        print(J)
         # papers that cite the focal paper but do not cite reference from the focal paper
         I = set(citing_focal_paper.keys()) - J
-        print(I)
         # papers that do not cite the focal paper but cite reference from the focal paper
         K = set(citing_ref_from_focal_paper.keys()) - J
-        print(K)
         # number of reference cited by a paper that cite the focal paper that are cited by the focal paper
         Jxc = [len(set(focal_paper_refs).intersection(cited_ref)) for cited_ref in citing_focal_paper.values()]
         
