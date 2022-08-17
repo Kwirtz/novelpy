@@ -92,7 +92,8 @@ class Author_proximity(Dataset):
                  focal_year = None,
                  windows_size = 5,
                  density = False,
-                 distance_type = 'cosine'):
+                 distance_type = 'cosine',
+                 output_name = None):
         """
         Description
         -----------
@@ -135,6 +136,7 @@ class Author_proximity(Dataset):
         self.entity = entity
         self.windows_size = windows_size 
         self.distance_type = distance_type
+        self.output_name = '_'+output_name if output_name else None
         Dataset.__init__(
             self,
             client_name = client_name,
@@ -145,7 +147,7 @@ class Author_proximity(Dataset):
             focal_year = focal_year,
             density = density)
         if self.client_name:
-            self.collection_authors_years = self.db['aid_embedding'] 
+            self.collection_authors_years = self.db['AID_year_embedding'] 
         else:
             self.collection_authors_years = pd.read_json("Data/docs/authors_years_profile.json")
         self.path_output = "Data/Result/Author_proximity/"
@@ -224,24 +226,24 @@ class Author_proximity(Dataset):
 
         """
         if self.client_name:
-            if "output_aut_comb" not in self.db.list_collection_names():
+            if "output_aut_comb"+self.output_name not in self.db.list_collection_names():
                 print("Init output_aut_comb collection with index on id_variable ...")
-                self.collection_output = self.db["output_aut_comb"]
+                self.collection_output = self.db["output_aut_comb"+self.output_name]
                 self.collection_output.create_index([ (self.id_variable,1) ])
             else:
-                self.collection_output = self.db["output"]
+                self.collection_output = self.db["output_aut_comb"+self.output_name]
 
             if self.density:
-                if "output_aut_scores" not in self.db.list_collection_names():
+                if "output_aut_scores"+self.output_name not in self.db.list_collection_names():
                     print("Init output_aut_scores collection with index on id_variable ...")
-                    self.collection_output_aut_scores = self.db["output_aut_scores"]
+                    self.collection_output_aut_scores = self.db["output_aut_scores"+self.output_name]
                     self.collection_output_aut_scores.create_index([ (self.id_variable,1) ])
                 else:
-                    self.collection_output_aut_scores = self.db["output_aut_scores"]
+                    self.collection_output_aut_scores = self.db["output_aut_scores"+self.output_name]
                     
             if self.list_of_insertion_op: 
                 try:
-                    self.db['output_aut_comb'].insert_many(self.list_of_insertion_op)
+                    self.db['output_aut_comb'+self.output_name].insert_many(self.list_of_insertion_op)
                     last_i_file = open(self.path_output+'/{}failsafe.txt'.format(self.focal_year), 'w')
                     last_i_file.write(str(self.i))
                     last_i_file.close()
@@ -252,7 +254,7 @@ class Author_proximity(Dataset):
 
             if self.density:
                 if self.list_of_insertion_sa:    
-                    self.db['output_aut_scores'].insert_many(self.list_of_insertion_sa)
+                    self.db['output_aut_scores'+self.output_name].insert_many(self.list_of_insertion_sa)
         else:
             if self.list_of_insertion_op:
                 with open(self.path_output + "/{}.json".format(self.focal_year), 'w') as outfile:
@@ -360,8 +362,8 @@ class Author_proximity(Dataset):
         for year_profile in self.profile:
             if year_profile['embedded_abs']:# and 'abstract' in self.entity:
                 txt_profile['abstract'] += year_profile['embedded_abs'] 
-            if year_profile['embedded_title']:# and 'title' in self.entity :
-                txt_profile['title']  += year_profile['embedded_title'] 
+            if year_profile['embedded_titles']:# and 'title' in self.entity :
+                txt_profile['title']  += year_profile['embedded_titles'] 
                 
         self.profile = txt_profile
 
@@ -463,7 +465,8 @@ class Author_proximity(Dataset):
                 temp_list += inter_paper_dist
                 self.inter_authors_dist[ent] += inter_paper_dist
                 temp_dict = {'ids' : [id_i,id_j]}
-                temp_dict.update(get_percentiles(temp_list))
+                if temp_list:
+                    temp_dict.update(get_percentiles(temp_list))
                 # get percentiles
                 self.authors_infos_dist[ent] += [temp_dict]
                     
@@ -502,7 +505,7 @@ class Author_proximity(Dataset):
                     self.structure_infos(ent)
 
 
-    def get_indicator(self):
+    def get_indicator(self,list_of_ids=None):
         """
         
 
@@ -517,17 +520,34 @@ class Author_proximity(Dataset):
         self.list_of_insertion_sa = []
          
         self.i = 0 
-        for doc in tqdm.tqdm(self.docs):
-            if self.i > self.last_i:
-                if doc[self.aut_list_variable]: 
-                    self.compute_score(doc)
-                    self.insert_doc_output(doc)
-                if self.i % 1000 == 0:
-                    self.save_outputs()
-                    self.list_of_insertion_op = []
-                    self.list_of_insertion_sa = []
+        if list_of_ids:
+            for id_ in tqdm.tqdm(list_of_ids):
+                if self.i > self.last_i:
+                    self.session = self.client.start_session()
+                    doc = self.collection.find_one({self.id_variable:id_})
+                    if doc:
+                        self.focal_year = doc[self.year_variable]
+                        if self.aut_list_variable in doc:
+                            if doc[self.aut_list_variable]: 
+                                self.compute_score(doc)
+                                self.insert_doc_output(doc)
+                            if self.i % 1000 == 0:
+                                self.save_outputs()
+                                self.list_of_insertion_op = []
+                                self.list_of_insertion_sa = []
+                self.i+=1
+        else:
+            for doc in tqdm.tqdm(self.docs):
+                if self.i > self.last_i:
+                    if doc[self.aut_list_variable]: 
+                        self.compute_score(doc)
+                        self.insert_doc_output(doc)
+                    if self.i % 1000 == 0:
+                        self.save_outputs()
+                        self.list_of_insertion_op = []
+                        self.list_of_insertion_sa = []
 
-            self.i+=1
+                self.i+=1
         self.save_outputs()
 
 
