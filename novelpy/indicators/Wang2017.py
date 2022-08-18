@@ -1,8 +1,6 @@
 import os 
-import tqdm
 import pickle 
 import numpy as np
-from scipy.linalg import norm
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.sparse import csr_matrix, lil_matrix, triu, tril
 from novelpy.utils.run_indicator_tools import create_output
