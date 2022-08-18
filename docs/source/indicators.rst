@@ -4,7 +4,7 @@ Indicators
 =====
 
 .. image:: img/mindmap.png
-   :width: 450
+   :width: 600
    :align: center
 
 .. _Novelty:
@@ -30,7 +30,12 @@ The goal of the measure proposed by Uzzi et al. [2013] :cite:p:`uzzi2013atypical
    :width: 250
    :align: center
 
-.. py:function:: Uzzi2013(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, client_name = None, db_name = None, nb_sample = 20)
+P and P’ are two distinct papers, P cites journals A, B and D. P’ cites journals B, C and E. The goal is to shuffle the
+network by conserving the dynamical structure of citations at the paper level. P is not citing anymore A from :math:`t − y` but cites
+instead B from year :math:`t − y`. Comparing the observed and resampled networks we can compute a z-score for each journal
+combination.
+
+.. py:function:: Uzzi2013(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, client_name = None, db_name = None, nb_sample = 20, density = False)
 
    Compute novelty score for every paper for the focal_year based on Uzzi et al. 2013 
 
@@ -43,6 +48,7 @@ The goal of the measure proposed by Uzzi et al. [2013] :cite:p:`uzzi2013atypical
    :param str client_name: Mongo URI if your data is hosted on a MongoDB instead of a JSON file.
    :param str db_name: Name of the MongoDB.
    :param int nb_sample: Number of resample of the co-occurence matrix.
+   :param bool density: If True, save an array where each cell is the score of a combination. If False, save only the percentile of this array
 
    :return: 
 
@@ -81,7 +87,7 @@ Foster et al. [2015] :cite:p:`foster2015tradition` define novelty as an inter-co
    :width: 300
    :align: center
 
-.. py:function:: Foster2015(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, starting_year, client_name = None, db_name = None, community_algorithm = "Louvain")
+.. py:function:: Foster2015(collection_name, id_variable, year_variable, variable, sub_variable, focal_year, starting_year, client_name = None, db_name = None, community_algorithm = "Louvain", density = False)
 
    Compute novelty score for every paper for the focal_year based on Foster et al. 2015 
 
@@ -91,10 +97,12 @@ Foster et al. [2015] :cite:p:`foster2015tradition` define novelty as an inter-co
    :param str variable: Name of the key that holds the variable of interest used in combinations.
    :param str sub_variable: Name of the key which holds the ID of the variable of interest.
    :param int focal_year: The year to start the accumulation of co-occurence matrices.
-   :param int starting_year: The accumulation of co-occurence starting at year.
+   :param int starting_year: The accumulation of co-occurence starting at year starting_year.
    :param str client_name: Mongo URI if your data is hosted on a MongoDB instead of a JSON file
    :param str db_name: Name of the MongoDB.
    :param str community_algorithm: The name of the community algorithm to be used.
+   :param bool density: If True, save an array where each cell is the score of a combination. If False, save only the percentile of this array
+
 
    :return: 
 

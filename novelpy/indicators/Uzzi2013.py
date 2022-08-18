@@ -251,18 +251,28 @@ class Uzzi2013(create_output):
  
         Parameters
         ----------
-        var : str
-            variable used.
-        var_year : str
-            year variable name
-        focal_year : int
-            year of interest.
-        current_item : dict
-            dict with id as key and item and item info as value.
-        unique_items : dict
-            dict structured thi way name:index, file from the name2index.p generated with the cooccurrence matrices.
-        true_current_adj_freq : scipy.sparse.csr.csr_matrix
-            current adjacency matrix.
+        var: str
+            Variable used.
+        collection_name: str
+            Name of the collection or the json file containing the variable.  
+        id_variable: str
+            Name of the key which value give the identity of the document.
+        year_variable : str
+            Name of the key which value is the year of creation of the document.
+        variable: str
+            Name of the key that holds the variable of interest used in combinations.
+        sub_variable: str
+            Name of the key which holds the ID of the variable of interest (nested dict in variable).
+        focal_year: int
+            Calculate the novelty score for every document which has a year_variable = focal_year.
+        client_name: str
+            Mongo URI if your data is hosted on a MongoDB instead of a JSON file.
+        db_name: str 
+            Name of the MongoDB.
+        nb_sample: int 
+            Number of resample of the co-occurence matrix.
+        density: bool 
+            If True, save an array where each cell is the score of a combination. If False, save only the percentile of this array
 
         Returns
         -------
