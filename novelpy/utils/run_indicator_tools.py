@@ -5,6 +5,7 @@ import pymongo
 import pickle
 import json
 import os
+from collections import Counter
 
 class Dataset:
     
@@ -21,8 +22,8 @@ class Dataset:
              n_reutilisation = None,
              starting_year = None,
              new_infos = None,
-             list_of_journals = None,
-             density = False):
+             density = False,
+             keep_item_percentile = None):
         """
         Description
         -----------
@@ -72,15 +73,38 @@ class Dataset:
         self.starting_year = starting_year
         self.new_infos = new_infos
         self.item_name = self.variable.split('_')[0] if self.variable else None
-        self.list_of_journals = list_of_journals 
-        self.restricted = '_restricted' if self.list_of_journals else ''
         self.density  = density
+        self.keep_item_percentile = keep_item_percentile
         if self.client_name:
             self.client = pymongo.MongoClient(client_name)
             self.db = self.client[db_name]
             self.collection = self.db[collection_name]
 
-            
+        self.restricted = '_restricted{}'.format(self.keep_item_percentile) 
+    
+
+    def get_q_journal_list(self):
+        journals_ = []
+        for year in tqdm.tqdm(range(self.focal_year-3,self.focal_year)):
+            if self.client_name:
+                self.docs = self.collection.find({
+                    self.variable:{'$exists':'true'},
+                    self.year_variable:year
+                    })
+            else:
+                self.docs = json.load(open("Data/docs/{}/{}.json".format(self.collection_name,
+                                                                         year)) )
+            for doc in self.docs:
+                if self.variable in doc:
+                    for ref in doc[self.variable]:
+                        journals_.append(ref['item'])
+
+        count = Counter(journals_)                
+        nb_cit = [count[journal] for journal in count]
+        percentile = np.percentile(nb_cit,self.keep_item_percentile)
+        list_of_journals = [journal for journal in count if count[journal] >= percentile]
+        self.list_of_journals = list_of_journals 
+
     def get_item_infos(self,
                        item):
         """
@@ -244,6 +268,9 @@ class create_output(Dataset):
             scores and indicators infos.
     
         """
+
+
+
         if self.unique_pairwise and self.keep_diag:
             combis = [(i,j) for i,j in combinations(set(self.current_items),2)]
         elif self.unique_pairwise == False and self.keep_diag == False:

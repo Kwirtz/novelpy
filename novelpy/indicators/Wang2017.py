@@ -6,7 +6,7 @@ from scipy.linalg import norm
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.sparse import csr_matrix, lil_matrix, triu, tril
 from novelpy.utils.run_indicator_tools import create_output
-   
+
 
    
 def get_difficulty_cos_sim(difficulty_adj):
@@ -46,7 +46,7 @@ class Wang2017(create_output):
                  starting_year,
                  client_name = None,
                  db_name = None,
-                 list_of_journals = None,
+                 keep_item_percentile = 50,
                  density = False):
         """
         
@@ -85,14 +85,13 @@ class Wang2017(create_output):
                                time_window_cooc = time_window_cooc,
                                n_reutilisation = n_reutilisation,
                                starting_year = starting_year,
-                               list_of_journals = list_of_journals,
-                               density = density)        
+                               density = density,
+                               keep_item_percentile = keep_item_percentile)        
 
-        
         self.path_score = "Data/score/wang/{}/".format(self.variable + "_" + str(self.time_window_cooc) + "_" + str(self.n_reutilisation)+ self.restricted )
        
         if not os.path.exists(self.path_score):
-            os.makedirs(self.path_score)        
+            os.makedirs(self.path_score)   
 
     def compute_comb_score(self):
         """
@@ -131,6 +130,7 @@ class Wang2017(create_output):
         
 
     def get_indicator(self):
+        self.get_q_journal_list()
         self.get_data()      
         print('Getting score per year ...')  
         self.compute_comb_score()
