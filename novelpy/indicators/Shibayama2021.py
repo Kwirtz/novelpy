@@ -198,7 +198,10 @@ class Shibayama2021(Dataset):
             if self.client_name:
                 ref_embedding = self.collection_embedding.find_one({self.id_variable: ref})
             else:
-                ref_embedding = self.collection_embedding[ref]
+                try:
+                    ref_embedding = self.collection_embedding[ref]
+                except:
+                    continue
             if ref_embedding:
                 if self.client_name:
                     ref_embedding.pop('_id')
@@ -265,6 +268,7 @@ class Shibayama2021(Dataset):
                 print("Init output collection with index on id_variable ...")
                 self.collection_output = self.db["output_shibayama"]
                 self.collection_output.create_index([ (self.id_variable,1) ])
+                self.collection_output.create_index([ (self.year_variable,1) ])
             else:
                 self.collection_output = self.db["output_shibayama"]
             if self.list_of_insertion:
