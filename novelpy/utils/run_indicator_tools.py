@@ -84,7 +84,7 @@ class Dataset:
     
 
     def get_q_journal_list(self):
-        journals_ = []
+        items = []
         for year in tqdm.tqdm(range(self.focal_year-3,self.focal_year)):
             if self.client_name:
                 self.docs = self.collection.find({
@@ -97,13 +97,12 @@ class Dataset:
             for doc in self.docs:
                 if self.variable in doc:
                     for ref in doc[self.variable]:
-                        journals_.append(ref['item'])
+                        items.append(ref['item'])
 
-        count = Counter(journals_)                
-        nb_cit = [count[journal] for journal in count]
+        count = Counter(items)                
+        nb_cit = [count[item] for item in count]
         percentile = np.percentile(nb_cit,self.keep_item_percentile)
-        list_of_journals = [journal for journal in count if count[journal] >= percentile]
-        self.list_of_journals = list_of_journals 
+        self.list_of_items_restricted = [item for item in count if count[item] >= percentile]
 
     def get_item_infos(self,
                        item):
@@ -282,8 +281,8 @@ class create_output(Dataset):
         
         scores_list = []
         for combi in combis:
-            if self.list_of_journals:
-                if combi[0] in self.list_of_journals and combi[1] in self.list_of_journals: 
+            if self.list_of_items_restricted:
+                if combi[0] in self.list_of_items_restricted and combi[1] in self.list_of_items_restricted: 
                     combi = sorted( (self.name2index[combi[0]], self.name2index[combi[1]]) )
                     scores_list.append(float(self.comb_scores[combi[0], combi[1]]))
             else:
