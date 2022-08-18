@@ -107,11 +107,12 @@ class Embedding:
 
         Parameters
         ----------
-        collection_articles : TYPE
+        collection_articles : str
             DESCRIPTION.
-        collection_embedding : TYPE
+        collection_embedding : str
             DESCRIPTION.
-
+        year_range : range
+            
         Returns
         -------
         None.

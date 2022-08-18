@@ -6,6 +6,9 @@ Indicators
 .. _Novelty:
 .. _Dirsuptiveness:
 
+.. raw:: html
+    :file: img/mindmap.svg
+
 Novelty indicators
 ------------
 
