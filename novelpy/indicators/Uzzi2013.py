@@ -272,7 +272,7 @@ class Uzzi2013(create_output):
         nb_sample: int 
             Number of resample of the co-occurence matrix.
         density: bool 
-            If True, save an array where each cell is the score of a combination. If False, save only the percentile of this array
+            If True, save an array where each cell is the score of a combination. If False, save only the percentiles of this array
 
         Returns
         -------

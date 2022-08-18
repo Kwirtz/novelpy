@@ -29,14 +29,26 @@ class Disruptiveness(create_output):
 
         Parameters
         ----------
+        collection_name: str
+            Name of the collection or the json file containing the variables. 
         focal_year : int
             year of interest
         id_variable : str
             id variable name.
         refs_list_variable : str
-            cited references list variable name .
+            Name of the key which value is a List of IDs cited by the focal paper.
+        cits_list_variable : str
+            Name of the key which value is a List of IDs that cite focal paper
+        focal_year: int
+            Calculate the novelty score for every document which has a year_variable = focal_year.
+        id_variable: str
+            Name of the key which value give the identity of the document.
         year_variable : str
-            year variable name
+            Name of the key which value is the year of creation of the document.
+        client_name: str
+            Mongo URI if your data is hosted on a MongoDB instead of a JSON file.
+        db_name: str 
+            Name of the MongoDB.
 
         Returns
         -------

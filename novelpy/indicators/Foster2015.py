@@ -35,14 +35,31 @@ class Foster2015(create_output):
         
         Parameters
         ----------
-        current_adj : scipy.sparse.csr.csr_matrix
-            The accumulated coocurence/adjacency matrix of items we want to calculate the novelty score on.
-        focal_year : int
-            Calculate novelty for object that have a creation/publication year = focal_year.
-        variable : str
-            Variable of interest (only for path purpose)
-        community_algorithm : str
-            The name of the community algorithm used (["Louvain"]).
+        
+        
+        collection_name: str
+            Name of the collection or the json file containing the variable.  
+        id_variable: str
+            Name of the key which value give the identity of the document.
+        year_variable: str
+            Name of the key which value is the year of creation of the document.
+        variable: str
+            Name of the key that holds the variable of interest used in combinations.
+        sub_variable: str
+            Name of the key which holds the ID of the variable of interest.
+        focal_year: int
+            The year to start the accumulation of co-occurence matrices.
+        starting_year: int
+            The accumulation of co-occurence starting at year starting_year.
+        client_name: str
+            Mongo URI if your data is hosted on a MongoDB instead of a JSON file
+        db_name: str
+            Name of the MongoDB.
+        community_algorithm: str
+            The name of the community algorithm to be used.
+        density: bool 
+            If True, save an array where each cell is the score of a combination. If False, save only the percentile of this array
+
         '''
         
         self.indicator = "foster"

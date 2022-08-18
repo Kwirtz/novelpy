@@ -54,16 +54,32 @@ class Wang2017(create_output):
 
         Parameters
         ----------
-        var : str
-            variable used.
-        var_year : str
-            year variable name
-        focal_year : int
-            year of interest.
-        time_window : int
+        var: str
+            Variable used.
+        collection_name: str
+            Name of the collection or the json file containing the variable.  
+        id_variable: str
+            Name of the key which value give the identity of the document.
+        year_variable : str
+            Name of the key which value is the year of creation of the document.
+        variable: str
+            Name of the key that holds the variable of interest used in combinations.
+        sub_variable: str
+            Name of the key which holds the ID of the variable of interest (nested dict in variable).
+        focal_year: int
+            Calculate the novelty score for every document which has a year_variable = focal_year.
+        client_name: str
+            Mongo URI if your data is hosted on a MongoDB instead of a JSON file.
+        db_name: str 
+            Name of the MongoDB.
+        density: bool 
+            If True, save an array where each cell is the score of a combination. If False, save only the percentiles of this array
+        time_window_cooc : int
             time window to compute the difficulty in the past and the reutilisation in the futur.
         n_reutilisation : int
             minimal number of reutilisation in the futur.
+        keep_item_percentile: int
+            Between 0 and 100. Keep only items that appear more than keep_item_percentile% of every items
 
         Returns
         -------

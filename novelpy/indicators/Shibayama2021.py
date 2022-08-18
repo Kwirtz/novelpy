@@ -81,16 +81,29 @@ class Shibayama2021(Dataset):
 
         Parameters
         ----------
-        id_variable : str
-            identifier variable name.
-        ref_variable : str
-            lembedded representation of references variable name.
-        aut_profile_variable : str
-            embedded representation of author articles variable name.
+        id_variable: str
+            Name of the key which value give the identity of the document.
         year_variable : str
-            year variable name.
+            Name of the key which value is the year of creation of the document.
+        ref_variable : str
+            Name of the key which value is the list of ids cited by the doc
+        entity: list
+            Which variable embedded to run the algorithm (e.g ["title","abstract"])
+        focal_year: int
+            Calculate the novelty score for every document which has a year_variable = focal_year.
+        collection_name: str
+            Name of the collection or the json file containing the variable.  
+        collection_embedding_name: str
+            Name of the collection or the json file containing the entity embedded.  
+        client_name: str
+            Mongo URI if your data is hosted on a MongoDB instead of a JSON file.
+        db_name: str 
+            Name of the MongoDB.
         distance_type : fun
             distance function, this function need to take an array with documents as row and features as columns, it needs to return a square matrix of distance between documents
+        density: bool 
+            If True, save an array where each cell is the score of a distance between a pair of document.
+            If False, save only the percentiles of this array
         Returns
         -------
         None.
