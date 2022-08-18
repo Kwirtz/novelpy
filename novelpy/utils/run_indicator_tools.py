@@ -346,7 +346,7 @@ class create_output(Dataset):
                     open(
                         'Data/score/{}/{}/{}.p'.format(
                             self.indicator,
-                            self.variable+'_'+str(self.time_window_cooc)+'_'+str(self.n_reutilisation),
+                            self.variable+'_'+str(self.time_window_cooc)+'_'+str(self.n_reutilisation)+self.restricted,
                              self.focal_year),
                         "rb" ))       
         else:
