@@ -3,11 +3,15 @@
 Indicators
 =====
 
+.. raw:: html
+    :file: img/mindmap.svg
+    :width: 450
+    :align: center
+
 .. _Novelty:
 .. _Dirsuptiveness:
 
-.. raw:: html
-    :file: img/mindmap.svg
+
 
 Novelty indicators
 ------------
