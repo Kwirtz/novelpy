@@ -522,8 +522,8 @@ class Embedding:
             self.authors = self.collection_authors.find({},no_cursor_timeout  = True, session=self.session).skip(skip_-1).limit(limit_)
             self.embedding = None
         else:
-            if not os.path.exists("Data/docs/authors_profiles/"):
-                os.makedirs("Data/docs/authors_profiles")
+            if not os.path.exists("Data/docs/{}_year_embedding/".format(self.aut_id_variable)):
+                os.makedirs("Data/docs/{}_year_embedding/".format(self.aut_id_variable))
                             
             self.authors = json.load(open("Data/docs/{}.json".format(collection_authors))) 
             all_years = [int(re.sub('.json','',file)) for file in os.listdir("Data/docs/{}/".format(collection_embedding))]
@@ -766,6 +766,6 @@ class Embedding:
             if self.client_name:
                 self.collection_authors_years.insert_many(self.list_of_insertion)
             else:
-                with open("Data/docs/authors_years_profile.json", 'w') as outfile:
+                with open("Data/docs/{}_year_embedding.json".format(self.aut_id_variable), 'w') as outfile:
                     json.dump(self.list_of_insertion, outfile)
     
