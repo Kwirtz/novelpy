@@ -92,8 +92,7 @@ class Author_proximity(Dataset):
                  focal_year = None,
                  windows_size = 5,
                  density = False,
-                 distance_type = 'cosine',
-                 output_name = None):
+                 distance_type = 'cosine'):
         """
         Description
         -----------
@@ -136,7 +135,7 @@ class Author_proximity(Dataset):
         self.entity = entity
         self.windows_size = windows_size 
         self.distance_type = distance_type
-        self.output_name = '_'+output_name if output_name else None
+        self.output_name = '_Author_proximity'
         Dataset.__init__(
             self,
             client_name = client_name,
