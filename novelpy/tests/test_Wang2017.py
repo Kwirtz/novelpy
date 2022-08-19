@@ -24,13 +24,15 @@ class TestWang(unittest.TestCase):
                                        time_window_cooc = 2,
                                        starting_year = 1,
                                        n_reutilisation = 1,
-                                       density = True)
+                                       density = True,
+				       keep_item_percentile = 0)
         self.papers_item = docs3 = {5:["A", "C", "D"],#NEWCOMB
                            6:["B", "C", "B"]
                           }
 
     def test_get_data(self):
         self.get_papers_items()
+        self.wang.get_q_journal_list()
         self.wang.get_data()
 
 
@@ -39,6 +41,7 @@ class TestWang(unittest.TestCase):
 
     def test_adj(self):
         self.get_papers_items()
+        self.wang.get_q_journal_list()
         self.wang.get_data()
 
         difficulty_adj = np.array([[0,3,2,0],
@@ -65,6 +68,7 @@ class TestWang(unittest.TestCase):
         #comb_scores = self.futur_adj.multiply(nbd_adj).multiply(cos_sim)
 
         self.get_papers_items()
+        self.wang.get_q_journal_list()
         self.wang.get_data()
         self.wang.compute_comb_score()
 
@@ -88,6 +92,7 @@ class TestWang(unittest.TestCase):
         #comb_scores = self.futur_adj.multiply(nbd_adj).multiply(cos_sim)
 
         self.get_papers_items()
+        self.wang.get_q_journal_list()
         self.wang.get_data()
 
         difficulty_adj = np.array([[0,3,2,0],
@@ -106,6 +111,7 @@ class TestWang(unittest.TestCase):
     def test_compute_comb_score(self):
 
         self.get_papers_items()
+        self.wang.get_q_journal_list()
         self.wang.get_data()
         self.wang.compute_comb_score()
 
@@ -121,6 +127,7 @@ class TestWang(unittest.TestCase):
 
     def test_update_paper_values(self):
         self.get_papers_items()
+        self.wang.get_q_journal_list()
         self.wang.get_data()
         self.wang.compute_comb_score()
         self.wang.update_paper_values()
@@ -129,10 +136,10 @@ class TestWang(unittest.TestCase):
 
         score = json.load(open(self.wang.path_output+ "/{}.json".format(self.wang.focal_year),"r" ))
         test_score = [{"id": 5,
-                      "Ref_journals_wang_2_1": {"scores_array": [0.0,0.0,1-value_AD], 
+                      "Ref_journals_wang_2_1_restricted0": {"scores_array": [1-value_AD,0.0,0.0], 
                                             "score": {"novelty": 1-value_AD}}},
                      {"id": 6,
-                      "Ref_journals_wang_2_1": {"scores_array": [0.0], 
+                      "Ref_journals_wang_2_1_restricted0": {"scores_array": [0.0], 
                                             "score": {"novelty": 0.0}}}
                     ]
         json.dump(test_score,open(self.wang.path_output+ "/{}_test.json".format(self.wang.focal_year),"w" ))
