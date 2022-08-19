@@ -135,7 +135,7 @@ class Author_proximity(Dataset):
         self.entity = entity
         self.windows_size = windows_size 
         self.distance_type = distance_type
-        self.output_name = '_Author_proximity'
+        self.output_name = 'output_Author_proximity'
         Dataset.__init__(
             self,
             client_name = client_name,
@@ -148,7 +148,7 @@ class Author_proximity(Dataset):
         if self.client_name:
             self.collection_authors_years = self.db['AID_year_embedding'] 
         else:
-            self.collection_authors_years = pd.read_json("Data/docs/authors_years_profile.json")
+            self.collection_authors_years = pd.read_json("Data/docs/AID_year_embedding.json")
         self.path_output = "Data/Result/Author_proximity/"
         if not os.path.exists(self.path_output):
             os.makedirs(self.path_output)
@@ -198,22 +198,27 @@ class Author_proximity(Dataset):
                             self.scores_infos[ent][i].update({self.id_variable: doc[self.id_variable]})
                             self.list_of_insertion_sa.append(self.scores_infos[ent][i])
                         
-            if self.client_name:
-                for ent in self.infos:
+            
+            for ent in self.infos:
+                if self.client_name:
                     self.list_of_insertion_op.append(
                         #pymongo.UpdateOne(
-                            {self.id_variable: doc[self.id_variable], ent: self.infos[ent]}
+                        {
+                            self.id_variable: doc[self.id_variable], 
+                            ent: self.infos[ent]
+                            }
                                           #upsert = True)
                         )
-                self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
-            else:
-                self.list_of_insertion_op.append(
-                    {
-                        self.id_variable: doc[self.id_variable],
-                        'Author_proximity': self.infos
-                        }
-                    )
-              
+                    self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
+                else:
+
+                    self.list_of_insertion_op.append(
+                        {
+                            self.id_variable: doc[self.id_variable],
+                            ent: self.infos[ent]
+                            }
+                        )
+                  
                 
     def save_outputs(self):
         """
@@ -225,24 +230,16 @@ class Author_proximity(Dataset):
 
         """
         if self.client_name:
-            if "output_aut_comb"+self.output_name not in self.db.list_collection_names():
+            if self.output_name not in self.db.list_collection_names():
                 print("Init output_aut_comb collection with index on id_variable ...")
-                self.collection_output = self.db["output_aut_comb"+self.output_name]
+                self.collection_output = self.db[self.output_name]
                 self.collection_output.create_index([ (self.id_variable,1) ])
             else:
-                self.collection_output = self.db["output_aut_comb"+self.output_name]
-
-            if self.density:
-                if "output_aut_scores"+self.output_name not in self.db.list_collection_names():
-                    print("Init output_aut_scores collection with index on id_variable ...")
-                    self.collection_output_aut_scores = self.db["output_aut_scores"+self.output_name]
-                    self.collection_output_aut_scores.create_index([ (self.id_variable,1) ])
-                else:
-                    self.collection_output_aut_scores = self.db["output_aut_scores"+self.output_name]
+                self.collection_output = self.db[self.output_name]
                     
             if self.list_of_insertion_op: 
                 try:
-                    self.db['output_aut_comb'+self.output_name].insert_many(self.list_of_insertion_op)
+                    self.db[self.output_name].insert_many(self.list_of_insertion_op)
                     last_i_file = open(self.path_output+'/{}failsafe.txt'.format(self.focal_year), 'w')
                     last_i_file.write(str(self.i))
                     last_i_file.close()
@@ -253,7 +250,7 @@ class Author_proximity(Dataset):
 
             if self.density:
                 if self.list_of_insertion_sa:    
-                    self.db['output_aut_scores'+self.output_name].insert_many(self.list_of_insertion_sa)
+                    self.db[self.output_name].insert_many(self.list_of_insertion_sa)
         else:
             if self.list_of_insertion_op:
                 with open(self.path_output + "/{}.json".format(self.focal_year), 'w') as outfile:
@@ -289,30 +286,32 @@ class Author_proximity(Dataset):
                 'share_nb_aut_captured': self.nb_aut/self.true_nb_aut}
             }
         
-        dist_ = {'intra':self.intra_authors_dist,
-                'inter':self.inter_authors_dist}
-
-        scores = []
-        for type_ in dist_:
-            score = {'entity':ent,
-                    'type': type_,
-                    'score_array':dist_[type_][ent]}
-
-            len_ = len(dist_[type_][ent])
-            if len_ > 100000:
-                nb_split = math.ceil(len_/100000)
-                for i in range(nb_split):
-                    from_ = i*100000
-                    to_ = (i+1)*100000-1 if (i+1)*100000-1  < len_-1 else len_
-                    score = {'entity':ent,
-                            'type': type_,
-                            'score_array':dist_[type_][ent][from_:to_]}
-                    scores.append(score)
-            else:
-                scores.append(score)
-
         self.infos.update(authors_novelty)
-        self.scores_infos.update({ent:scores})
+
+        if self.density:
+
+            dist_ = {'intra':self.intra_authors_dist,
+                    'inter':self.inter_authors_dist}
+
+            scores = []
+            if self.client_name:
+                for type_ in dist_:
+                    infos = dist_[type_][ent]
+                    for info in infos:
+                        info.update({'type': type_})
+                        score = {'score_array_authors_novelty_{}_{}'.format(ent, str(self.windows_size)) : info}
+                        scores.append(score)
+                self.scores_infos.update({ent:scores})
+            else:
+                scores.append(dist_)
+                self.infos['authors_novelty_{}_{}'.format(ent, str(self.windows_size))].update({
+                    'score_array_authors_novelty_{}_{}'.format(ent, str(self.windows_size)) : {
+                        'intra':self.intra_authors_dist[ent],
+                        'inter':self.inter_authors_dist[ent]
+                        }
+                    })
+
+
 
             
     def get_author_papers(self,
@@ -359,10 +358,10 @@ class Author_proximity(Dataset):
         """
         txt_profile = {ent:[] for ent in self.entity}
         for year_profile in self.profile:
-            if year_profile['embedded_abs']:# and 'abstract' in self.entity:
+            if year_profile['embedded_abs'] and 'abstract' in self.entity:
                 txt_profile['abstract'] += year_profile['embedded_abs'] 
-            if year_profile['embedded_titles']:# and 'title' in self.entity :
-                txt_profile['title']  += year_profile['embedded_titles'] 
+            if year_profile['embedded_title'] and 'title' in self.entity :
+                txt_profile['title']  += year_profile['embedded_title'] 
                 
         self.profile = txt_profile
 
@@ -401,8 +400,10 @@ class Author_proximity(Dataset):
                 temp_dict = {str(self.aut_id_variable):auth_id}
                 temp_dict.update(get_percentiles(aut_dist))
 
+                score_dict = {'id': auth_id,
+                              'score_array':aut_dist}
                 self.authors_info_percentiles[ent] += [temp_dict]
-                self.intra_authors_dist[ent] += aut_dist
+                self.intra_authors_dist[ent] += [score_dict]
     
     def get_intra_dist(self,
                        doc):
@@ -462,8 +463,10 @@ class Author_proximity(Dataset):
 
                 inter_paper_dist = similarity_dist(i = items, j = j_items, distance_type = self.distance_type)
                 temp_list += inter_paper_dist
-                self.inter_authors_dist[ent] += inter_paper_dist
+
                 temp_dict = {'ids' : [id_i,id_j]}
+
+                self.inter_authors_dist[ent] += [{'ids' : [id_i,id_j], 'score_array':temp_list}]
                 if temp_list:
                     temp_dict.update(get_percentiles(temp_list))
                 # get percentiles
