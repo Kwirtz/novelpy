@@ -175,6 +175,38 @@ class Author_proximity(Dataset):
         else:
             self.docs = json.load(open("Data/docs/{}/{}.json".format(self.collection_name,self.focal_year)))
             
+    def slip_cell(self,
+                score_info,
+                id_):
+        var = [var for var in score_info if 'score_array' in var][0]
+        var_id = [var_id for var_id in score_info[var] if 'id' in var_id][0]
+
+        scores = []
+        
+
+        len_ = len(score_info[var]['score_array'])
+        if len_ > 100000:
+            nb_split = math.ceil(len_/100000)
+            for i in range(nb_split):
+                from_ = i*100000
+                to_ = (i+1)*100000-1 if (i+1)*100000-1  < len_-1 else len_
+                score = {var:{
+                            var_id:score_info[var][var_id],
+                            'score_array':score_info[var]['score_array'][from_:to_]},
+                        'type':score_info['type']
+                        }
+                score.update({self.id_variable: id_})
+                scores.append(score)
+        else:
+            score = {var:{
+                    var_id:score_info[var][var_id],
+                    'score_array':score_info[var]['score_array']},
+                'type':score_info['type']
+            }
+            score.update({self.id_variable: id_})
+            scores.append(score)
+        return scores
+
     def insert_doc_output(self,
                       doc):
         """
@@ -195,8 +227,10 @@ class Author_proximity(Dataset):
                 for ent in self.entity:
                     if ent in self.scores_infos:
                         for i in range(len(self.scores_infos[ent])):
-                            self.scores_infos[ent][i].update({self.id_variable: doc[self.id_variable]})
-                            self.list_of_insertion_sa.append(self.scores_infos[ent][i])
+                            id_ = doc[self.id_variable]
+                            scores = self.slip_cell(self.scores_infos[ent][i],id_)
+                            for score in scores:
+                                self.list_of_insertion_sa.append(score)
                         
             
             for ent in self.infos:
