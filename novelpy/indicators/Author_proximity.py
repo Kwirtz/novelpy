@@ -298,8 +298,8 @@ class Author_proximity(Dataset):
                 for type_ in dist_:
                     infos = dist_[type_][ent]
                     for info in infos:
-                        info.update({'type': type_})
                         score = {'score_array_authors_novelty_{}_{}'.format(ent, str(self.windows_size)) : info}
+                        score.update({'type': type_})
                         scores.append(score)
                 self.scores_infos.update({ent:scores})
             else:
