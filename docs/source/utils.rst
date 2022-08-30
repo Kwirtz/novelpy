@@ -40,24 +40,24 @@ embedding
 In order to use the indicators of Shibayama et al (2021) and the one on authors, it is necessary to embed the title or abstract of the document.
 
 
-.. py:function:: Embedding(self, year_variable, id_variable, references_variable, pretrain_path, time_range, title_variable = None, abstract_variable = None, keywords_variable = None, keywords_subvariable = None, abstract_subvariable = None, aut_id_variable = None, aut_pubs_variable = None, client_name = None, db_name = None)
+.. py:function:: Embedding(year_variable, id_variable, references_variable, pretrain_path, time_range, title_variable = None, abstract_variable = None, keywords_variable = None, keywords_subvariable = None, abstract_subvariable = None, aut_id_variable = None, aut_pubs_variable = None, client_name = None, db_name = None)
 
-    - Compute semantic centroid for each paper (abstract and title)
-    - Compute an author profile of embedded articles per year and store it for each article.
+    Compute semantic centroid for each paper (abstract and title)
+    Compute an author profile of embedded articles per year and store it for each article.
 
-   :param str year_variable : Key where value is the year of publication of the document.
-   :param str id_variable : Key where value is the id of the document.
-   :param range time_range : Create the embedding for papers published in the time_range.
-   :param str pretrain_path : path to the pretrain word2vec: 'your/path/to/en_core_sci_lg-0.4.0/en_core_sci_lg/en_core_sci_lg-0.4.0.
-   :param str title_variable : Key where value is the title of the document.
-   :param str abstract_variable : Key where value is the abstract's information for the document.
-   :param str abstract_sub_variable : Key inside abstract variable where value is text of the abstract.
-   :param str keywords_variable : Key where value is the keywords' information for the document.
-   :param str keywords_subvariable : Key inside keywords_variable where value is the actual keyword.
-   :param str aut_id_variable : In collection author key where value is the ID of an author.
-   :param str aut_pubs_variable : In collection author key where value is the list of document for a given author.
-   :param str client_name : name of the MongoDB client.
-   :param str db_name : name of the MongoDB where your data is.
+   :param str year_variable: Key where value is the year of publication of the document.
+   :param str id_variable: Key where value is the id of the document.
+   :param range time_range: Create the embedding for papers published in the time_range if None it iterates on all available years.
+   :param str pretrain_path: path to the pretrain word2vec: 'your/path/to/en_core_sci_lg-0.4.0/en_core_sci_lg/en_core_sci_lg-0.4.0.
+   :param str title_variable: Key where value is the title of the document.
+   :param str abstract_variable: Key where value is the abstract's information for the document.
+   :param str abstract_sub_variable: Key inside abstract variable where value is text of the abstract.
+   :param str keywords_variable: Key where value is the keywords' information for the document.
+   :param str keywords_subvariable: Key inside keywords_variable where value is the actual keyword.
+   :param str aut_id_variable: In collection author key where value is the ID of an author.
+   :param str aut_pubs_variable: In collection author key where value is the list of document for a given author.
+   :param str client_name: name of the MongoDB client.
+   :param str db_name: name of the MongoDB
 
    :return: 
    
@@ -72,7 +72,6 @@ In order to use the indicators of Shibayama et al (2021) and the one on authors,
 
    embedding = Embedding(
          year_variable = 'year',
-         time_range = range(2000,2011),
          id_variable = 'PMID',
          references_variable = 'refs_pmid_wos',
          pretrain_path = 'en_core_sci_lg-0.4.0/en_core_sci_lg/en_core_sci_lg-0.4.0',
@@ -86,8 +85,7 @@ The first step is to embed every paper's abstract/title by using ``get_articles_
 
    embedding.get_articles_centroid(
          collection_articles = 'Title_abs_sample',
-         collection_embedding = 'embedding',
-         year_range = range(2000,2011,1))
+         collection_embedding = 'embedding')
 
 Once this is done you can run the Shibayama et al. [2021] :cite:p:`shibayama2021measuring` indicator.
 
