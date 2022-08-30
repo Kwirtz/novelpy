@@ -26,7 +26,7 @@ class Embedding:
                  id_variable,
                  references_variable,
                  pretrain_path,
-                 time_range,
+                 time_range = None,
                  title_variable = None,
                  abstract_variable = None,
                  keywords_variable = None,
