@@ -100,8 +100,7 @@ class Embedding:
 
     def init_dbs_centroid(self,
                  collection_articles,
-                 collection_embedding,
-                 year_range):
+                 collection_embedding):
         """
         
 
@@ -122,10 +121,10 @@ class Embedding:
         
         print("init_dbs_centroid")
         if self.client_name:
-            if year_range == None:
+            if self.time_range == None:
                 self.all_years = self.db[collection_articles].distinct(self.year_variable) 
             else:
-                self.all_years = year_range
+                self.all_years = self.time_range
             if collection_embedding not in self.db.list_collection_names():
                 print("Init embedding collection with index on id_variable ...")
                 self.collection_embedding = self.db[collection_embedding]
@@ -136,10 +135,10 @@ class Embedding:
             if not os.path.exists("Data/docs/{}".format(collection_embedding)):
                 os.makedirs("Data/docs/{}".format(collection_embedding))
                 # Get all years availables 
-            if year_range == None:
+            if self.time_range == None:
                 self.all_years = [int(re.sub('.json','',file)) for file in os.listdir("Data/docs/{}/".format(collection_articles))] 
             else:
-                self.all_years = year_range
+                self.all_years = self.time_range
         
     def load_data_centroid(self,
                   collection_articles,
@@ -194,17 +193,26 @@ class Embedding:
         else:
             self.article_title_centroid = None
         ## Abstracts
-        if (self.abstract_variable in doc.keys() and
-            doc[self.abstract_variable][0][self.abstract_subvariable] != "") :
+        if (self.abstract_variable in doc.keys()) :
             
             # abstract = ast.literal_eval(doc[self.abstract_variable])[0]['AbstractText']
             if self.abstract_subvariable:
-                abstract = doc[self.abstract_variable][0][self.abstract_subvariable]
+                if  doc[self.abstract_variable][0][self.abstract_subvariable] != "" :
+                    abstract = doc[self.abstract_variable][0][self.abstract_subvariable]
+                else:
+                    abstract = None
             else:
-                abstract = doc[self.abstract_variable]
-            tokens = self.nlp(abstract)
-            article_abs_centroid = np.sum([t.vector for t in tokens], axis=0) / len(tokens)
-            self.article_abs_centroid = article_abs_centroid.tolist()
+                if  doc[self.abstract_variable] != "" :
+                    abstract = doc[self.abstract_variable] 
+                else:
+                    abstract = None
+
+            if abstract:
+                tokens = self.nlp(abstract)
+                article_abs_centroid = np.sum([t.vector for t in tokens], axis=0) / len(tokens)
+                self.article_abs_centroid = article_abs_centroid.tolist()
+            else:
+                self.article_abs_centroid = None
         else:
             self.article_abs_centroid = None
         
@@ -254,8 +262,7 @@ class Embedding:
         
     def get_articles_centroid(self,
                               collection_articles = None,
-                              collection_embedding = None,
-                              year_range = None):
+                              collection_embedding = None):
         """
         Description
         -----------
@@ -274,8 +281,7 @@ class Embedding:
         self.nlp = spacy.load(self.pretrain_path)
         #Create folder or mongo database
         self.init_dbs_centroid(collection_articles,
-                      collection_embedding,
-                      year_range)
+                      collection_embedding)
         
         for year in tqdm.tqdm(self.all_years):
             self.load_data_centroid(collection_articles,
