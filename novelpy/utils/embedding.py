@@ -241,7 +241,7 @@ class Embedding:
             if self.client_name:
                 self.list_of_insertion.append(
                     UpdateOne(
-                        {self.id_variable : int(re.sub('https://openalex.org/W','',doc[self.id_variable]))}, 
+                        {self.id_variable : doc[self.id_variable]}, 
                         {'$set' : {
                             'year' : doc[self.year_variable],
                             'title_embedding' : self.article_title_centroid,
