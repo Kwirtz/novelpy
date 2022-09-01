@@ -132,9 +132,6 @@ class Embedding:
             else:
                 self.collection_embedding = self.db[collection_embedding]
         else:
-            if not os.path.exists("Data/docs/{}".format(collection_embedding)):
-                os.makedirs("Data/docs/{}".format(collection_embedding))
-                # Get all years availables 
             if self.time_range == None:
                 self.all_years = [int(re.sub('.json','',file)) for file in os.listdir("Data/docs/{}/".format(collection_articles))] 
             else:
@@ -581,7 +578,7 @@ class Embedding:
         for year in title_year:
             info = {
                 self.year_variable:int(year),
-                'embedded_abs':abs_year[year] if (abs_year and year in abs_year.keys()) else None,
+                'embedded_abstract':abs_year[year] if (abs_year and year in abs_year.keys()) else None,
                 'embedded_title':title_year[year] if (title_year and year in title_year.keys()) else None,
             #'keywords':keywords_year
             }

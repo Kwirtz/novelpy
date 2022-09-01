@@ -76,7 +76,7 @@ The year of creation of the document and the entities they use
 
    # Example of a single paper information
 
-   dict_Ref_Journals = {"PMID": 16992327, "c04_referencelist": [{"item": "0022-3751"}], "year": 1896}
+   dict_Ref_Journals = {"PMID": 16992327, "year": 1896, "c04_referencelist": [{"item": "0022-3751"}]}
    # OR
    dict_Meshterms = {"PMID": 12255534, "year": 1902, "Mesh_year_category": [{"descUI": "D000830"}, {"descUI": "D001695"}]}
 
@@ -88,7 +88,7 @@ For Uzzi et al. [2013] :cite:p:`uzzi2013atypical` you will need one more informa
 
    # Example of a single paper information
 
-   dict_Ref_Journals = {"PMID": 16992327, "c04_referencelist": [{"item": "0022-3751", "year": 1893}], "year": 1896}
+   dict_Ref_Journals = {"PMID": 16992327, "year": 1896"", "c04_referencelist": [{"item": "0022-3751", "year": 1893}]}
    # OR
    dict_Meshterms = {"PMID": 12255534, "year": 1902, "Mesh_year_category": [{"descUI": "D000830", "year": 1999}, {"descUI": "D001695", "year": 1999}]}
 
@@ -197,12 +197,13 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
                                               sub_variable = "item",
                                               focal_year = focal_year,
                                               starting_year = 1995,
-                                              community_algorithm = "Louvain")
+                                              community_algorithm = "Louvain",
+                                              density = True)
        Foster.get_indicator()
     
 
 | Here the indicator is calculated using the co-occurence matrix done before. You can change the period depending on your data, read more here :ref:`Indicators:foster`.
-| Now you should have one more folder "Results" with a json for the focal year with the results. 
+| Now you should have one more folder "Results" with a json for the focal year with the results.
 
 ::
 
@@ -278,7 +279,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
    :width: 300
 
 
-| Here's a script to run all the indicators in the package that depends on the co-occurence matrix, on all the variables available in the sample.
+| Here's a script to run all the indicators in the package that uses the co-occurence matrix, on all the variables available in the sample.
 
 .. code-block:: python
 
@@ -286,7 +287,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
    import novelpy
    import tqdm
 
-   # all the cooc possible
+   # all the cooc possible not including the one done above
 
    ref_cooc = novelpy.utils.cooc_utils.create_cooc(
                     collection_name = "Ref_Journals_sample",
@@ -326,7 +327,8 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
                                               year_variable = 'year',
                                               variable = "Mesh_year_category",
                                               sub_variable = "descUI",
-                                              focal_year = focal_year)
+                                              focal_year = focal_year,
+                                              density = True)
        Uzzi.get_indicator()
 
    # Uzzi et al.(2013) Ref_Journals_sample
@@ -336,7 +338,8 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
                                               year_variable = 'year',
                                               variable = "c04_referencelist",
                                               sub_variable = "item",
-                                              focal_year = focal_year)
+                                              focal_year = focal_year,
+                                              density = True)
        Uzzi.get_indicator()
 
    # Foster et al.(2015) Meshterms_sample
@@ -348,7 +351,8 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
                                               sub_variable = "descUI",
                                               focal_year = focal_year,
                                               starting_year = 1995,
-                                              community_algorithm = "Louvain")
+                                              community_algorithm = "Louvain",
+                                              density = True)
        Foster.get_indicator()
 
    # Lee et al.(2015) Meshterms_sample
@@ -358,7 +362,8 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
                                               year_variable = 'year',
                                               variable = "Mesh_year_category",
                                               sub_variable = "descUI",
-                                              focal_year = focal_year)
+                                              focal_year = focal_year),
+                                              density = True
        Lee.get_indicator()
 
    # Lee et al.(2015) Ref_Journals_sample
@@ -368,7 +373,8 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
                                               year_variable = 'year',
                                               variable = "c04_referencelist",
                                               sub_variable = "item",
-                                              focal_year = focal_year)
+                                              focal_year = focal_year,
+                                              density = True)
        Lee.get_indicator()
 
    # Wang et al.(2017) Meshterms_sample
@@ -381,7 +387,8 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
                                               focal_year = focal_year,
                                               time_window_cooc = 3,
                                               n_reutilisation = 1,
-                                              starting_year = 1995)
+                                              starting_year = 1995,
+                                              density = True)
        Wang.get_indicator()
 
 
@@ -395,7 +402,8 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
                                               focal_year = focal_year,
                                               time_window_cooc = 3,
                                               n_reutilisation = 1,
-                                              starting_year = 1995)
+                                              starting_year = 1995,
+                                              density = True)
        Wang.get_indicator()
 
 
@@ -405,101 +413,116 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
 
 .. code-block:: python
 
-   from novelpy.utils.embedding import Embedding
-   import time
+    from novelpy.utils.embedding import Embedding
+    
+    embedding = Embedding(
+    		year_variable = 'year',
+    		time_range = range(2000,2011),
+    		id_variable = 'PMID',
+    		references_variable = 'refs_pmid_wos',
+    		pretrain_path = 'en_core_sci_lg-0.4.0/en_core_sci_lg/en_core_sci_lg-0.4.0',
+    		title_variable = 'ArticleTitle',
+    		abstract_variable = 'a04_abstract',
+    		abstract_subvariable = 'AbstractText')
+    
+    # articles
+    
+    embedding.get_articles_centroid(
+          collection_articles = 'Title_abs_sample',
+          collection_embedding = 'embedding',
+          year_range = range(2000,2011,1))
 
-   embedding = Embedding(
-         year_variable = 'year',
-         time_range = range(2000,2011),
-         id_variable = 'PMID',
-         references_variable = 'refs_pmid_wos',
-         pretrain_path = 'en_core_sci_lg-0.4.0/en_core_sci_lg/en_core_sci_lg-0.4.0',
-         title_variable = 'ArticleTitle',
-         abstract_variable = 'a04_abstract',
-         abstract_subvariable = 'AbstractText')
-
-   embedding.get_articles_centroid(
-         collection_articles = 'Title_abs_sample',
-         collection_embedding = 'embedding')
-
-   embedding.get_references_embbeding(
-         collection_articles = 'Citation_net_sample',
-         collection_embedding = 'embedding',
-         collection_ref_embedding = 'references_embedding',
-         skip_ = 1,
-         limit_ = 0)
-
-| 2 new DBs will be created, one with the id of the articles and it's embedding called "embedding" and one with the id of the focal articles and the embeddings of its references called "references_embedding". Using this you can run the indicator:
+| 1 new DB will be created, one with the id of the articles and it's embedding called "embedding". Now you can run Shibayama et al. [2021] :cite:p:`shibayama2021measuring`:
 
 .. code-block:: python
 
-   import novelpy
-   import tqdm
-
-   for focal_year in tqdm.tqdm(range(2000,2011), desc = "Computing indicator for window of time"):
-       shibayama = novelpy.indicators.Shibayama2021(
-            collection_name = 'references_embedding',
-            id_variable = 'PMID',
-            year_variable = 'year',
-            ref_variable = 'refs_embedding',
-            entity = ['title_embedding','abstract_embedding'],
-            focal_year = focal_year)
-       
-       shibayama.get_indicator()
-
+    import novelpy
+    import tqdm
+    
+    for focal_year in tqdm.tqdm(range(2000,2011), desc = "Computing indicator for window of time"):
+        shibayama = novelpy.indicators.Shibayama2021(
+             collection_name = 'Citation_net_sample',
+             collection_embedding_name = 'embedding',
+             id_variable = 'PMID',
+             year_variable = 'year',
+             ref_variable = 'refs_pmid_wos',
+             entity = ['title_embedding','abstract_embedding'],
+             focal_year = focal_year,
+             density = True)
+        
+        shibayama.get_indicator()
+        
 
 | To run Pelletier et Wirtz [2022] You need to have the title or abstract (in our case we have both) for articles and the list of authors for the document. This will allow you to create a new collection where each document is an author ID with a list of embedded references (i.e. Papers for which this author contributed) 
 
 .. code-block:: python
 
-   from novelpy.utils.embedding import Embedding
+    from novelpy.utils import Embedding
+    from novelpy.utils import create_authors_past
+    import novelpy
+    
+    # First step is to create a collection where each doc contains the author ID and its list of document he coauthored
+    clean = create_authors_past(client_name = 'mongodb://localhost:27017',
+                                db_name = 'novelty_sample',
+                                collection_name = "authors_sample",
+                                id_variable = "PMID",
+                                variable = "a02_authorlist",
+                                sub_variable = "AID")
+    
+    clean.author2paper()
+    clean.update_db()
 
-   embedding = Embedding(
-         year_variable = 'year',
-         time_range = range(2000,2016),
-         id_variable = 'PMID',
-         client_name = 'mongodb://localhost:27017',
-         db_name = 'novelty_final',
-         references_variable = 'refs_pmid_wos',
-         pretrain_path = r'D:\pretrain\en_core_sci_lg-0.4.0\en_core_sci_lg\en_core_sci_lg-0.4.0',
-         title_variable = 'ArticleTitle',
-         abstract_variable = 'a04_abstract',
-         abstract_subvariable = 'AbstractText',
-         aut_id_variable = 'AID',
-         aut_pubs_variable = 'PMID_list')
+    # Second step is to create a profile of researcher per year.
+    embedding = Embedding(
+          year_variable = 'year',
+          time_range = range(2000,2010),
+          id_variable = 'PMID',
+          client_name = 'mongodb://localhost:27017',
+          db_name = 'novelty_sample',
+          references_variable = 'refs_pmid_wos',
+          pretrain_path = r'en_core_sci_lg-0.4.0\en_core_sci_lg\en_core_sci_lg-0.4.0',
+          title_variable = 'ArticleTitle',
+          abstract_variable = 'a04_abstract',
+          abstract_subvariable = 'AbstractText',
+          aut_id_variable = 'AID',
+          aut_pubs_variable = 'doc_list')
+    
+    # Articles are already embedded above
+    """
+    embedding.get_articles_centroid(
+          collection_articles = 'Title_abs_sample',
+          collection_embedding = 'embedding')
+    """
+    
+    
+    # Creates a collection where each doc is an author ID, its profile and the year of the profile.
+    embedding.feed_author_profile(
+        aut_id_variable = 'AID',
+        aut_pubs_variable = 'doc_list',
+        collection_authors = 'authors_sample_cleaned',
+        collection_embedding = 'embedding')
 
-
-   """ #Only if you don't already have it
-   embedding.get_articles_centroid(
-         collection_articles = 'Title_abs_sample',
-         collection_embedding = 'embedding')
-   """
-
-   embedding.feed_author_profile(
-       collection_authors = 'a02_authorlist_AID',
-           collection_embedding = 'articles_embedding',
-           skip_ = 0,
-           limit_ = 500000)
 
 | Then to run the indicator
 
 .. code-block:: python
 
-   from novelpy.indicators.Author_proximity import Author_proximity
-
-   for year in range(2000,2011):
-      author =  Author_proximity(client_name = 'mongodb://localhost:27017',
-                           db_name = 'novelty',
-                           collection_name = 'authors',
-                           id_variable = 'PMID',
-                           year_variable = 'year',
-                           aut_list_variable = 'a02_authorlist',
-                           aut_id_variable = 'AID',
-                           entity = ['title','abstract'],
-                           focal_year = year,
-                           windows_size = 5)
-          
-      author.get_indicator()
+    from novelpy.indicators.Author_proximity import Author_proximity
+    
+    for year in range(2000,2011):
+    	author =  Author_proximity(client_name = 'mongodb://localhost:27017',
+    	                     db_name = 'novelty_sample',
+    	                     collection_name = 'authors_sample',
+    	                     id_variable = 'PMID',
+    	                     year_variable = 'year',
+    	                     aut_list_variable = 'a02_authorlist',
+    	                     aut_id_variable = 'AID',
+    	                     entity = ['title','abstract'],
+    	                     focal_year = year,
+    	                     windows_size = 5,
+                             density = True)
+    	    
+    	author.get_indicator()
 
 
 

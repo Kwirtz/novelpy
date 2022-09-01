@@ -5,3 +5,57 @@ Change Log
 -----------------
 
 First beta release with only mongodb in backend
+
+1.0(18/01/2022)
+-----------------
+
+First official release. Supports mongodb and json
+
+1.1(20/07/2022)
+-----------------
+
+First bug correction, only backend stuff are changed
+
+1.2(12/08/2022)
+-----------------
+
+Multiple bug correction and unwanted behavior + optimization by changing the expected format.
+
+- Changing the format expected for disruptiveness indicators.
+Before: dict_citation_net = {"PMID": 20793277, "year": 1850, "refs_pmid_wos": [20794613, 20794649, 20794685, 20794701, 20794789, 20794829]}
+Now: dict_citation_net = {"PMID": 20793277, "year": 1850, "citations": {"refs":[20794613, 20794649, 20794685, 20794701, 20794789, 20794829],"cited_by":[31000000,31000001]}
+
+In previous version we had a preprocessing step to convert from the previous expected format to the new one. You can run this processing step on your side (more in the tutorial on https://novelpy.readthedocs.io/en/latest/usage.html)
+
+- Changing the format expected for the Pelletier and Wirtz (2022) indicator.
+Before: dict_authors_list = {"PMID": 20793277, "year": 1850, "a02_authorlist": [{"id":201645},{"id":51331354}]}
+Now: dict_authors_list = {"AID": 201645, "year": 1850, "doc_list": [20793277]}
+
+In previous version we had a preprocessing step to convert from the previous expected format to the new one. You can run this processing step on your side (more in the tutorial on https://novelpy.readthedocs.io/en/latest/usage.html)
+
+- Changing the preprocessing step for Shibayama et al(2021) indicator.
+Before: Creating a new collection embeddings = {"PMID":1,"year":2000, "refs_embedding":[{"PMID":124, "abstract_embedding":array, "title_embedding": array }]}
+Now: We compute the score directly with the citation_network and embedding collections. No further preprocessing steps are required
+
+These changes were made because its more likely that you have your data already structured as the new format. The sample on https://novelpy.readthedocs.io/en/latest/usage.html is still based on the old format and the preprocessing step to have the new format are described in the tutorial.
+
+- Changing the default dtype in novelty.utils.cooc_utils.create_cooc from uint16 to uint32.
+
+We do believe that it is very likely that a combination appears more than the range of uint16. Although it requires more ram and storage it seemed necessary to put uint32 as default.
+
+- New behavior in mongoDB.
+
+Before: Saving all the outputs for each indicators and entity in the same collection
+Now: New collection per indicator and per entity
+
+This was done to avoid the limit of 16mb in mongoDB. 
+
+- New argument for indicators, density = False. 
+
+We do believe that choosing only a specific percentile as the novelty score of a document is biaised. Scholars interested in comparing indicator might want to use the density score of combinations. Keeping this information resulted in hitting the 16mb limitation of mongoDB in some cases. We therefore decided to go with this parameter to make it easier for users only interested in the score and not the density.
+We are still working on efficient solution to continue to avoid the 16mb limitation (chunks)
+
+- Some issue where found in different indicators and are now solved.
+
+
+
