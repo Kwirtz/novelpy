@@ -191,7 +191,7 @@ class Embedding:
                 article_title_centroid = np.sum([t.vector for t in tokens], axis=0) / len(tokens)
                 self.article_title_centroid = article_title_centroid.tolist()
             else:
-            self.article_title_centroid = None
+                self.article_title_centroid = None
         else:
             self.article_title_centroid = None
         ## Abstracts
@@ -241,7 +241,7 @@ class Embedding:
             if self.client_name:
                 self.list_of_insertion.append(
                     UpdateOne(
-                        {self.id_variable : doc[self.id_variable]}, 
+                        {self.id_variable : int(re.sub('https://openalex.org/W','',doc[self.id_variable]))}, 
                         {'$set' : {
                             'year' : doc[self.year_variable],
                             'title_embedding' : self.article_title_centroid,
