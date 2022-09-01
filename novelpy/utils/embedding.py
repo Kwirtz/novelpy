@@ -184,35 +184,36 @@ class Embedding:
         """
     
         ## Titles
-        if (self.title_variable in doc.keys() and doc[self.title_variable] and
-            doc[self.title_variable] != "" ):
-            
-            tokens = self.nlp(doc[self.title_variable])
-            article_title_centroid = np.sum([t.vector for t in tokens], axis=0) / len(tokens)
-            self.article_title_centroid = article_title_centroid.tolist()
+        if self.title_variable in doc.keys():
+            if (doc[self.title_variable] and doc[self.title_variable] != "" ):
+                
+                tokens = self.nlp(doc[self.title_variable])
+                article_title_centroid = np.sum([t.vector for t in tokens], axis=0) / len(tokens)
+                self.article_title_centroid = article_title_centroid.tolist()
         else:
             self.article_title_centroid = None
         ## Abstracts
-        if (self.abstract_variable in doc.keys() and doc[self.abstract_variable]) :
-            
-            # abstract = ast.literal_eval(doc[self.abstract_variable])[0]['AbstractText']
-            if self.abstract_subvariable:
-                if  doc[self.abstract_variable][0][self.abstract_subvariable] != "" :
-                    abstract = doc[self.abstract_variable][0][self.abstract_subvariable]
+        if self.abstract_variable in doc.keys():
+            if doc[self.abstract_variable] :
+                
+                # abstract = ast.literal_eval(doc[self.abstract_variable])[0]['AbstractText']
+                if self.abstract_subvariable:
+                    if  doc[self.abstract_variable][0][self.abstract_subvariable] != "" :
+                        abstract = doc[self.abstract_variable][0][self.abstract_subvariable]
+                    else:
+                        abstract = None
                 else:
-                    abstract = None
-            else:
-                if  doc[self.abstract_variable] != "" :
-                    abstract = doc[self.abstract_variable] 
-                else:
-                    abstract = None
+                    if  doc[self.abstract_variable] != "" :
+                        abstract = doc[self.abstract_variable] 
+                    else:
+                        abstract = None
 
-            if abstract:
-                tokens = self.nlp(abstract)
-                article_abs_centroid = np.sum([t.vector for t in tokens], axis=0) / len(tokens)
-                self.article_abs_centroid = article_abs_centroid.tolist()
-            else:
-                self.article_abs_centroid = None
+                if abstract:
+                    tokens = self.nlp(abstract)
+                    article_abs_centroid = np.sum([t.vector for t in tokens], axis=0) / len(tokens)
+                    self.article_abs_centroid = article_abs_centroid.tolist()
+                else:
+                    self.article_abs_centroid = None
         else:
             self.article_abs_centroid = None
         
