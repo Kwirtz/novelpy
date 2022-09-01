@@ -190,6 +190,8 @@ class Embedding:
                 tokens = self.nlp(doc[self.title_variable])
                 article_title_centroid = np.sum([t.vector for t in tokens], axis=0) / len(tokens)
                 self.article_title_centroid = article_title_centroid.tolist()
+            else:
+            self.article_title_centroid = None
         else:
             self.article_title_centroid = None
         ## Abstracts
@@ -214,6 +216,8 @@ class Embedding:
                     self.article_abs_centroid = article_abs_centroid.tolist()
                 else:
                     self.article_abs_centroid = None
+            else:
+                self.article_abs_centroid = None
         else:
             self.article_abs_centroid = None
         
