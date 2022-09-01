@@ -184,7 +184,7 @@ class Embedding:
         """
     
         ## Titles
-        if (self.title_variable in doc.keys() and
+        if (self.title_variable in doc.keys() and doc[self.title_variable] and
             doc[self.title_variable] != "" ):
             
             tokens = self.nlp(doc[self.title_variable])
@@ -193,7 +193,7 @@ class Embedding:
         else:
             self.article_title_centroid = None
         ## Abstracts
-        if (self.abstract_variable in doc.keys()) :
+        if (self.abstract_variable in doc.keys() and doc[self.abstract_variable]) :
             
             # abstract = ast.literal_eval(doc[self.abstract_variable])[0]['AbstractText']
             if self.abstract_subvariable:
