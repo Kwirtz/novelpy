@@ -10,11 +10,11 @@ classifiers = [
  
 setup(
   name='novelpy',
-  version='1.1',
+  version='1.2',
   description='Calculate novelty indicators',
   long_description=open('README.txt').read() + '\n\n' + open('CHANGELOG.txt').read(),
   url='',  
-  author='Pierre Pelletier and Wirtz Kevin',
+  author='Pelletier Pierre and Wirtz Kevin',
   author_email='kevin.wirtz@unistra.fr',
   license='MIT', 
   classifiers=classifiers,

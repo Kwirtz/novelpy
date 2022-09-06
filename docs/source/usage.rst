@@ -480,8 +480,6 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
    clean.update_db()
 
    embedding = Embedding(
-         client_name="mongodb://localhost:27017",
-         db_name = "novelty_sample",
          year_variable = 'year',
          id_variable = 'PMID',
          references_variable = 'refs_pmid_wos',
@@ -515,8 +513,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
     from novelpy.indicators.Author_proximity import Author_proximity
     
     for year in range(2000,2011):
-    	author =  Author_proximity(client_name = 'mongodb://localhost:27017',
-    	                     db_name = 'novelty_sample',
+    	author =  Author_proximity(
     	                     collection_name = 'authors_sample',
     	                     id_variable = 'PMID',
     	                     year_variable = 'year',
@@ -525,7 +522,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
     	                     entity = ['title','abstract'],
     	                     focal_year = year,
     	                     windows_size = 5,
-                             density = True)
+                           density = True)
     	    
     	author.get_indicator()
 
