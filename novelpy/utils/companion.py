@@ -963,6 +963,22 @@ class correlation_indicators:
                                 except:
                                     self.corr[year]["shibayama_" +  embedding_entity] = []   
 
+            elif indicator == "disruptiveness":
+                key_name = "disruptiveness"
+                collection = self.db["output_disruptiveness"]
+                for measure in self.disruptiveness_measures:
+                    for year in self.year_range:
+                        docs = collection.find({"year":year})
+                        for doc in docs:
+                            try:
+                                to_append = doc[key_name][measure]
+                            except:
+                                continue
+                            try:
+                                self.corr[year][key_name + "_" + measure] += [to_append]
+                            except:
+                                self.corr[year][key_name + "_" + measure] = []  
+                                
             elif indicator =="Author_proximity":
                 key_name = "Author_proximity"
                 for embedding_entity in self.embedding_entities_authors:

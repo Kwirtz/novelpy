@@ -103,7 +103,8 @@ To run Shibayama et al. [2021] :cite:p:`shibayama2021measuring` you need the Cit
    dict_citation_net = {"PMID": 20793277, "year": 1850, "refs_pmid_wos": [20794613, 20794649, 20794685, 20794701, 20794789, 20794829]}
    # AND
    dict_title_abs = {"PMID": 20793277, "year": 1850, "ArticleTitle": "Here is the title", "a04_abstract":[{"AbstractText":"This is the abstract"}]}
-
+   # You can also have the following format for title abs. In this case leave the abstract_sub_variable argument empty
+   dict_title_abs = {"PMID": 20793277, "year": 1850, "ArticleTitle": "Here is the title", "a04_abstract":"This is the abstract"}
 
 To run Pelletier et Wirtz [2022] you need the abstract or/and title of papers but also the list of authors for each paper.
 
@@ -114,6 +115,9 @@ To run Pelletier et Wirtz [2022] you need the abstract or/and title of papers bu
    dict_authors_list = {"PMID": 20793277, "year": 1850, "a02_authorlist": [{"id":201645},{"id":51331354}]}
    # AND
    dict_title_abs = {"PMID": 20793277, "year": 1850, "ArticleTitle": "Here is the title", "a04_abstract":[{"AbstractText":"This is the abstract"}]}
+   # You can also have the following format for title abs. In this case leave the abstract_sub_variable argument empty
+   dict_title_abs = {"PMID": 20793277, "year": 1850, "ArticleTitle": "Here is the title", "a04_abstract":"This is the abstract"}
+
 
 Finally for disruptiveness indicators you only need the citation network
 
@@ -436,71 +440,72 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
 
 .. code-block:: python
 
-    import novelpy
-    import tqdm
+   import novelpy
+   import tqdm
+
+   for focal_year in tqdm.tqdm(range(2000,2011), desc = "Computing indicator for window of time"):
+    shibayama = novelpy.indicators.Shibayama2021(client_name="mongodb://localhost:27017",
+                                    db_name = "novelty_sample",
+         collection_name = 'Citation_net_sample',
+         collection_embedding_name = 'embedding',
+         id_variable = 'PMID',
+         year_variable = 'year',
+         ref_variable = 'refs_pmid_wos',
+         entity = ['title_embedding','abstract_embedding'],
+         focal_year = focal_year,
+         density = True)
     
-    for focal_year in tqdm.tqdm(range(2000,2011), desc = "Computing indicator for window of time"):
-        shibayama = novelpy.indicators.Shibayama2021(
-             collection_name = 'Citation_net_sample',
-             collection_embedding_name = 'embedding',
-             id_variable = 'PMID',
-             year_variable = 'year',
-             ref_variable = 'refs_pmid_wos',
-             entity = ['title_embedding','abstract_embedding'],
-             focal_year = focal_year,
-             density = True)
-        
-        shibayama.get_indicator()
+    shibayama.get_indicator()
+ 
+
         
 
 | To run Pelletier et Wirtz [2022] You need to have the title or abstract (in our case we have both) for articles and the list of authors for the document. This will allow you to create a new collection where each document is an author ID with a list of embedded references (i.e. Papers for which this author contributed) 
 
 .. code-block:: python
 
-    from novelpy.utils import Embedding
-    from novelpy.utils import create_authors_past
-    import novelpy
+   from novelpy.utils import Embedding
+   from novelpy.utils import create_authors_past
+   import novelpy
     
-    # First step is to create a collection where each doc contains the author ID and its list of document he coauthored
-    clean = create_authors_past(client_name = 'mongodb://localhost:27017',
+   # First step is to create a collection where each doc contains the author ID and its list of document he coauthored
+   clean = create_authors_past(client_name = 'mongodb://localhost:27017',
                                 db_name = 'novelty_sample',
                                 collection_name = "authors_sample",
                                 id_variable = "PMID",
                                 variable = "a02_authorlist",
                                 sub_variable = "AID")
     
-    clean.author2paper()
-    clean.update_db()
+   clean.author2paper()
+   clean.update_db()
 
-    # Second step is to create a profile of researcher per year.
-    embedding = Embedding(
-          year_variable = 'year',
-          time_range = range(2000,2010),
-          id_variable = 'PMID',
-          client_name = 'mongodb://localhost:27017',
-          db_name = 'novelty_sample',
-          references_variable = 'refs_pmid_wos',
-          pretrain_path = r'en_core_sci_lg-0.4.0\en_core_sci_lg\en_core_sci_lg-0.4.0',
-          title_variable = 'ArticleTitle',
-          abstract_variable = 'a04_abstract',
-          abstract_subvariable = 'AbstractText',
-          aut_id_variable = 'AID',
-          aut_pubs_variable = 'doc_list')
-    
-    # Articles are already embedded above
-    """
-    embedding.get_articles_centroid(
-          collection_articles = 'Title_abs_sample',
-          collection_embedding = 'embedding')
-    """
-    
-    
-    # Creates a collection where each doc is an author ID, its profile and the year of the profile.
-    embedding.feed_author_profile(
-        aut_id_variable = 'AID',
-        aut_pubs_variable = 'doc_list',
-        collection_authors = 'authors_sample_cleaned',
-        collection_embedding = 'embedding')
+   embedding = Embedding(
+         client_name="mongodb://localhost:27017",
+         db_name = "novelty_sample",
+         year_variable = 'year',
+         id_variable = 'PMID',
+         references_variable = 'refs_pmid_wos',
+         pretrain_path = r'en_core_sci_lg-0.4.0\en_core_sci_lg\en_core_sci_lg-0.4.0',
+         title_variable = 'ArticleTitle',
+         abstract_variable = 'a04_abstract',
+         abstract_subvariable = 'AbstractText',
+         aut_id_variable = 'AID',
+         aut_pubs_variable = 'doc_list')
+
+
+   """
+   embedding.get_articles_centroid(
+         collection_articles = 'Title_abs_sample',
+         collection_embedding = 'embedding')
+   """
+
+
+
+   embedding.feed_author_profile(
+       aut_id_variable = 'AID',
+       aut_pubs_variable = 'doc_list',
+       collection_authors = 'authors_sample_cleaned',
+       collection_embedding = 'embedding')
 
 
 | Then to run the indicator
@@ -547,7 +552,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
 
 .. code-block:: python
 
-   trend = novelpy.utils.novelty_trend(year_range = range(2000,2015,1),
+   trend = novelpy.utils.novelty_trend(year_range = range(2000,2011,1),
                  variable = ["c04_referencelist","a06_meshheadinglist"],
                  id_variable = "PMID",
                  indicator = ["foster","commonness"],

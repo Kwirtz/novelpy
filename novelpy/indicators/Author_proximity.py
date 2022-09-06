@@ -277,7 +277,7 @@ class Author_proximity(Dataset):
                     last_i_file = open(self.path_output+'/{}failsafe.txt'.format(self.focal_year), 'w')
                     last_i_file.write(str(self.i))
                     last_i_file.close()
-                except:
+                except Exception as e:
                     file_object = open(self.path_output+'/{}.txt'.format(self.focal_year), 'a')
                     file_object.write(str(self.i))
                     file_object.close()
@@ -314,6 +314,7 @@ class Author_proximity(Dataset):
     def structure_infos(self,
                       ent):
         authors_novelty = {
+ 
             'authors_novelty_{}_{}'.format(ent, str(self.windows_size)) :{
                 'individuals_scores': self.authors_info_percentiles[ent],
                 'iter_individuals_scores':self.authors_infos_dist[ent],
@@ -339,6 +340,7 @@ class Author_proximity(Dataset):
             else:
                 scores.append(dist_)
                 self.infos['authors_novelty_{}_{}'.format(ent, str(self.windows_size))].update({
+                    self.year_variable:self.focal_year,
                     'score_array_authors_novelty_{}_{}'.format(ent, str(self.windows_size)) : {
                         'intra':self.intra_authors_dist[ent],
                         'inter':self.inter_authors_dist[ent]
@@ -392,8 +394,8 @@ class Author_proximity(Dataset):
         """
         txt_profile = {ent:[] for ent in self.entity}
         for year_profile in self.profile:
-            if year_profile['embedded_abs'] and 'abstract' in self.entity:
-                txt_profile['abstract'] += year_profile['embedded_abs'] 
+            if year_profile['embedded_abstract'] and 'abstract' in self.entity:
+                txt_profile['abstract'] += year_profile['embedded_abstract'] 
             if year_profile['embedded_title'] and 'title' in self.entity :
                 txt_profile['title']  += year_profile['embedded_title'] 
                 
@@ -555,7 +557,7 @@ class Author_proximity(Dataset):
         self.list_of_insertion_op = []
         self.list_of_insertion_sa = []
          
-        self.i = 0 
+        self.i = 1 
         if list_of_ids:
             for id_ in tqdm.tqdm(list_of_ids):
                 if self.i > self.last_i:
