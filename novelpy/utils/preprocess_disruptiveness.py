@@ -32,7 +32,7 @@ class create_citation_network():
         
         self.pmid2citedby = defaultdict(list)
         if self.client_name:
-            docs = self.collection.find({"refs_pmid_wos":{"$exists":1}})
+            docs = self.collection.find({self.variable:{"$exists":1}})
             for doc in tqdm.tqdm(docs):
                 for ref in doc[self.variable]:
                     self.pmid2citedby[ref].append(doc[self.id_variable])
@@ -50,7 +50,7 @@ class create_citation_network():
         
         if self.client_name:
             list_of_insertion = []
-            docs = self.collection.find({"refs_pmid_wos":{"$exists":1}})
+            docs = self.collection.find({self.variable:{"$exists":1}})
             for doc in tqdm.tqdm(docs):
                 refs = doc[self.variable]
                 cited_by = self.pmid2citedby[doc[self.id_variable]]
