@@ -36,7 +36,7 @@ The package currently supports JSON files which should be located in Data/docs o
               └ 2002.json
 
 
-| Depending on what kind of indicator you are running, you will need different kind of input (For example for Uzzi et al. [2013] :cite:p:`uzzi2013atypical` you only need the journal name of the references for the focal articles). 
+| Depending on what kind of indicator you are running, you will need different kind of input (For example for Lee et al. [2015] :cite:p:`lee2015creativity` you only need the journal name of the references for the focal articles). 
 |
 | We intend to automatize the process with well known Databases (Web of science, ArXiv, Pubmed Knowlede graph, ...). Look into the :ref:`roadmap` section to learn
 | more about future implementation.
@@ -88,13 +88,13 @@ For Uzzi et al. [2013] :cite:p:`uzzi2013atypical` you will need one more informa
 
    # Example of a single paper information
 
-   dict_Ref_Journals = {"PMID": 16992327, "year": 1896"", "c04_referencelist": [{"item": "0022-3751", "year": 1893}]}
+   dict_Ref_Journals = {"PMID": 16992327, "year": 1896", "c04_referencelist": [{"item": "0022-3751", "year": 1893}]}
    # OR
    dict_Meshterms = {"PMID": 12255534, "year": 1902, "Mesh_year_category": [{"descUI": "D000830", "year": 1999}, {"descUI": "D001695", "year": 1999}]}
 
 For text embedding indicators you need different entities. 
 
-To run Shibayama et al. [2021] :cite:p:`shibayama2021measuring` you need the Citation_network (e.g the ID of papers the document cite) but also the abstract or/and title of papers.
+To run Shibayama et al. [2021] :cite:p:`shibayama2021measuring` you need the Citation_network (i.e the ID of papers the document cite) but also the abstract and/or title of papers.
 
 .. code-block:: python
 
