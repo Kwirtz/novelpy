@@ -18,7 +18,7 @@ To use novelpy, first install it using pip:
 Format supported
 ----------------
 
-The package currently supports JSON files which should be located in Data/docs or a MongoDB. Here's a typical starting folder structure to run novelpy if you use JSON:
+The package currently supports JSON files which should be located in Data/docs or a MongoDB. Here is a typical starting folder structure to run novelpy if one use JSON:
 
 ::
 
@@ -36,28 +36,28 @@ The package currently supports JSON files which should be located in Data/docs o
               └ 2002.json
 
 
-| Depending on what kind of indicator you are running, you will need different kind of input (For example for Lee et al. [2015] :cite:p:`lee2015creativity` you only need the journal name of the references for the focal articles). 
+| Depending on the kind of indicator, one needs different kinds of input (For example, for Lee et al. [2015] :cite:p:`lee2015creativity`, one only needs the journal name of the references for the focal articles). 
 |
-| We intend to automatize the process with well known Databases (Web of science, ArXiv, Pubmed Knowlede graph, ...). Look into the :ref:`roadmap` section to learn
+| We intend to automatize the process with well-known Databases (Web of Science, ArXiv, Pubmed Knowledge graph, ...). Look into the :ref:`roadmap` section to learn
 | more about future implementation.
 |
-| To use your own data, please look into the :ref:`Usage:Sample` section below to learn more about the expected data structure and :ref:`Usage:tutorial` to learn the basic usages of the package.
+| To use other data sources, please look into the :ref:`Usage:Sample` section below to learn more about the expected data structure and :ref:`Usage:tutorial` to learn the basic usages of the package.
 
 .. _sample:
 Sample
 ----------------
 
-We made available a small sample of data so you can get familiar using the package with well formated data. To get this sample run the following code in your "project" folder:
+We made available a small sample of data so one can get familiar with the package and the data structure needed. To get this sample, one needs to run the following code in the "project" folder:
 
 >>> from novelpy.utils.get_sample import download_sample
 >>> download_sample()
 
-| This will give you files as seen above. Read more about this sample structure `here <https://zenodo.org/record/5768348#.YdMGWlnjImA>`_.
-| If you want to test the package with MongoDB you can run the following which will create a database "novelty_sample" with everything needed:
+| This will give you files, as seen above. Read more about this sample structure `here <https://zenodo.org/record/5768348#.YdMGWlnjImA>`_.
+| If you want to test the package with MongoDB you can run the following, which will create a database "novelty_sample" with everything needed:
 
 >>> download_sample(client_name="mongodb://localhost:27017")
 
-Note that you will have the json files in both case, please delete the files if you use MongoDB and do not want any duplicates (saving memory is always good).
+Note that you will have the JSON files in both cases. Please delete the files if you use MongoDB and do not want duplicates (saving memory is always good).
 
 .. _structure:
 More on the structure expected
@@ -69,7 +69,7 @@ Depending on the indicator you will run you'll need different info/variables/for
    :width: 1000
 
 
-For Foster et al. [2015] :cite:p:`foster2015tradition`, Lee et al. [2015] :cite:p:`lee2015creativity` and Wang et al. [2017] :cite:p:`wang2017bias` you only need two informations of a document.
+For Foster et al. [2015] :cite:p:`foster2015tradition`, Lee et al. [2015] :cite:p:`lee2015creativity` and Wang et al. [2017] :cite:p:`wang2017bias` you only need two pieces of information of a document.
 The year of creation of the document and the entities they use
 
 .. code-block:: python
@@ -81,7 +81,7 @@ The year of creation of the document and the entities they use
    dict_Meshterms = {"PMID": 12255534, "year": 1902, "Mesh_year_category": [{"descUI": "D000830"}, {"descUI": "D001695"}]}
 
 
-For Uzzi et al. [2013] :cite:p:`uzzi2013atypical` you will need one more information, the year of creation of the entity in order to do the resampling.
+For Uzzi et al. [2013] :cite:p:`uzzi2013atypical` you will need one more information, the year of creation of the entity, in order to do the resampling.
 
 
 .. code-block:: python
@@ -92,9 +92,9 @@ For Uzzi et al. [2013] :cite:p:`uzzi2013atypical` you will need one more informa
    # OR
    dict_Meshterms = {"PMID": 12255534, "year": 1902, "Mesh_year_category": [{"descUI": "D000830", "year": 1999}, {"descUI": "D001695", "year": 1999}]}
 
-For text embedding indicators you need different entities. 
+For text embedding indicators, one need different entities. 
 
-To run Shibayama et al. [2021] :cite:p:`shibayama2021measuring` you need the Citation_network (i.e the ID of papers the document cite) but also the abstract and/or title of papers.
+To run Shibayama et al. [2021] :cite:p:`shibayama2021measuring`, one needs the Citation_network (i.e. the ID of papers the document cite) but also the abstract and/or title of papers.
 
 .. code-block:: python
 
@@ -119,7 +119,7 @@ To run Pelletier et Wirtz [2022] you need the abstract or/and title of papers bu
    dict_title_abs = {"PMID": 20793277, "year": 1850, "ArticleTitle": "Here is the title", "a04_abstract":"This is the abstract"}
 
 
-Finally for disruptiveness indicators you only need the citation network
+Finally, for disruptiveness indicators, one only need the citation network.
 
 .. code-block:: python
 
@@ -132,9 +132,9 @@ Finally for disruptiveness indicators you only need the citation network
 Tutorial
 ----------------
 
-This tutorial is build upon the sample made available above in the json format. The extension to MongoDB is straightforward and requires you to add the "client_name" and "db_name" arguments in each function. Make sure you run the code in the "project" folder (demo.py in :ref:`Usage:format`)
+This tutorial is built upon the sample available above in JSON format. The extension to MongoDB is straightforward and requires adding the "client_name" and "db_name" arguments in each function. Make sure to run the code in the "project" folder (demo.py in :ref:`Usage:format`)
 
-Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tradition` novelty indicator. Currently all available indicators are based on the idea that new knowledge is created by combining already existing pieces of knowledge. Because of this you will require co-occurrence matrices. The element ij of the co-occurence matrix is the number of times the combination of item i and j appeared for a given year. We made it so the co-occurrence matrices are saved in the pickle format in order to save time when running different indicators :
+Here is a straightforward implementation to run Foster et al. [2015] :cite:p:`foster2015tradition` novelty indicator. Currently, all available indicators are based on the idea that new knowledge is created by combining already existing pieces of knowledge. Because of this, one will require co-occurrence matrices. The element ij of the co-occurrence matrix is the number of times the combination of item i and j appeared for a given year. We made it so the co-occurrence matrices are saved in the pickle format in order to save time when running different indicators :
 
 .. code-block:: python
    
@@ -152,8 +152,8 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
    ref_cooc.main()
 
 
-| This will create the co-occurence matrix for each year between 1995 and 2015 included. Read more on it in :ref:`Utils`.
-| Now you should have a new folder "cooc". Depending on your arguments you will have different folder. In the tutorial case we wanted the co-occurrence matrix of journals cited per paper.
+| This will create the co-occurrence matrix for each year between 1995 and 2015 included. Read more on it in :ref:`Utils`.
+| Now you should have a new folder "cooc". Depending on the arguments, different folders are created. In the tutorial case, we wanted the co-occurrence matrix of journals cited per paper.
 
 ::
 
@@ -184,7 +184,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
                  ├ index2name.p
                  └ name2index.p
 
-| Since we use sparse matrix, index2name.p and name2index.p are required to convert the name of items to index in our matrix. Now you can run the Foster et al. [2015] :cite:p:`foster2015tradition` novelty indicator.
+| Since we use sparse matrices, index2name.p and name2index.p are required to convert the name of items to index in our matrix. Now we can run the novelty indicator of Foster et al. [2015] :cite:p:`foster2015tradition`.
 
 .. code-block:: python
 
@@ -206,8 +206,8 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
        Foster.get_indicator()
     
 
-| Here the indicator is calculated using the co-occurence matrix done before. You can change the period depending on your data, read more here :ref:`Indicators:foster`.
-| Now you should have one more folder "Results" with a json for the focal year with the results.
+| Here, the indicator is calculated using the co-occurrence matrix done before. You can change the period depending on your data, read more here :ref:`Indicators:foster`.
+| Now you should have one more folder "Results" with a JSON for the focal year with the results.
 
 ::
 
@@ -245,7 +245,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
 
 
 
-| Some pre-build functions can help you perform your analysis by getting the novelty score of a document, plotting the distribution and look at the trend of the novelty score over the years.
+| Some pre-build functions can help you perform your analysis by getting the novelty score of a document, plotting the distribution and looking at the trend of the novelty score over the years.
 
 .. code-block:: python
    
@@ -283,7 +283,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
    :width: 300
 
 
-| Here's a script to run all the indicators in the package that uses the co-occurence matrix, on all the variables available in the sample.
+| Here's a script to run all indicators in the package that uses the co-occurrence matrices on all the variables available in the sample.
 
 .. code-block:: python
 
@@ -411,7 +411,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
        Wang.get_indicator()
 
 
-| Now for text-embedding indicators. For Shibayama et al. [2021] :cite:p:`shibayama2021measuring` you won't need co-occurence matrices. You need to have the title or abstract (in our case we have both) for articles cited by focal papers and therefore the id of for each paper cited. In the sample you can find these information in two different DBs: "Title_abs_sample" and "Citation_net_sample". You then embbed the articles using spacy and do a cosine similarity between the embeddings of cited papers for focal papers. You can find a pretrain here https://pypi.org/project/scispacy/. We used en_core_sci_lg-0.4.0. Change the pretrain_path depending on the one you use
+| Now for text-embedding indicators. We do not need co-occurrence matrices for Shibayama et al. [2021] :cite:p:`shibayama2021measuring`. We need the title or abstract (in our case, we have both) for articles cited by focal papers and, therefore, the id for each paper cited. One can find this information in the sample in two DBs: "Title_abs_sample" and "Citation_net_sample". We then embed the articles using spacy and do a cosine similarity between the embeddings of cited papers for focal papers. One can find a pre train here https://pypi.org/project/scispacy/. We used en_core_sci_lg-0.4.0. The pretrain_path can be changed depending on the one needed.
 
 | Let's start with the embedding:
 
@@ -436,7 +436,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
           collection_embedding = 'embedding',
           year_range = range(2000,2011,1))
 
-| 1 new DB will be created, one with the id of the articles and it's embedding called "embedding". Now you can run Shibayama et al. [2021] :cite:p:`shibayama2021measuring`:
+| one new DB will be created, one with the id of the articles and its embedding called "embedding". Now we can run Shibayama et al. [2021] :cite:p:`shibayama2021measuring`:
 
 .. code-block:: python
 
@@ -460,7 +460,7 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
 
         
 
-| To run Pelletier et Wirtz [2022] You need to have the title or abstract (in our case we have both) for articles and the list of authors for the document. This will allow you to create a new collection where each document is an author ID with a list of embedded references (i.e. Papers for which this author contributed) 
+| To run Pelletier et Wirtz [2022], one needs to have the title or abstract (in our case we have both) for articles and the list of authors for the document. This will allow the creation of a new collection where each document is an author ID with a list of embedded references (i.e. Papers to which this author contributed) 
 
 .. code-block:: python
 
@@ -577,4 +577,4 @@ Here's a short implementation to run Foster et al. [2015] :cite:p:`foster2015tra
    :width: 400
 
 
-| Of course the plots are here just to guide you in your analysis and if you want to make some pretty plots yourself you can use the data inside the class instance or from the files.
+| Of course, the plots are here to guide readers in their analysis, to make some pretty plots, one can use the data inside the class instance or from the files.
