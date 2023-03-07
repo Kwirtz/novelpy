@@ -243,7 +243,8 @@ class Uzzi2013(create_output):
              client_name = None,
              db_name = None,
              nb_sample = 20,
-             density = False):
+             density = False,
+             list_ids = None):
         """
         Description
         -----------
@@ -292,7 +293,8 @@ class Uzzi2013(create_output):
                                variable = variable,
                                sub_variable = sub_variable,
                                focal_year = focal_year,
-                               density = density) 
+                               density = density,
+                               list_ids = list_ids) 
         
         
         self.path_sample = "Data/cooc_sample/{}/".format(self.variable)

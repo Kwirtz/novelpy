@@ -4,25 +4,7 @@ import wosfile
 import glob
 import tqdm
 import numpy as np
-import seaborn as sns
 import re
-import matplotlib.pyplot as plt
-
-def get_50_journal_list(collection_name,focal_year):
-    journals_ = []
-    for year in tqdm.tqdm(range(focal_year-3,focal_year)):
-        docs = json.load(open("Data/docs/{}/{}.json".format('references',year)) )
-        for doc in docs:
-            if 'c04_referencelist' in doc:
-                for ref in doc['c04_referencelist']:
-                    journals_.append(ref['item'])
-
-    count = Counter(journals_)                
-    nb_cit = [count[journal] for journal in count]
-    med = np.median(nb_cit)
-    print(len(set(journals_)))
-    list_of_journals = [journal for journal in count if count[journal] >= med]
-    return list_of_journals
 
 class Reference_cleaner:
     

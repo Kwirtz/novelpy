@@ -41,11 +41,12 @@ class Wang2017(create_output):
                  focal_year,
                  time_window_cooc,
                  n_reutilisation,
-                 starting_year,
+                 starting_year = None,
                  client_name = None,
                  db_name = None,
                  keep_item_percentile = 50,
-                 density = False):
+                 density = False,
+                 list_ids = None):
         """
         
         Description
@@ -100,7 +101,8 @@ class Wang2017(create_output):
                                n_reutilisation = n_reutilisation,
                                starting_year = starting_year,
                                density = density,
-                               keep_item_percentile = keep_item_percentile)        
+                               keep_item_percentile = keep_item_percentile,
+                               list_ids = list_ids)        
 
         self.path_score = "Data/score/wang/{}/".format(self.variable + "_" + str(self.time_window_cooc) + "_" + str(self.n_reutilisation)+ self.restricted )
        

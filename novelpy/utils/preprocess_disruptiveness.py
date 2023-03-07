@@ -9,7 +9,7 @@ from collections import defaultdict
 
 class create_citation_network():
     
-    def __init__(self, collection_name, id_variable, 
+    def __init__(self, collection_name, id_variable, year_variable, 
                  variable, client_name = None, db_name = None):
         
         self.variable = variable
@@ -17,6 +17,7 @@ class create_citation_network():
         self.collection_name = collection_name
         self.client_name = client_name
         self.db_name = db_name
+        self.year_variable = year_variable
         if self.client_name:
             self.client = pymongo.MongoClient(client_name)
             self.db = self.client[db_name]
@@ -54,10 +55,10 @@ class create_citation_network():
             for doc in tqdm.tqdm(docs):
                 refs = doc[self.variable]
                 cited_by = self.pmid2citedby[doc[self.id_variable]]
-                list_of_insertion.append({"PMID":doc[self.id_variable],
-                                          "year":doc["year"],
+                list_of_insertion.append({self.id_variable:doc[self.id_variable],
+                                          self.year_variable:doc[self.year_variable],
                                           "citations": {"refs": refs,"cited_by":cited_by}})
-                if len(list_of_insertion) == 10000:
+                if len(list_of_insertion) == 1000:
                     self.collection_new.insert_many(list_of_insertion)
                     list_of_insertion = []
             self.collection_new.insert_many(list_of_insertion)
@@ -68,8 +69,7 @@ class create_citation_network():
                     docs = json.load(f)
                 for doc in tqdm.tqdm(docs):
                     gros_dict[doc[self.id_variable]] = {}
-                    gros_dict[doc[self.id_variable]] = {}
-                    gros_dict[doc[self.id_variable]]["year"] = doc["year"]
+                    gros_dict[doc[self.id_variable]][self.year_variable] = doc[self.year_variable]
                     gros_dict[doc[self.id_variable]]["citations"] = {}
                     gros_dict[doc[self.id_variable]]["citations"]["refs"] = doc[self.variable]
                     gros_dict[doc[self.id_variable]]["citations"]["cited_by"] = self.pmid2citedby[doc[self.id_variable]]
