@@ -22,3 +22,7 @@ First bug correction, only backend stuff are changed
 Multiple bug correction and unwanted behavior + optimization by changing the expected format.
 
 
+1.3(19/03/2023)
+-----------------
+
+Update package version in setup. Add an argument to feed a list of id to the indicators
