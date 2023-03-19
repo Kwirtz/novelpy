@@ -6,7 +6,7 @@ import pymongo
 from pymongo import UpdateOne
 import tqdm
 from sklearn.metrics.pairwise import cosine_similarity
-import json 
+import json
 import os
 import bson
 import math

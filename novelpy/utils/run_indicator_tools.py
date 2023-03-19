@@ -1,11 +1,12 @@
-import numpy as np
-from itertools import combinations
-import tqdm
-import pymongo
-import pickle
-import json
 import os
+import glob
+import json
+import tqdm
+import pickle
+import pymongo
+import numpy as np
 from collections import Counter
+from itertools import combinations
 
 class Dataset:
     
@@ -23,7 +24,8 @@ class Dataset:
              starting_year = None,
              new_infos = None,
              density = False,
-             keep_item_percentile = None):
+             keep_item_percentile = None,
+             list_ids = None):
         """
         Description
         -----------
@@ -75,6 +77,8 @@ class Dataset:
         self.item_name = self.variable.split('_')[0] if self.variable else None
         self.density  = density
         self.keep_item_percentile = keep_item_percentile
+        self.list_ids = list_ids
+        
         if self.client_name:
             self.client = pymongo.MongoClient(client_name)
             self.db = self.client[db_name]
@@ -170,20 +174,32 @@ class Dataset:
         self.papers_items = dict()
 
 
-        for doc in tqdm.tqdm(self.docs):
-            if self.sub_variable:
-                doc_items = list()
-                for item in doc[self.variable]:
-                    doc_item = self.get_item_infos(item)
-                    if doc_item:
-                        doc_items.append(doc_item)
-
-                self.papers_items.update({int(doc[self.id_variable]):doc_items})  
+        for doc in tqdm.tqdm(self.docs, desc = "get_papers_item"):
+            if self.list_ids:
+                if doc[self.id_variable] in self.list_ids:
+                    if self.sub_variable:
+                        doc_items = list()
+                        for item in doc[self.variable]:
+                            doc_item = self.get_item_infos(item)
+                            if doc_item:
+                                doc_items.append(doc_item)
+        
+                        self.papers_items.update({int(doc[self.id_variable]):doc_items})  
+                    else:
+                        self.papers_items.update({int(doc[self.id_variable]):doc[self.variable]})
             else:
-                self.papers_items.update({int(doc[self.id_variable]):doc[self.variable]})
-                    
+                if self.sub_variable:
+                    doc_items = list()
+                    for item in doc[self.variable]:
+                        doc_item = self.get_item_infos(item)
+                        if doc_item:
+                            doc_items.append(doc_item)
+    
+                    self.papers_items.update({int(doc[self.id_variable]):doc_items})  
+                else:
+                    self.papers_items.update({int(doc[self.id_variable]):doc[self.variable]})                    
 
-    def sum_cooc_matrix(self,window):
+    def sum_cooc_matrix(self, window = None):
         """
         
     
@@ -201,13 +217,29 @@ class Dataset:
     
         """
         
+        
         i = 0
-        for year in window:
-            if i == 0:
-                cooc = pickle.load(open( self.path_input + "/{}.p".format(year), "rb" ))
-                i += 1
-            else:
-                cooc += pickle.load(open( self.path_input + "/{}.p".format(year), "rb" ))            
+        if window:
+            for year in window:
+                if i == 0:
+                    cooc = pickle.load(open( self.path_input + "/{}.p".format(year), "rb" ))
+                    i += 1
+                else:
+                    cooc += pickle.load(open( self.path_input + "/{}.p".format(year), "rb" ))
+        else: 
+            files = glob.glob(self.path_input+ "/*")
+            files = [file for file in files if file.split("\\")[-1].split(".")[0] not in ["index2name","name2index"]]
+            files = [file for file in files if file.split("/")[-1].split(".")[0] not in ["index2name","name2index"]]
+            try:
+                files = [file for file in files if int(file.split("\\")[-1].split(".")[0])<self.focal_year]
+            except:
+                files = [file for file in files if int(file.split("/")[-1].split(".")[0])<self.focal_year]
+            for file in tqdm.tqdm(files,desc="Summing cooc"):
+                if i == 0:
+                    cooc = pickle.load(open( file, "rb" ))
+                    i += 1
+                else:
+                    cooc += pickle.load(open( file, "rb" ))                
         return cooc
 
     def get_cooc(self):
@@ -219,12 +251,18 @@ class Dataset:
         self.name2index = pickle.load(open(self.path_input + "/name2index.p", "rb" ))
         
         if self.indicator == "foster":
-            self.current_adj = self.sum_cooc_matrix( window = range(self.starting_year, self.focal_year))
-        
+            if self.starting_year:
+                self.current_adj = self.sum_cooc_matrix( window = range(self.starting_year, self.focal_year))
+            else:
+                print("loading cooc")
+                self.current_adj = self.sum_cooc_matrix()
+                
         elif self.indicator == "wang":
             print("Calculate past matrix ")
-            self.past_adj = self.sum_cooc_matrix( window = range(self.starting_year, self.focal_year))
-
+            if self.starting_year:
+                self.past_adj = self.sum_cooc_matrix( window = range(self.starting_year, self.focal_year))
+            else:
+                self.past_adj = self.sum_cooc_matrix()
             print('Calculate futur matrix')
             self.futur_adj = self.sum_cooc_matrix(window = range(self.focal_year+1, self.focal_year+self.time_window_cooc+1))
 
@@ -388,7 +426,7 @@ class create_output(Dataset):
                                           self.key: self.doc_infos,
                                           self.year_variable:self.focal_year})
             else:
-                list_of_insertion.append({self.id_variable: int(idx),self.key: self.doc_infos})
+                list_of_insertion.append({self.id_variable: int(idx),self.key: self.doc_infos, self.year_variable:self.focal_year})
 
         
         if self.client_name:

@@ -91,6 +91,7 @@ class Embedding:
         self.title_variable = title_variable
         self.abstract_variable = abstract_variable
         self.abstract_subvariable = abstract_subvariable
+        self.references_variable = references_variable
         
         if self.client_name:
             self.client = pymongo.MongoClient(self.client_name)
@@ -184,7 +185,7 @@ class Embedding:
         if self.title_variable in doc.keys():
             if (doc[self.title_variable] and doc[self.title_variable] != "" ):
                 
-                tokens = self.nlp(doc[self.title_variable])
+                tokens = self.nlp(doc[self.title_variable].lower())
                 article_title_centroid = np.sum([t.vector for t in tokens], axis=0) / len(tokens)
                 self.article_title_centroid = article_title_centroid.tolist()
             else:
@@ -208,7 +209,7 @@ class Embedding:
                         abstract = None
 
                 if abstract:
-                    tokens = self.nlp(abstract)
+                    tokens = self.nlp(abstract.lower())
                     article_abs_centroid = np.sum([t.vector for t in tokens], axis=0) / len(tokens)
                     self.article_abs_centroid = article_abs_centroid.tolist()
                 else:
@@ -420,7 +421,15 @@ class Embedding:
                         self.list_of_insertion.append(self.infos)    
                     except Exception as e:
                         print(e)
-            if len(self.list_of_insertion) % 1000 == 0:
+            else:
+                self.infos = {'refs_embedding': self.refs_emb} if self.refs_emb else  {'refs_embedding': None}
+                try:
+                    self.infos.update({self.id_variable:doc[self.id_variable],
+                                       self.year_variable:doc[self.year_variable]})
+                    self.list_of_insertion.append(self.infos)    
+                except Exception as e:
+                    print(e)                
+            if len(self.list_of_insertion) >= 1000 :
                 self.collection_ref_embedding.insert_many(self.list_of_insertion)
                 self.list_of_insertion = []
         else:
@@ -428,7 +437,7 @@ class Embedding:
                 self.infos = {'refs_embedding': self.refs_emb} if self.refs_emb else  {'refs_embedding': None}
                 self.infos.update({self.id_variable:doc[self.id_variable],
                             self.year_variable:doc[self.year_variable]})
-                self.list_of_insertion.append(self.infos)    
+                self.list_of_insertion.append(self.infos)  
             except Exception as e:
                 print(e)
 
@@ -475,7 +484,7 @@ class Embedding:
                self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
 
             if self.client_name:
-                self.collection_ref_embedding.bulk_write(self.list_of_insertion)
+                self.collection_ref_embedding.insert_many(self.list_of_insertion)
             else:
                 with open("{}/{}.json".format(self.out_path,year), 'w') as outfile:
                     json.dump(self.list_of_insertion, outfile)

@@ -6,10 +6,12 @@ import pickle
 import itertools
 import numpy as np
 import networkx as nx
-import community as community_louvain
+from packaging import version
 from collections import defaultdict
-from scipy.sparse import lil_matrix, spdiags
+from scipy.sparse import lil_matrix
+import community as community_louvain
 from novelpy.utils.run_indicator_tools import create_output
+
 
 
 class Foster2015(create_output):
@@ -22,11 +24,12 @@ class Foster2015(create_output):
              variable,
              sub_variable,
              focal_year,
-             starting_year,
+             starting_year = None,
              community_algorithm = "Louvain",
              client_name = None,
              db_name = None,
-             density = False):
+             density = False,
+             list_ids = None):
         
         '''
         Description
@@ -75,7 +78,8 @@ class Foster2015(create_output):
                                sub_variable = sub_variable,
                                focal_year = focal_year,
                                starting_year = starting_year,
-                               density = density)
+                               density = density,
+                               list_ids = list_ids)
 
         self.path_score = "Data/score/foster/{}".format(self.variable)
         
@@ -158,7 +162,10 @@ class Foster2015(create_output):
 
         '''
         self.get_data()
-        self.g = nx.from_scipy_sparse_matrix(self.current_adj, edge_attribute='weight')         
+        if version.parse(nx.__version__) < version.parse("3.0"):
+            self.g = nx.from_scipy_sparse_matrix(self.current_adj, edge_attribute='weight') 
+        else:
+            self.g = nx.from_scipy_sparse_array(self.current_adj, edge_attribute='weight') 
         print("Create empty df ...")
         self.generate_commu_adj_matrix()
         print("Empty df created !")  

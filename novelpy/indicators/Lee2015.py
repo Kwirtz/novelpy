@@ -18,7 +18,8 @@ class Lee2015(create_output):
              focal_year,
              client_name = None,
              db_name = None,
-             density = False):
+             density = False,
+             list_ids = None):
         """
         Description
         -----------
@@ -65,7 +66,8 @@ class Lee2015(create_output):
                                variable = variable,
                                sub_variable = sub_variable,
                                focal_year = focal_year,
-                               density = density) 
+                               density = density,
+                               list_ids = list_ids) 
         
 
         self.path_score = "Data/score/lee/{}".format(variable)

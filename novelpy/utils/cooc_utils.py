@@ -1,13 +1,12 @@
-import pymongo
-import tqdm
-import itertools
-from scipy.sparse import lil_matrix, csr_matrix
-import scipy.sparse as sp
-from sklearn import preprocessing
-import numpy as np
-import pickle
 import os
+import re
+import tqdm
 import json
+import pickle
+import pymongo
+import itertools
+import numpy as np
+from scipy.sparse import lil_matrix
 
 class create_cooc:
     
@@ -16,7 +15,7 @@ class create_cooc:
                  sub_var,
                  year_var,
                  collection_name,
-                 time_window,
+                 time_window = None,
                  dtype = np.uint32,
                  weighted_network = False,
                  self_loop = False,
@@ -57,7 +56,6 @@ class create_cooc:
         self.sub_var = sub_var
         self.year_var = year_var
         self.collection_name = collection_name
-        self.time_window = time_window
         self.dtype = dtype
         self.weighted_network = weighted_network
         self.self_loop = self_loop
@@ -78,6 +76,16 @@ class create_cooc:
         self.path_output = "Data/cooc/{}/{}_{}".format(var,type1,type2)
         if not os.path.exists(self.path_output):
             os.makedirs(self.path_output)
+        
+        if time_window:
+            self.time_window = time_window
+        else:
+            if client_name:
+                self.time_window = self.db[collection_name].distinct(self.year_var) 
+            else:
+                self.time_window = [int(re.sub('.json','',file)) for file in os.listdir("Data/docs/{}/".format(collection_name))] 
+            
+            
             
     def save_matrix(self,year):
         '''
