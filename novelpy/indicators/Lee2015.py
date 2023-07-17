@@ -1,7 +1,9 @@
 import os 
+import tqdm
+import scipy
 import pickle 
 import numpy as np
-import scipy
+import scipy.sparse as sp
 from scipy.sparse import csr_matrix, triu
 from novelpy.utils.run_indicator_tools import create_output
 
@@ -19,7 +21,8 @@ class Lee2015(create_output):
              client_name = None,
              db_name = None,
              density = False,
-             list_ids = None):
+             list_ids = None,
+             ram_efficient= False):
         """
         Description
         -----------
@@ -69,7 +72,7 @@ class Lee2015(create_output):
                                density = density,
                                list_ids = list_ids) 
         
-
+        self.ram_efficient = ram_efficient
         self.path_score = "Data/score/lee/{}".format(variable)
         if not os.path.exists(self.path_score):
             os.makedirs(self.path_score)
@@ -86,21 +89,35 @@ class Lee2015(create_output):
         None.
 
         """
-        
+
         Nt = np.sum(triu(self.current_adj))
-        
         temp_adj = self.current_adj.T+triu(self.current_adj,k=1)
         ij_sums = np.sum(temp_adj.A, axis= 0)[np.newaxis]
-        ij_sums = ij_sums.astype('uint64')
-        ij_products = ij_sums.T.dot(ij_sums)
-        self.ij_sums = ij_sums
-        self.ij_products = ij_products
+        ij_sums = ij_sums.astype('uint64')        
+        if self.ram_efficient:
+            comb_scores = sp.lil_matrix((temp_adj.shape[0], temp_adj.shape[1]), dtype=np.float64)
+            nonzero_rows, nonzero_cols = temp_adj.nonzero()
+            for row, col in tqdm.tqdm(zip(nonzero_rows, nonzero_cols),total=len(nonzero_rows)):
+                value = temp_adj[row, col]
+                ij_products = ij_sums[0,row]*ij_sums.T[col,0]
+                comb_scores[row,col] = value*int(Nt)/ij_products
+            comb_scores = csr_matrix(comb_scores)
             
-        comb_scores = (csr_matrix(temp_adj,dtype=float)*int(Nt))/ij_products
-        comb_scores[np.isinf(comb_scores)] =  0
-        comb_scores[np.isnan(comb_scores)] =  0
-        comb_scores = triu(comb_scores,format='csr')
+            comb_scores.data[np.isinf(comb_scores.data)] =  0
+            comb_scores.data[np.isnan(comb_scores.data)] =  0
+            comb_scores = triu(comb_scores,format='csr')
+        else:
+            ij_products = ij_sums.T.dot(ij_sums)
+            self.ij_sums = ij_sums
+            self.ij_products = ij_products
+            
+            print("comb_scores")
+            comb_scores = (csr_matrix(temp_adj,dtype=float)*int(Nt))/ij_products
+            comb_scores[np.isinf(comb_scores)] =  0
+            comb_scores[np.isnan(comb_scores)] =  0
+            comb_scores = triu(comb_scores,format='csr')
 
+        print("pickle dump")
         pickle.dump(comb_scores, open(self.path_score + "/{}.p".format(self.focal_year), "wb" ) )
         
 
