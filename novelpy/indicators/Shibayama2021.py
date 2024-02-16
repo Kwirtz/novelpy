@@ -245,7 +245,7 @@ class Shibayama2021(Dataset):
     def get_indicator(self):
 
         self.load_data()
-        print('Getting score per paper ...')     
+        print('Getting the cosine similarity of references for each paper in {}'.format(self.focal_year))     
         # Iterate over every docs 
         self.list_of_insertion = []
 

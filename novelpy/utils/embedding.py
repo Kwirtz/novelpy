@@ -5,7 +5,6 @@ import tqdm
 import json
 import spacy
 import pymongo
-import scispacy
 import numpy as np
 import re
 import pandas as pd
@@ -277,7 +276,10 @@ class Embedding:
         None.
 
         """
-        
+        if not self.client_name:
+            if not os.path.exists("Data/docs/{}".format(collection_embedding)):
+                os.makedirs("Data/docs/{}".format(collection_embedding))
+                
         self.nlp = spacy.load(self.pretrain_path)
         #Create folder or mongo database
         self.init_dbs_centroid(collection_articles,

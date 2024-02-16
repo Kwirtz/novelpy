@@ -148,9 +148,9 @@ class Wang2017(create_output):
     def get_indicator(self):
         self.get_q_journal_list()
         self.get_data()      
-        print('Getting score per year ...')  
+        print('Getting the ', self.indicator, ' novelty score for combination of items in ', self.focal_year, ' ...')  
         self.compute_comb_score()
         print("Matrice done !")  
-        print('Getting score per paper ...')  
+        print('Attributing the ',self.indicator, ' novelty indicator for ',self.focal_year '  papers ...')       
         self.update_paper_values()
-        print("Done !")   
+        print("Done !")      

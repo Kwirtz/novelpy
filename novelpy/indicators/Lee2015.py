@@ -112,9 +112,9 @@ class Lee2015(create_output):
             self.ij_products = ij_products
             
             print("comb_scores")
-            comb_scores = (csr_matrix(temp_adj,dtype=float)*int(Nt))/ij_products
-            comb_scores[np.isinf(comb_scores)] =  0
-            comb_scores[np.isnan(comb_scores)] =  0
+            comb_scores = csr_matrix((csr_matrix(temp_adj,dtype=float)*int(Nt))/ij_products)
+            comb_scores.data[np.isinf(comb_scores.data)] = 0
+            comb_scores.data[np.isnan(comb_scores.data)] =  0
             comb_scores = triu(comb_scores,format='csr')
 
         print("pickle dump")
@@ -122,10 +122,11 @@ class Lee2015(create_output):
         
 
     def get_indicator(self):
+
         self.get_data()      
-        print('Getting score per year ...')  
+        print('Getting the ', self.indicator, ' novelty score for combination of items in ', self.focal_year, ' ...')  
         self.compute_comb_score()
         print("Matrice done !")  
-        print('Getting score per paper ...')       
+        print('Attributing the ',self.indicator, ' novelty indicator for ',self.focal_year '  papers ...')       
         self.update_paper_values()
         print("Done !")        
