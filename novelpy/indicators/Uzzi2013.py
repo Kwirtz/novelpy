@@ -324,6 +324,9 @@ class Uzzi2013(create_output):
             f for f in os.listdir(self.path_sample) 
                              if re.match(r'sample_[0-9]+_{}'.format(self.focal_year), f)
                              ]
+        if already_computed:
+            print("""Some of the sample are already computed, we skip the recomputation. 
+                If this is not a wanted behavior delete the samples here {}""".format(self.path_sample))
 
         for i in tqdm.tqdm(range(self.nb_sample),desc = 'Create sample network'):
             filename =  "sample_{}_{}.p".format(i,self.focal_year)
@@ -385,12 +388,12 @@ class Uzzi2013(create_output):
 
     def get_indicator(self):
         self.get_data()
-        print("Creating sample ...")
+        print("Creating sample for Uzzi et al. (2013) ...")
         self.sample_network()
-        print("Sample created !")
-        print('Getting score per year ...')  
+        print("Done ! Saved in {}".format(self.path_sample))
+        print('Getting the {} novelty score for combination of items in {} ...'.format(self.indicator, self.focal_year))  
         self.compute_comb_score()
         print("Matrice done !")  
-        print('Getting score per paper ...')     
+        print('Attributing the {} novelty indicator for {}  papers ...'.format(self.indicator, self.focal_year))        
         self.update_paper_values()
-        print("Done !")    
+        print("Done !")       

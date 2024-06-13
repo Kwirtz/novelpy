@@ -126,7 +126,10 @@ venv.bak/
 dmypy.json
 
 # Pyre type checker
+Data/
 .pyre/
+en_core_sci_lg-0.4.0/
+en_core_sci_lg-0.5.3/
 Paper/mindmap.png
 *.json
 *.txt

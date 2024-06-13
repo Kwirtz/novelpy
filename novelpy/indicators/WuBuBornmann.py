@@ -115,11 +115,11 @@ class Disruptiveness(create_output):
 
         """
         if self.tomongo:
-            docs = self.collection.find({self.year_variable:self.focal_year})
+            docs = self.collection.find({self.year_variable:self.focal_year}, no_cursor_timeout=True)
             if self.list_ids:
-                self.papers_items = {doc[self.id_variable]:doc[self.variable] for doc in docs if doc[self.id_variable] in self.list_ids}
+                self.papers_items = {doc[self.id_variable]: doc[self.variable] for doc in tqdm.tqdm(docs) if doc[self.id_variable] in self.list_ids}
             else:
-                self.papers_items = {doc[self.id_variable]:doc[self.variable] for doc in docs}
+                self.papers_items = {doc[self.id_variable]:doc[self.variable] for doc in tqdm.tqdm(docs)}
         else:
             self.citation_network = pickle.load(open('Data/docs/{}.pkl'.format(self.collection_name),'rb'))
             self.papers_items = {pmid:self.citation_network[pmid] for pmid in self.citation_network if self.citation_network[pmid][self.year_variable] == self.focal_year}

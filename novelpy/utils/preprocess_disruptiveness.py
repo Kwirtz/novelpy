@@ -18,6 +18,7 @@ class create_citation_network():
         self.client_name = client_name
         self.db_name = db_name
         self.year_variable = year_variable
+
         if self.client_name:
             self.client = pymongo.MongoClient(client_name)
             self.db = self.client[db_name]

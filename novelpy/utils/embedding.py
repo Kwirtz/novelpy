@@ -5,7 +5,6 @@ import tqdm
 import json
 import spacy
 import pymongo
-import scispacy
 import numpy as np
 import re
 import pandas as pd
@@ -13,11 +12,6 @@ from itertools import chain
 from pymongo import UpdateOne, InsertOne
 from collections import defaultdict
 from joblib import Parallel, delayed
-
-
-
-
-
 
 class Embedding:
     
@@ -91,7 +85,6 @@ class Embedding:
         self.title_variable = title_variable
         self.abstract_variable = abstract_variable
         self.abstract_subvariable = abstract_subvariable
-        self.references_variable = references_variable
         
         if self.client_name:
             self.client = pymongo.MongoClient(self.client_name)
@@ -185,7 +178,7 @@ class Embedding:
         if self.title_variable in doc.keys():
             if (doc[self.title_variable] and doc[self.title_variable] != "" ):
                 
-                tokens = self.nlp(doc[self.title_variable].lower())
+                tokens = self.nlp(doc[self.title_variable])
                 article_title_centroid = np.sum([t.vector for t in tokens], axis=0) / len(tokens)
                 self.article_title_centroid = article_title_centroid.tolist()
             else:
@@ -209,7 +202,7 @@ class Embedding:
                         abstract = None
 
                 if abstract:
-                    tokens = self.nlp(abstract.lower())
+                    tokens = self.nlp(abstract)
                     article_abs_centroid = np.sum([t.vector for t in tokens], axis=0) / len(tokens)
                     self.article_abs_centroid = article_abs_centroid.tolist()
                 else:
@@ -280,7 +273,10 @@ class Embedding:
         None.
 
         """
-        
+        if not self.client_name:
+            if not os.path.exists("Data/docs/{}".format(collection_embedding)):
+                os.makedirs("Data/docs/{}".format(collection_embedding))
+                
         self.nlp = spacy.load(self.pretrain_path)
         #Create folder or mongo database
         self.init_dbs_centroid(collection_articles,
@@ -421,15 +417,7 @@ class Embedding:
                         self.list_of_insertion.append(self.infos)    
                     except Exception as e:
                         print(e)
-            else:
-                self.infos = {'refs_embedding': self.refs_emb} if self.refs_emb else  {'refs_embedding': None}
-                try:
-                    self.infos.update({self.id_variable:doc[self.id_variable],
-                                       self.year_variable:doc[self.year_variable]})
-                    self.list_of_insertion.append(self.infos)    
-                except Exception as e:
-                    print(e)                
-            if len(self.list_of_insertion) >= 1000 :
+            if len(self.list_of_insertion) % 1000 == 0:
                 self.collection_ref_embedding.insert_many(self.list_of_insertion)
                 self.list_of_insertion = []
         else:
@@ -437,7 +425,7 @@ class Embedding:
                 self.infos = {'refs_embedding': self.refs_emb} if self.refs_emb else  {'refs_embedding': None}
                 self.infos.update({self.id_variable:doc[self.id_variable],
                             self.year_variable:doc[self.year_variable]})
-                self.list_of_insertion.append(self.infos)  
+                self.list_of_insertion.append(self.infos)    
             except Exception as e:
                 print(e)
 
@@ -473,7 +461,7 @@ class Embedding:
         for year in self.time_range:
 
             if self.client_name:
-                docs = self.collection_articles.find({self.year_variable:year},no_cursor_timeout  = True, session=self.session).skip(skip_-1).limit(limit_)
+                docs = self.collection_articles.find({self.year_variable:year},no_cursor_timeout  = True, session=self.session)#.skip(skip_-1).limit(limit_)
             else:
                 docs = json.load(open("Data/docs/{}/{}.json".format(collection_articles,year)))
 
@@ -484,7 +472,7 @@ class Embedding:
                self.client.admin.command('refreshSessions', [self.session.session_id], session=self.session)
 
             if self.client_name:
-                self.collection_ref_embedding.insert_many(self.list_of_insertion)
+                self.collection_ref_embedding.bulk_write(self.list_of_insertion)
             else:
                 with open("{}/{}.json".format(self.out_path,year), 'w') as outfile:
                     json.dump(self.list_of_insertion, outfile)
@@ -664,8 +652,8 @@ class Embedding:
                          #'keywords':keywords
                          }
 
-        
-    def get_author_profile(self,
+
+    def get_author_profile_v0(self,
                             doc):
         """
         Description
@@ -701,8 +689,54 @@ class Embedding:
             df = pd.DataFrame(year_articles)
             if not df.empty:
                self.infos = self.get_year_embedding(df)
-               
-               
+
+    def get_author_profile(self,
+                            doc):
+        """
+        Description
+        -----------
+        Track previous work for a given author, for each year it store all articles semantic
+        representation in a dict
+
+        Internal to allow for parallel computing latter
+    
+        Parameters
+        ----------
+        doc : dict
+            document from the authors collection.
+
+        Returns
+        -------
+        infos : dict 
+            title/abstract embedded representation and keyword list by year 
+
+
+        """
+        
+        
+        
+        #keywords = collection_keywords.find({self.id_variable:{'$in':doc[self.aut_pubs_variable]}},no_cursor_timeout  = True)
+        #for article, keyword in zip(articles,keywords) :
+            
+        self.search_previous_work(doc)
+        
+        self.infos = defaultdict(lambda: defaultdict(list))
+        if self.articles:
+            for article in self.articles:                
+                if article["abstract_embedding"]:
+                    try:    
+                        self.infos[article["year"]]["abstract_embedding"].append(article["abstract_embedding"])
+                    except:
+                        pass
+                if article["title_embedding"]:
+                    try:    
+                        self.infos[article["year"]]["title_embedding"].append(article["title_embedding"])
+                    except:
+                        pass
+
+            [self.infos[i].update({"year":i,self.aut_id_variable:doc[self.aut_id_variable]}) for i in self.infos]
+            self.infos = [self.infos[i] for i in self.infos]
+            
                
                
     def insert_embedding_aut(self,
@@ -723,18 +757,20 @@ class Embedding:
         
         if self.client_name:
             if self.infos:
-                for info in self.infos:
-                    info.update({self.aut_id_variable : and_id})
-                    self.list_of_insertion.append(info)
+                self.list_of_insertion += self.infos
+                #for info in self.infos:
+                #    info.update({self.aut_id_variable : and_id})
+                #    self.list_of_insertion.append(info)
                     
             if len(self.list_of_insertion) > 1000:
                 self.collection_authors_years.insert_many(self.list_of_insertion)
                 self.list_of_insertion = []
         else:
             if self.infos:
-                for info in self.infos:
-                    info.update({self.aut_id_variable : and_id})
-                    self.list_of_insertion.append(info)
+                self.list_of_insertion += self.infos
+                #for info in self.infos:
+                #    info.update({self.aut_id_variable : and_id})
+                #    self.list_of_insertion.append(info)
                     
                     
     def feed_author_profile(self,

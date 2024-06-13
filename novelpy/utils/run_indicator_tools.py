@@ -254,19 +254,18 @@ class Dataset:
             if self.starting_year:
                 self.current_adj = self.sum_cooc_matrix( window = range(self.starting_year, self.focal_year))
             else:
-                print("loading cooc")
                 self.current_adj = self.sum_cooc_matrix()
                 
         elif self.indicator == "wang":
-            print("Calculate past matrix ")
+            print("Calculate past matrix for Wang et al.(2017)")
             if self.starting_year:
                 self.past_adj = self.sum_cooc_matrix( window = range(self.starting_year, self.focal_year))
             else:
                 self.past_adj = self.sum_cooc_matrix()
-            print('Calculate futur matrix')
+            print('Calculate futur matrix for Wang et al.(2017)')
             self.futur_adj = self.sum_cooc_matrix(window = range(self.focal_year+1, self.focal_year+self.time_window_cooc+1))
 
-            print('Calculate difficulty matrix')
+            print('Calculate difficulty matrix for Wang et al.(2017)')
             self.difficulty_adj = self.sum_cooc_matrix(window = range(self.focal_year-self.time_window_cooc,self.focal_year))
         else:
             self.current_adj =  pickle.load( open(self.path_input+'/{}.p'.format(self.focal_year), "rb" )) 
@@ -276,7 +275,7 @@ class Dataset:
         
         if self.indicator in ['uzzi','wang','lee',"foster"]:
             # Get the coocurence for self.focal_year
-            print("loading cooc for focal year {}".format(self.focal_year))
+            print("loading cooc for indicator focal year {}".format(self.indicator, self.focal_year))
             self.get_cooc()
             print("cooc loaded !")
             print("loading items for papers in {}".format(self.focal_year))    
@@ -473,4 +472,7 @@ class create_output(Dataset):
             self.populate_list()
         else:
             print('''indicator must be in 'uzzi', 'foster', 'lee', 'wang' ''')
-        print('saved')
+        if self.client_name:
+            print("Results are saved in the collection named '{}' in MongoDB".format(self.collection_output_name))
+        else:
+            print("Results are in {}".format(self.path_output))
