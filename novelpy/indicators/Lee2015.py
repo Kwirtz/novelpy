@@ -124,9 +124,9 @@ class Lee2015(create_output):
     def get_indicator(self):
 
         self.get_data()      
-        print('Getting the ', self.indicator, ' novelty score for combination of items in ', self.focal_year, ' ...')  
+        print('Getting the {} novelty score for combination of items in {} ...'.format(self.indicator, self.focal_year))  
         self.compute_comb_score()
         print("Matrice done !")  
-        print('Attributing the ',self.indicator, ' novelty indicator for ',self.focal_year '  papers ...')       
+        print('Attributing the {} novelty indicator for {}  papers ...'.format(self.indicator, self.focal_year))        
         self.update_paper_values()
         print("Done !")        

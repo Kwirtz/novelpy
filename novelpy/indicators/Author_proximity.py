@@ -149,7 +149,7 @@ class Author_proximity(Dataset):
             self.collection_authors_years = self.db['AID_year_embedding'] 
         else:
             self.collection_authors_years = pd.read_json("Data/docs/AID_year_embedding.json")
-        self.path_output = "Data/Result/Author_proximity/"
+        self.path_output = "Result/Author_proximity/"
         if not os.path.exists(self.path_output):
             os.makedirs(self.path_output)
             

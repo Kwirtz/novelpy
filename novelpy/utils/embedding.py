@@ -13,9 +13,6 @@ from pymongo import UpdateOne, InsertOne
 from collections import defaultdict
 from joblib import Parallel, delayed
 
-test = {1986: {'embedded_abstract': [], 'embedded_title': [],"year":1968,"AID":6192779}}
-[test[i] for i in test]
-
 class Embedding:
     
     def __init__(self,
